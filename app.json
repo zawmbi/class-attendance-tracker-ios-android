@@ -1,0 +1,28 @@
+{
+  "expo": {
+    "name": "Attendance Tracker",
+    "slug": "attendance-tracker",
+    "scheme": "attendance-tracker",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "plugins": [
+      "expo-router",
+      "expo-notifications"
+    ],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#F5F1E8"
+      }
+    }
+  }
+}
