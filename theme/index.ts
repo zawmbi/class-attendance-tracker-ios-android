@@ -12,11 +12,27 @@ export const palette = {
   success: "#4C7A5D"
 } as const;
 
+export const darkPalette = {
+  background: "#1A221F",
+  primary: "#E3D2B5",
+  secondary: "#7E927F",
+  accent: "#C88F60",
+  surface: "#24302B",
+  ink: "#F6EFE3",
+  muted: "#AAB6AC",
+  border: "#34413C",
+  warning: "#D3A262",
+  critical: "#C87868",
+  success: "#91AF86"
+} as const;
+
 export const appConfig = {
-  reminderOptions: [5, 10, 15, 30, 45],
-  missedCheckInOptions: [5, 10, 15, 20],
+  reminderOptions: [0, 5, 10, 15, 30, 45],
+  missedCheckInOptions: [0, 5, 10, 15, 20],
   priorityOptions: ["low", "medium", "high"] as const,
   attendanceTypeOptions: ["percentage", "points", "optional"] as const,
+  academicTermOptions: ["semester", "trimester", "quarter", "custom"] as const,
+  courseLengthOptions: [4, 6, 8, 10, 12, 14, 16] as const,
   lateCreditWeight: 0.5,
   heatmapWeeks: 8,
   analyticsWeeks: 6,
@@ -34,10 +50,11 @@ export const appConfig = {
   ],
   classColorOptions: [
     "#2F5D50",
-    "#A3B18A",
-    "#D4A373",
     "#6B8F71",
     "#7C8A6D",
+    "#A3B18A",
+    "#B7BE96",
+    "#D4A373",
     "#C08457"
   ],
   earthyThemes: [
@@ -70,3 +87,5 @@ export const cardStyles = {
   },
   elevation: 4
 } as const;
+
+export const getPalette = (mode: "light" | "dark") => (mode === "dark" ? darkPalette : palette);

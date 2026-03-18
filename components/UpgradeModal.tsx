@@ -2,6 +2,7 @@ import { Modal, Pressable, Text, View } from "react-native";
 
 import { cardStyles } from "@/theme";
 import { useUserStore } from "@/store/userStore";
+import { useAppPalette } from "@/theme/useAppPalette";
 import { UpgradeTrigger } from "@/utils/types";
 
 const copyByReason: Record<UpgradeTrigger, { title: string; body: string }> = {
@@ -28,6 +29,7 @@ const copyByReason: Record<UpgradeTrigger, { title: string; body: string }> = {
 };
 
 export const UpgradeModal = () => {
+  const palette = useAppPalette();
   const { upgradePrompt, closeUpgradeModal, upgradeToPremium, markPromptSeen } = useUserStore();
 
   if (!upgradePrompt) {
@@ -39,30 +41,34 @@ export const UpgradeModal = () => {
   return (
     <Modal animationType="fade" transparent visible onRequestClose={closeUpgradeModal}>
       <View className="flex-1 justify-end">
-        <View className="absolute inset-0 bg-primary/10" />
+        <View className="absolute inset-0" style={{ backgroundColor: `${palette.primary}22` }} />
         <View className="px-4 pb-8">
-          <View className="self-center h-1.5 w-12 rounded-full bg-primary/15" />
-          <View className="mt-3 w-full rounded-[32px] border border-border bg-background px-6 py-7" style={[cardStyles, { maxWidth: 460, alignSelf: "center" }]}>
-            <Text className="text-center text-xs uppercase tracking-[1.5px] text-muted">One-time upgrade</Text>
-            <Text className="mt-3 text-center font-serif text-[30px] text-primary">{copy.title}</Text>
-            <Text className="mt-3 text-center text-sm leading-6 text-muted">{copy.body}</Text>
-            <View className="mt-5 rounded-[22px] bg-surface p-4">
-              <Text className="text-center text-sm leading-6 text-ink">
+          <View className="self-center h-1.5 w-12 rounded-full" style={{ backgroundColor: `${palette.primary}33` }} />
+          <View className="mt-3 w-full rounded-[32px] px-6 py-7" style={[cardStyles, { maxWidth: 460, alignSelf: "center", backgroundColor: palette.background, borderColor: palette.border, borderWidth: 1 }]}>
+            <Text className="text-center text-xs uppercase tracking-[1.5px]" style={{ color: palette.muted }}>Monthly subscription</Text>
+            <Text className="mt-3 text-center font-serif text-[30px]" style={{ color: palette.primary }}>{copy.title}</Text>
+            <Text className="mt-3 text-center text-sm leading-6" style={{ color: palette.muted }}>{copy.body}</Text>
+            <View className="mt-5 rounded-[22px] p-4" style={{ backgroundColor: palette.surface }}>
+              <Text className="text-center text-sm leading-6" style={{ color: palette.ink }}>
                 Includes predictive attendance engine, behavioral insights, advanced reminders, and theme customization.
+              </Text>
+              <Text className="mt-2 text-center text-xs uppercase tracking-[1.4px]" style={{ color: palette.muted }}>
+                billed monthly
               </Text>
             </View>
             <View className="mt-6 gap-3">
-              <Pressable className="rounded-full bg-primary px-4 py-4" onPress={upgradeToPremium}>
-                <Text className="text-center text-background">Unlock now</Text>
+              <Pressable className="rounded-full px-4 py-4" style={{ backgroundColor: palette.primary }} onPress={upgradeToPremium}>
+                <Text className="text-center" style={{ color: palette.background }}>Start monthly plan</Text>
               </Pressable>
               <Pressable
-                className="rounded-full border border-border px-4 py-4"
+                className="rounded-full px-4 py-4"
+                style={{ borderWidth: 1, borderColor: palette.border }}
                 onPress={() => {
                   markPromptSeen(upgradePrompt);
                   closeUpgradeModal();
                 }}
               >
-                <Text className="text-center text-primary">Maybe later</Text>
+                <Text className="text-center" style={{ color: palette.primary }}>Maybe later</Text>
               </Pressable>
             </View>
           </View>

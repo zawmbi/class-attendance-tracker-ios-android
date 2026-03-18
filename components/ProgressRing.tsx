@@ -4,6 +4,7 @@ import Animated, { useAnimatedProps, useSharedValue, withTiming } from "react-na
 import Svg, { Circle } from "react-native-svg";
 
 import { palette } from "@/theme";
+import { useAppPalette } from "@/theme/useAppPalette";
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
@@ -14,6 +15,7 @@ interface ProgressRingProps {
 }
 
 export const ProgressRing = ({ value, label, size = 148 }: ProgressRingProps) => {
+  const activePalette = useAppPalette();
   const strokeWidth = 10;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
@@ -34,7 +36,7 @@ export const ProgressRing = ({ value, label, size = 148 }: ProgressRingProps) =>
           cx={size / 2}
           cy={size / 2}
           r={radius}
-          stroke={palette.border}
+          stroke={activePalette.border}
           strokeWidth={strokeWidth}
           fill="transparent"
         />
@@ -42,7 +44,7 @@ export const ProgressRing = ({ value, label, size = 148 }: ProgressRingProps) =>
           cx={size / 2}
           cy={size / 2}
           r={radius}
-          stroke={palette.primary}
+          stroke={activePalette.primary}
           strokeWidth={strokeWidth}
           strokeLinecap="round"
           strokeDasharray={circumference}
@@ -52,8 +54,8 @@ export const ProgressRing = ({ value, label, size = 148 }: ProgressRingProps) =>
         />
       </Svg>
       <View className="absolute items-center">
-        <Text className="font-serif text-3xl text-primary">{value}%</Text>
-        <Text className="mt-1 text-sm text-muted">{label}</Text>
+        <Text className="font-serif text-3xl" style={{ color: activePalette.primary }}>{value}%</Text>
+        <Text className="mt-1 text-sm" style={{ color: activePalette.muted }}>{label}</Text>
       </View>
     </View>
   );

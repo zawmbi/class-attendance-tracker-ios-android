@@ -1,5 +1,6 @@
 import { Pressable, Text } from "react-native";
 
+import { useAppPalette } from "@/theme/useAppPalette";
 import { AttendanceStatus } from "@/utils/types";
 
 const tones: Record<AttendanceStatus, { container: string; text: string }> = {
@@ -14,8 +15,39 @@ interface RecordStatusPillProps {
   onPress?: () => void;
 }
 
-export const RecordStatusPill = ({ status, onPress }: RecordStatusPillProps) => (
-  <Pressable onPress={onPress} disabled={!onPress} className={`rounded-full px-3 py-1.5 ${tones[status].container}`}>
-    <Text className={`text-xs uppercase tracking-[1.5px] ${tones[status].text}`}>{status}</Text>
-  </Pressable>
-);
+export const RecordStatusPill = ({ status, onPress }: RecordStatusPillProps) => {
+  const palette = useAppPalette();
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={!onPress}
+      className="rounded-full px-3 py-1.5"
+      style={{
+        backgroundColor:
+          status === "present"
+            ? `${palette.success}22`
+            : status === "late"
+              ? `${palette.accent}22`
+              : status === "absent"
+                ? `${palette.critical}22`
+                : `${palette.muted}22`
+      }}
+    >
+      <Text
+        className="text-xs uppercase tracking-[1.5px]"
+        style={{
+          color:
+            status === "present"
+              ? palette.success
+              : status === "late"
+                ? palette.warning
+                : status === "absent"
+                  ? palette.critical
+                  : palette.muted
+        }}
+      >
+        {status}
+      </Text>
+    </Pressable>
+  );
+};

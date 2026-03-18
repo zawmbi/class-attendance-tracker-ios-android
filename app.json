@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Attendance Tracker",
-    "slug": "attendance-tracker",
+    "slug": "attendance-tracker-app",
     "scheme": "attendance-tracker",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -17,12 +17,24 @@
       "expo-notifications"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.attendancetrackerappsorganization.attendancetrackerapp",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#F5F1E8"
+      },
+      "package": "com.attendancetrackerappsorganization.attendancetrackerapp"
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "3870d774-eded-4c01-909c-8795c2dc001c"
       }
-    }
+    },
+    "owner": "attendancetrackerapps-organization"
   }
 }

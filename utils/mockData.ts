@@ -4,6 +4,8 @@ import { AttendanceRecord, AttendanceSettings, ClassModel } from "@/utils/types"
 export const defaultSettings: AttendanceSettings = {
   reminderMinutesBefore: 15,
   missedCheckInDelayMinutes: 10,
+  defaultTermType: "semester",
+  defaultCourseLengthWeeks: 16,
   riskThresholds: appConfig.riskThresholdDefaults,
   lateCreditWeight: appConfig.lateCreditWeight,
   locationRemindersEnabled: false,
@@ -19,7 +21,10 @@ export const seedClasses: ClassModel[] = [
   {
     id: "cls-1",
     name: "Modern Literature",
+    linkedGroup: "",
+    sectionLabel: "Seminar",
     professor: "Dr. Elaine Porter",
+    ta: "",
     location: "Humanities Hall",
     room: "204",
     schedule: [
@@ -27,7 +32,11 @@ export const seedClasses: ClassModel[] = [
       { day: "Wednesday", startTime: "09:00", endTime: "10:15" }
     ],
     attendanceType: "percentage",
+    termType: "semester",
+    courseLengthWeeks: 16,
     requiredAttendance: 85,
+    excusedAllowance: 2,
+    hoursPerWeek: 3,
     color: "#2F5D50",
     priority: "high",
     notes: "Seminar discussions count heavily toward the final grade."
@@ -35,7 +44,10 @@ export const seedClasses: ClassModel[] = [
   {
     id: "cls-2",
     name: "Biostatistics",
+    linkedGroup: "BIOS 210",
+    sectionLabel: "Lecture",
     professor: "Prof. Marcus Hill",
+    ta: "Nina Patel",
     location: "Science Center",
     room: "118",
     schedule: [
@@ -43,22 +55,55 @@ export const seedClasses: ClassModel[] = [
       { day: "Thursday", startTime: "11:00", endTime: "12:20" }
     ],
     attendanceType: "percentage",
+    termType: "semester",
+    courseLengthWeeks: 16,
     requiredAttendance: 80,
+    excusedAllowance: 2,
+    hoursPerWeek: 3,
     color: "#A3B18A",
     priority: "medium",
     notes: "Late arrivals after quiz distribution are marked absent."
   },
   {
+    id: "cls-5",
+    name: "Biostatistics Lab",
+    linkedGroup: "BIOS 210",
+    sectionLabel: "Lab",
+    professor: "Prof. Marcus Hill",
+    ta: "Nina Patel",
+    location: "Science Center",
+    room: "Lab 6",
+    schedule: [
+      { day: "Tuesday", startTime: "14:00", endTime: "16:00" }
+    ],
+    attendanceType: "percentage",
+    termType: "semester",
+    courseLengthWeeks: 16,
+    requiredAttendance: 80,
+    excusedAllowance: 3,
+    hoursPerWeek: 2,
+    color: "#B7BE96",
+    priority: "medium",
+    notes: "Lab attendance is tracked separately from lecture."
+  },
+  {
     id: "cls-3",
     name: "Design Studio",
+    linkedGroup: "",
+    sectionLabel: "Studio",
     professor: "Avery Lin",
+    ta: "",
     location: "Arts Annex",
     room: "3B",
     schedule: [
       { day: "Friday", startTime: "13:30", endTime: "16:00" }
     ],
     attendanceType: "points",
+    termType: "quarter",
+    courseLengthWeeks: 10,
     requiredAttendance: 75,
+    excusedAllowance: 1,
+    hoursPerWeek: 4,
     color: "#D4A373",
     priority: "high",
     notes: "Project critique days are especially important."
@@ -66,7 +111,10 @@ export const seedClasses: ClassModel[] = [
   {
     id: "cls-4",
     name: "Movement Practice",
+    linkedGroup: "",
+    sectionLabel: "Practice",
     professor: "Coach Imani Reed",
+    ta: "",
     location: "Wellness Center",
     room: "Studio 1",
     schedule: [
@@ -74,7 +122,11 @@ export const seedClasses: ClassModel[] = [
       { day: "Thursday", startTime: "17:30", endTime: "18:30" }
     ],
     attendanceType: "optional",
+    termType: "trimester",
+    courseLengthWeeks: 12,
     requiredAttendance: 60,
+    excusedAllowance: 4,
+    hoursPerWeek: 2,
     color: "#6B8F71",
     priority: "low",
     notes: "Optional class, but streaks unlock extra wellness credits."
@@ -97,6 +149,9 @@ export const seedRecords: AttendanceRecord[] = [
   { id: "r-13", classId: "cls-2", date: "2026-03-03", status: "late", notes: "" },
   { id: "r-14", classId: "cls-2", date: "2026-03-05", status: "present", notes: "" },
   { id: "r-15", classId: "cls-2", date: "2026-03-10", status: "present", notes: "" },
+  { id: "r-15b", classId: "cls-5", date: "2026-02-17", status: "present", notes: "" },
+  { id: "r-15c", classId: "cls-5", date: "2026-02-24", status: "late", notes: "" },
+  { id: "r-15d", classId: "cls-5", date: "2026-03-03", status: "present", notes: "" },
   { id: "r-16", classId: "cls-3", date: "2026-02-20", status: "present", notes: "" },
   { id: "r-17", classId: "cls-3", date: "2026-02-27", status: "excused", notes: "Department showcase" },
   { id: "r-18", classId: "cls-3", date: "2026-03-06", status: "late", notes: "" },

@@ -37,6 +37,49 @@ export const formatTimeLabel = (time: string) => {
   }).format(date);
 };
 
+export const formatEditableTime = (time: string) => formatTimeLabel(time);
+
+export const parseTimeInput = (input: string) => {
+  const trimmed = input.trim().toUpperCase();
+
+  if (!trimmed) {
+    return null;
+  }
+
+  const meridiemMatch = trimmed.match(/^(\d{1,2})(?::?(\d{2}))?\s*(AM|PM)$/);
+  if (meridiemMatch) {
+    let hours = Number(meridiemMatch[1]);
+    const minutes = Number(meridiemMatch[2] ?? "0");
+    const suffix = meridiemMatch[3];
+
+    if (hours < 1 || hours > 12 || minutes < 0 || minutes > 59) {
+      return null;
+    }
+
+    if (suffix === "AM") {
+      hours = hours === 12 ? 0 : hours;
+    } else {
+      hours = hours === 12 ? 12 : hours + 12;
+    }
+
+    return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+  }
+
+  const twentyFourHourMatch = trimmed.match(/^(\d{1,2}):(\d{2})$/);
+  if (twentyFourHourMatch) {
+    const hours = Number(twentyFourHourMatch[1]);
+    const minutes = Number(twentyFourHourMatch[2]);
+
+    if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
+      return null;
+    }
+
+    return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+  }
+
+  return null;
+};
+
 export const isClassToday = (schedule: ClassSchedule[], now = new Date()) =>
   schedule.some((item) => item.day === getWeekdayLabel(now));
 
@@ -91,3 +134,20 @@ export const getRelativeDayBuckets = (weeks: number) => {
     return date;
   });
 };
+
+export const addDays = (date: Date, days: number) => {
+  const copy = new Date(date);
+  copy.setDate(copy.getDate() + days);
+  return copy;
+};
+
+export const getMonthLabel = (date: Date) =>
+  new Intl.DateTimeFormat("en-US", {
+    month: "long",
+    year: "numeric"
+  }).format(date);
+
+export const getShortWeekday = (date: Date) =>
+  new Intl.DateTimeFormat("en-US", {
+    weekday: "short"
+  }).format(date);

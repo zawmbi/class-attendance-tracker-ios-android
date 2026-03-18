@@ -178,6 +178,7 @@ export const getAttendanceSummary = (
     lateCount: classRecords.filter((record) => record.status === "late").length,
     absentCount: classRecords.filter((record) => record.status === "absent").length,
     excusedCount: classRecords.filter((record) => record.status === "excused").length,
+    remainingExcused: Math.max(classItem.excusedAllowance - classRecords.filter((record) => record.status === "excused").length, 0),
     projections: getProjectionSummary(classItem, records, settings)
   };
 };

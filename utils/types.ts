@@ -11,8 +11,12 @@ export type AttendanceStatus = "present" | "late" | "absent" | "excused";
 export type AttendanceType = "percentage" | "points" | "optional";
 export type RiskLevel = "safe" | "warning" | "critical";
 export type PriorityLevel = "low" | "medium" | "high";
+export type AcademicTermType = "semester" | "trimester" | "quarter" | "custom";
 export type UpgradeTrigger = "risk_alert" | "analytics" | "consistent_use" | "theme_customization" | "advanced_reminders";
 export type ThemePreset = "fern" | "sage" | "sandstone";
+export type ThemeMode = "light" | "dark";
+export type AuthProvider = "email" | "google" | "facebook" | "apple";
+export type DashboardWidget = "actions" | "momentum" | "motivation" | "today" | "more_classes";
 
 export interface ClassSchedule {
   day: Weekday;
@@ -23,12 +27,19 @@ export interface ClassSchedule {
 export interface ClassModel {
   id: string;
   name: string;
+  linkedGroup?: string;
+  sectionLabel?: string;
   professor: string;
+  ta: string;
   location: string;
   room: string;
   schedule: ClassSchedule[];
   attendanceType: AttendanceType;
+  termType: AcademicTermType;
+  courseLengthWeeks: number;
   requiredAttendance: number;
+  excusedAllowance: number;
+  hoursPerWeek: number;
   color: string;
   priority: PriorityLevel;
   notes: string;
@@ -46,6 +57,8 @@ export interface AttendanceRecord {
 export interface AttendanceSettings {
   reminderMinutesBefore: number;
   missedCheckInDelayMinutes: number;
+  defaultTermType: AcademicTermType;
+  defaultCourseLengthWeeks: number;
   riskThresholds: {
     warning: number;
     critical: number;
@@ -99,6 +112,12 @@ export interface PrioritySuggestion {
 export interface UserProfile {
   isPremium: boolean;
   preferredTheme: ThemePreset;
+  themeMode: ThemeMode;
+  isAuthenticated: boolean;
+  authProvider: AuthProvider | null;
+  userName: string;
+  userEmail: string;
+  dashboardWidgetOrder: DashboardWidget[];
   usageDays: number;
   consistencyDays: number;
   upgradePrompt: UpgradeTrigger | null;
