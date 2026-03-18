@@ -16,6 +16,7 @@
       "expo-router",
       "expo-notifications"
     ],
+    "icon": "./AppLogo.png",
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.attendancetrackerappsorganization.attendancetrackerapp",
@@ -25,7 +26,8 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#F5F1E8"
+        "backgroundColor": "#F5F1E8",
+        "foregroundImage": "./AppLogo.png"
       },
       "package": "com.attendancetrackerappsorganization.attendancetrackerapp"
     },
