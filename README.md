@@ -1,6 +1,6 @@
 # Attendance Tracker
 
-A cross-platform Expo Router app for tracking class attendance with React Native, TypeScript, Zustand, and NativeWind.
+iOS and Android app for tracking class attendance with React Native, TypeScript, Zustand, and NativeWind.
 
 ## Run
 
