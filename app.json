@@ -14,11 +14,15 @@
     },
     "plugins": [
       "expo-router",
-      "expo-notifications"
+      "expo-notifications",
+      "expo-web-browser",
+      "expo-apple-authentication",
+      "@react-native-google-signin/google-signin"
     ],
     "icon": "./AppLogo.png",
     "ios": {
       "supportsTablet": true,
+      "usesAppleSignIn": true,
       "bundleIdentifier": "com.attendancetrackerappsorganization.attendancetrackerapp",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false

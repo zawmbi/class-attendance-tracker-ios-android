@@ -15,7 +15,7 @@ export type AcademicTermType = "semester" | "trimester" | "quarter" | "custom";
 export type UpgradeTrigger = "risk_alert" | "analytics" | "consistent_use" | "theme_customization" | "advanced_reminders";
 export type ThemePreset = "fern" | "sage" | "sandstone";
 export type ThemeMode = "light" | "dark";
-export type AuthProvider = "email" | "google" | "facebook" | "apple";
+export type AuthProvider = "email" | "google" | "apple";
 export type DashboardWidget = "actions" | "momentum" | "motivation" | "today" | "more_classes";
 
 export interface ClassSchedule {
