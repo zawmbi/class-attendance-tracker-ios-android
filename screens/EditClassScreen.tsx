@@ -6,10 +6,12 @@ import { FormField, FormInput } from "@/components/FormField";
 import { ScreenContainer } from "@/components/ScreenContainer";
 import { SectionHeader } from "@/components/SectionHeader";
 import { useAttendanceStore } from "@/store/attendanceStore";
+import { useUserStore } from "@/store/userStore";
 import { appConfig } from "@/theme";
 import { useAppPalette } from "@/theme/useAppPalette";
 import { formatEditableTime, parseTimeInput } from "@/utils/date";
-import { AcademicTermType, AttendanceType, PriorityLevel, Weekday } from "@/utils/types";
+import { draftToClassPayload, parseSyllabusText } from "@/utils/syllabus";
+import { AcademicTermType, AttendanceType, PriorityLevel, SyllabusImportDraft, Weekday } from "@/utils/types";
 
 const weekdays: Weekday[] = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
@@ -20,6 +22,7 @@ interface EditClassScreenProps {
 export const EditClassScreen = ({ classId }: EditClassScreenProps) => {
   const palette = useAppPalette();
   const { classes, settings, addClass, updateClass, deleteClass } = useAttendanceStore();
+  const { isPremium, openUpgradeModal } = useUserStore();
   const existing = classes.find((item) => item.id === classId);
   const [name, setName] = useState(existing?.name ?? "");
   const [linkedGroup, setLinkedGroup] = useState(existing?.linkedGroup ?? "");
@@ -40,11 +43,70 @@ export const EditClassScreen = ({ classId }: EditClassScreenProps) => {
   const [hoursPerWeek, setHoursPerWeek] = useState(String(existing?.hoursPerWeek ?? 3));
   const [priority, setPriority] = useState<PriorityLevel>(existing?.priority ?? "medium");
   const [color, setColor] = useState(existing?.color ?? appConfig.classColorOptions[0]);
+  const [syllabusText, setSyllabusText] = useState("");
+  const [drafts, setDrafts] = useState<SyllabusImportDraft[]>([]);
 
   const canSave = useMemo(() => name.trim().length > 0 && selectedDays.length > 0, [name, selectedDays]);
 
   const toggleDay = (day: Weekday) => {
     setSelectedDays((current) => (current.includes(day) ? current.filter((item) => item !== day) : [...current, day]));
+  };
+
+  const applyDraftToForm = (draft: SyllabusImportDraft) => {
+    setName(draft.name);
+    setLinkedGroup(draft.linkedGroup);
+    setSectionLabel(draft.sectionLabel);
+    setProfessor(draft.professor);
+    setTa(draft.ta);
+    setLocation(draft.location);
+    setRoom(draft.room);
+    setNotes(draft.notes);
+    setAttendanceType(draft.attendanceType);
+    setTermType(draft.termType);
+    setCourseLengthWeeks(String(draft.courseLengthWeeks));
+    setRequiredAttendance(String(draft.requiredAttendance));
+    setExcusedAllowance(String(draft.excusedAllowance));
+    setHoursPerWeek(String(draft.hoursPerWeek));
+
+    if (draft.schedule.length > 0) {
+      setSelectedDays(draft.schedule.map((item) => item.day));
+      setStartTime(formatEditableTime(draft.schedule[0].startTime));
+      setEndTime(formatEditableTime(draft.schedule[0].endTime));
+    }
+  };
+
+  const handleParseSyllabus = () => {
+    if (!syllabusText.trim()) {
+      Alert.alert("Paste a syllabus first", "Add syllabus text or OCR text before scanning.");
+      return;
+    }
+
+    const parsedDrafts = parseSyllabusText(syllabusText);
+    if (!parsedDrafts.length) {
+      Alert.alert("Nothing matched yet", "Try pasting the course title, meeting schedule, and attendance policy lines.");
+      return;
+    }
+
+    setDrafts(parsedDrafts);
+  };
+
+  const handleImportAllDrafts = () => {
+    if (existing || drafts.length === 0) {
+      return;
+    }
+
+    drafts.forEach((draft, index) => {
+      addClass(
+        draftToClassPayload(draft, {
+          id: `class-${Date.now()}-${index}`,
+          color: appConfig.classColorOptions[index % appConfig.classColorOptions.length],
+          priority
+        })
+      );
+    });
+
+    Alert.alert("Classes imported", `${drafts.length} classes were created from your syllabus text.`);
+    router.replace("/(tabs)/dashboard");
   };
 
   const handleSave = () => {
@@ -134,6 +196,123 @@ export const EditClassScreen = ({ classId }: EditClassScreenProps) => {
       </Link>
 
       <SectionHeader title={existing ? "Edit Class" : "New Class"} subtitle="Add your real class details directly in the app." />
+
+      <View
+        className="mb-6 rounded-[28px] px-5 py-5"
+        style={{ backgroundColor: palette.surface, borderColor: palette.border, borderWidth: 1 }}
+      >
+        <Text className="font-serif text-[24px]" style={{ color: palette.primary }}>
+          Premium syllabus scan
+        </Text>
+        <Text className="mt-2 text-sm leading-6" style={{ color: palette.muted }}>
+          Paste syllabus text or OCR output to auto-fill class details. On new classes, you can also import multiple syllabi at once.
+        </Text>
+
+        {isPremium ? (
+          <>
+            <FormField
+              label="Syllabus text"
+              helper={
+                existing
+                  ? "Paste one syllabus to update this class."
+                  : "Separate multiple syllabi with --- or paste several Course:/Syllabus sections together."
+              }
+            >
+              <FormInput
+                multiline
+                numberOfLines={8}
+                textAlignVertical="top"
+                value={syllabusText}
+                onChangeText={(value) => {
+                  setSyllabusText(value);
+                  setDrafts([]);
+                }}
+                placeholder={`Course: Biology 101
+Instructor: Dr. Rivera
+Schedule: Tue/Thu 9:30 AM - 10:45 AM
+Attendance: 80% required, 2 excused absences...`}
+                style={{ minHeight: 176 }}
+              />
+            </FormField>
+
+            <View className="flex-row gap-3">
+              <Pressable
+                className="flex-1 items-center rounded-[22px] px-4 py-4"
+                style={{ backgroundColor: palette.primary }}
+                onPress={handleParseSyllabus}
+              >
+                <Text style={{ color: palette.background }}>Scan syllabus</Text>
+              </Pressable>
+              {drafts.length > 1 && !existing ? (
+                <Pressable
+                  className="flex-1 items-center rounded-[22px] px-4 py-4"
+                  style={{ backgroundColor: palette.background, borderWidth: 1, borderColor: palette.border }}
+                  onPress={handleImportAllDrafts}
+                >
+                  <Text style={{ color: palette.primary }}>Import all</Text>
+                </Pressable>
+              ) : null}
+            </View>
+
+            {drafts.length > 0 ? (
+              <View className="mt-4 gap-3">
+                {drafts.map((draft, index) => (
+                  <View
+                    key={`${draft.name}-${index}`}
+                    className="rounded-[24px] px-4 py-4"
+                    style={{ backgroundColor: palette.background, borderWidth: 1, borderColor: palette.border }}
+                  >
+                    <Text className="font-serif text-[20px]" style={{ color: palette.primary }}>
+                      {draft.name}
+                    </Text>
+                    <Text className="mt-2 text-sm leading-6" style={{ color: palette.muted }}>
+                      {draft.professor ? `${draft.professor} • ` : ""}
+                      {draft.schedule.length > 0
+                        ? `${draft.schedule.map((item) => item.day.slice(0, 3)).join(", ")} ${formatEditableTime(
+                            draft.schedule[0].startTime
+                          )} - ${formatEditableTime(draft.schedule[0].endTime)}`
+                        : "No schedule detected yet"}
+                    </Text>
+                    <Text className="mt-2 text-sm leading-6" style={{ color: palette.muted }}>
+                      {draft.requiredAttendance}% required • {draft.excusedAllowance} excused • about {draft.estimatedSessions} sessions
+                      {draft.attendanceType !== "optional"
+                        ? ` • about ${draft.allowedAbsencesEstimate} safe absences`
+                        : " • optional attendance"}
+                    </Text>
+                    {draft.notes ? (
+                      <Text className="mt-2 text-sm leading-6" style={{ color: palette.ink }}>
+                        {draft.notes}
+                      </Text>
+                    ) : null}
+                    <Pressable
+                      className="mt-3 self-start rounded-full px-4 py-3"
+                      style={{ backgroundColor: palette.primary }}
+                      onPress={() => applyDraftToForm(draft)}
+                    >
+                      <Text style={{ color: palette.background }}>
+                        {existing ? "Apply to this class" : drafts.length > 1 ? "Fill editor with this one" : "Use these details"}
+                      </Text>
+                    </Pressable>
+                  </View>
+                ))}
+              </View>
+            ) : null}
+          </>
+        ) : (
+          <View className="mt-4 rounded-[24px] px-4 py-4" style={{ backgroundColor: palette.background }}>
+            <Text className="text-sm leading-6" style={{ color: palette.muted }}>
+              Premium can pull course name, instructor, meeting schedule, attendance policy, excused absence limits, and course length from pasted syllabus text.
+            </Text>
+            <Pressable
+              className="mt-4 self-start rounded-full px-4 py-3"
+              style={{ backgroundColor: palette.primary }}
+              onPress={() => openUpgradeModal("syllabus_import")}
+            >
+              <Text style={{ color: palette.background }}>Unlock syllabus scan</Text>
+            </Pressable>
+          </View>
+        )}
+      </View>
 
       <FormField label="Class name">
         <FormInput value={name} onChangeText={setName} placeholder="Biology 101" />

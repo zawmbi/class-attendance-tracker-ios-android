@@ -12,7 +12,13 @@ export type AttendanceType = "percentage" | "points" | "optional";
 export type RiskLevel = "safe" | "warning" | "critical";
 export type PriorityLevel = "low" | "medium" | "high";
 export type AcademicTermType = "semester" | "trimester" | "quarter" | "custom";
-export type UpgradeTrigger = "risk_alert" | "analytics" | "consistent_use" | "theme_customization" | "advanced_reminders";
+export type UpgradeTrigger =
+  | "risk_alert"
+  | "analytics"
+  | "consistent_use"
+  | "theme_customization"
+  | "advanced_reminders"
+  | "syllabus_import";
 export type ThemePreset = "fern" | "sage" | "sandstone";
 export type ThemeMode = "light" | "dark";
 export type AuthProvider = "email" | "google" | "apple";
@@ -43,6 +49,27 @@ export interface ClassModel {
   color: string;
   priority: PriorityLevel;
   notes: string;
+}
+
+export interface SyllabusImportDraft {
+  name: string;
+  linkedGroup: string;
+  sectionLabel: string;
+  professor: string;
+  ta: string;
+  location: string;
+  room: string;
+  schedule: ClassSchedule[];
+  attendanceType: AttendanceType;
+  termType: AcademicTermType;
+  courseLengthWeeks: number;
+  requiredAttendance: number;
+  excusedAllowance: number;
+  hoursPerWeek: number;
+  notes: string;
+  estimatedSessions: number;
+  allowedAbsencesEstimate: number;
+  sourceExcerpt: string;
 }
 
 export interface AttendanceRecord {

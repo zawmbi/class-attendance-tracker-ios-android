@@ -25,6 +25,10 @@ const copyByReason: Record<UpgradeTrigger, { title: string; body: string }> = {
   advanced_reminders: {
     title: "Smarter reminders",
     body: "Premium adds leave-time reminders, persistent follow-ups, and adaptive timing around your routines."
+  },
+  syllabus_import: {
+    title: "Scan syllabi into classes",
+    body: "Paste one syllabus or several at once and Premium will pull out class details, schedule timing, and attendance policy defaults for you."
   }
 };
 
