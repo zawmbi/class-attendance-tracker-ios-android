@@ -62,6 +62,7 @@ export default function RootLayout() {
         <Stack.Screen name="index" />
         <Stack.Screen name="auth" />
         <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="premium" />
         <Stack.Screen name="dashboard/customize" />
         <Stack.Screen name="class/new" />
         <Stack.Screen name="class/edit/[id]" />

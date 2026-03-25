@@ -1,3 +1,4 @@
+import { router } from "expo-router";
 import { Pressable, Switch, Text, View } from "react-native";
 
 import { PremiumFeatureCard } from "@/components/PremiumFeatureCard";
@@ -84,6 +85,23 @@ export const SettingsScreen = () => {
           <Text style={{ color: palette.primary }}>Sign Out</Text>
         </Pressable>
       </View>
+
+      <Pressable className="mb-6 rounded-card p-5" style={cardStyle} onPress={() => router.push("/premium" as never)}>
+        <Text className="text-xs uppercase tracking-[1.5px]" style={{ color: palette.muted }}>
+          {isPremium ? "Premium Active" : "Premium"}
+        </Text>
+        <Text className="mt-3 font-serif text-xl" style={{ color: palette.primary }}>
+          {isPremium ? "View everything included" : "See what premium unlocks"}
+        </Text>
+        <Text className="mt-2 text-sm leading-6" style={{ color: palette.muted }}>
+          {isPremium
+            ? "Review your premium features, from syllabus import to predictive attendance planning."
+            : "Explore predictive insights, syllabus scanning, advanced reminders, and the rest of the monthly plan."}
+        </Text>
+        <Text className="mt-4 text-sm" style={{ color: palette.primary }}>
+          Open premium page ›
+        </Text>
+      </Pressable>
 
       <View className="mb-6 rounded-card p-5" style={cardStyle}>
         <Text className="font-serif text-xl" style={{ color: palette.primary }}>
