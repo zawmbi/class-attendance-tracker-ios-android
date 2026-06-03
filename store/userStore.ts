@@ -4,6 +4,17 @@ import { createJSONStorage, persist } from "zustand/middleware";
 
 import { AuthProvider, DashboardWidget, ThemeMode, ThemePreset, UpgradeTrigger, UserProfile } from "@/utils/types";
 
+// Canonical widget set + default order. Used to migrate persisted orders that
+// predate newer widgets (e.g. the trophy case) so nothing silently disappears.
+export const DASHBOARD_WIDGETS: DashboardWidget[] = [
+  "actions",
+  "momentum",
+  "trophies",
+  "motivation",
+  "today",
+  "more_classes"
+];
+
 interface UserState extends UserProfile {
   openUpgradeModal: (reason: UpgradeTrigger) => void;
   closeUpgradeModal: () => void;
@@ -27,7 +38,7 @@ export const useUserStore = create<UserState>()(
       authProvider: null,
       userName: "",
       userEmail: "",
-      dashboardWidgetOrder: ["actions", "momentum", "motivation", "today", "more_classes"],
+      dashboardWidgetOrder: [...DASHBOARD_WIDGETS],
       usageDays: 6,
       consistencyDays: 4,
       upgradePrompt: null,

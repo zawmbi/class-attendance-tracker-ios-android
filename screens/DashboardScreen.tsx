@@ -1,17 +1,19 @@
-import { ReactElement, useEffect, useState } from "react";
-import { Link } from "expo-router";
+import { ReactElement, useEffect, useMemo, useState } from "react";
+import { Href, Link } from "expo-router";
 import { Pressable, Text, View } from "react-native";
 import Animated, { useAnimatedStyle, useSharedValue, withRepeat, withTiming } from "react-native-reanimated";
 import Svg, { Circle, Line, Path } from "react-native-svg";
 
 import { ClassCard } from "@/components/ClassCard";
-import { IncentiveBanner } from "@/components/IncentiveBanner";
+import { LevelProgress } from "@/components/LevelProgress";
 import { ScreenContainer } from "@/components/ScreenContainer";
 import { SectionHeader } from "@/components/SectionHeader";
 import { useAttendanceStore } from "@/store/attendanceStore";
-import { useUserStore } from "@/store/userStore";
+import { useGamificationStore } from "@/store/gamificationStore";
+import { DASHBOARD_WIDGETS, useUserStore } from "@/store/userStore";
 import { useAppPalette } from "@/theme/useAppPalette";
-import { getAttendanceSummary, getIncentiveMessage } from "@/utils/attendance";
+import { getAttendanceSummary } from "@/utils/attendance";
+import { getGamificationProfile } from "@/utils/gamification";
 import { isClassToday } from "@/utils/date";
 import { getMotivationInsights } from "@/utils/motivation";
 import { DashboardWidget } from "@/utils/types";
@@ -128,19 +130,64 @@ const WidgetShell = ({
 export const DashboardScreen = () => {
   const palette = useAppPalette();
   const { classes, records, settings } = useAttendanceStore();
-  const { dashboardWidgetOrder, moveDashboardWidget } = useUserStore();
+  const { dashboardWidgetOrder, moveDashboardWidget, setDashboardWidgetOrder } = useUserStore();
+  const acknowledgedAchievements = useGamificationStore((state) => state.acknowledgedAchievements);
   const [isEditing, setIsEditing] = useState(false);
 
-  const todaysClasses = classes.filter((classItem) => isClassToday(classItem.schedule));
-  const strongestStreak = classes.reduce((best, classItem) => {
-    const summary = getAttendanceSummary(classItem, records, settings);
-    return summary.streak > best ? summary.streak : best;
-  }, 0);
-  const motivationInsights = getMotivationInsights(classes, records, settings);
+  const todaysClasses = useMemo(
+    () => classes.filter((classItem) => isClassToday(classItem.schedule)),
+    [classes]
+  );
+  const otherClasses = useMemo(
+    () => classes.filter((classItem) => !todaysClasses.some((todayClass) => todayClass.id === classItem.id)),
+    [classes, todaysClasses]
+  );
+
+  const profile = useMemo(
+    () => getGamificationProfile(classes, records, settings),
+    [classes, records, settings]
+  );
+  const strongestStreak = useMemo(
+    () =>
+      classes.reduce((best, classItem) => {
+        const summary = getAttendanceSummary(classItem, records, settings);
+        return summary.streak > best ? summary.streak : best;
+      }, 0),
+    [classes, records, settings]
+  );
+  const motivationInsights = useMemo(
+    () => getMotivationInsights(classes, records, settings),
+    [classes, records, settings]
+  );
+
   const topInsight = motivationInsights[0];
   const shouldHideMotivationCard =
     settings.incentiveSystemEnabled && topInsight?.tone === "streak";
-  const otherClasses = classes.filter((classItem) => !todaysClasses.some((todayClass) => todayClass.id === classItem.id));
+
+  const nextAchievement = useMemo(
+    () =>
+      profile.achievements
+        .filter((item) => !item.unlocked)
+        .sort((left, right) => right.progress - left.progress)[0] ?? null,
+    [profile.achievements]
+  );
+  const newBadgeCount = useMemo(
+    () =>
+      profile.achievements.filter((item) => item.unlocked && !acknowledgedAchievements.includes(item.id)).length,
+    [profile.achievements, acknowledgedAchievements]
+  );
+
+  // Migrate persisted orders that predate newer widgets so nothing disappears.
+  useEffect(() => {
+    const missing = DASHBOARD_WIDGETS.filter((widget) => !dashboardWidgetOrder.includes(widget));
+    const stale = dashboardWidgetOrder.filter((widget) => !DASHBOARD_WIDGETS.includes(widget));
+    if (missing.length > 0 || stale.length > 0) {
+      setDashboardWidgetOrder([
+        ...dashboardWidgetOrder.filter((widget) => DASHBOARD_WIDGETS.includes(widget)),
+        ...missing
+      ]);
+    }
+  }, [dashboardWidgetOrder, setDashboardWidgetOrder]);
 
   const widgets: Record<DashboardWidget, ReactElement | null> = {
     actions: (
@@ -165,9 +212,60 @@ export const DashboardScreen = () => {
       </View>
     ),
     momentum: settings.incentiveSystemEnabled ? (
-      <View key="momentum">
-        <IncentiveBanner streak={strongestStreak} message={getIncentiveMessage(strongestStreak)} />
-      </View>
+      <Link key="momentum" href={"/achievements" as Href} asChild>
+        <Pressable>
+          <LevelProgress profile={profile} streak={strongestStreak} />
+        </Pressable>
+      </Link>
+    ) : null,
+    trophies: settings.incentiveSystemEnabled ? (
+      <Link key="trophies" href={"/achievements" as Href} asChild>
+        <Pressable
+          className="rounded-[28px] px-5 py-5"
+          style={{ backgroundColor: palette.surface, borderColor: palette.border, borderWidth: 1 }}
+        >
+          <View className="flex-row items-center justify-between">
+            <Text className="text-[11px] uppercase tracking-[1.8px]" style={{ color: palette.muted }}>
+              Trophy Case
+            </Text>
+            <Text className="text-xs" style={{ color: palette.accent }}>
+              {newBadgeCount > 0 ? `${newBadgeCount} new →` : "View all →"}
+            </Text>
+          </View>
+
+          {nextAchievement ? (
+            <View className="mt-4 flex-row items-center">
+              <View
+                className="h-12 w-12 items-center justify-center rounded-full"
+                style={{ backgroundColor: palette.background, borderWidth: 1, borderColor: palette.border }}
+              >
+                <Text className="text-[22px]">🔒</Text>
+              </View>
+              <View className="ml-4 flex-1">
+                <Text className="font-serif text-[20px]" style={{ color: palette.primary }}>
+                  {nextAchievement.title}
+                </Text>
+                <Text className="mt-0.5 text-xs leading-5" style={{ color: palette.muted }}>
+                  {nextAchievement.description}
+                </Text>
+                <View
+                  className="mt-2 h-2 w-full overflow-hidden rounded-full"
+                  style={{ backgroundColor: palette.background, borderWidth: 1, borderColor: palette.border }}
+                >
+                  <View
+                    className="h-full rounded-full"
+                    style={{ width: `${Math.max(3, nextAchievement.progress * 100)}%`, backgroundColor: palette.accent }}
+                  />
+                </View>
+              </View>
+            </View>
+          ) : (
+            <Text className="mt-4 text-sm leading-6" style={{ color: palette.ink }}>
+              Every badge unlocked. You are running a flawless semester. 🏆
+            </Text>
+          )}
+        </Pressable>
+      </Link>
     ) : null,
     motivation:
       settings.motivationMessagesEnabled && topInsight && !shouldHideMotivationCard ? (
