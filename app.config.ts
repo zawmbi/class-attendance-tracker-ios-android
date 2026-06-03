@@ -31,7 +31,8 @@ const config: ExpoConfig = {
       {
         iosUrlScheme: getGoogleIosUrlScheme()
       }
-    ]
+    ],
+    "./plugins/withFmtConstevalFix"
   ],
   icon: "./AppLogo.png",
   ios: {
