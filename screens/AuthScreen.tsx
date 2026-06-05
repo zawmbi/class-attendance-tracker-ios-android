@@ -10,6 +10,7 @@ import { ScreenContainer } from "@/components/ScreenContainer";
 import { authConfig, hasGoogleAuthConfig } from "@/services/authConfig";
 import { authService } from "@/services/authService";
 import { useUserStore } from "@/store/userStore";
+import { useAttendanceStore } from "@/store/attendanceStore";
 import { useAppPalette } from "@/theme/useAppPalette";
 
 const titleCase = (provider: "google" | "apple") => `${provider[0].toUpperCase()}${provider.slice(1)}`;
@@ -39,6 +40,8 @@ const getGoogleSignin = () => {
 export const AuthScreen = () => {
   const palette = useAppPalette();
   const signIn = useUserStore((state) => state.signIn);
+  const completeOnboarding = useUserStore((state) => state.completeOnboarding);
+  const loadSampleData = useAttendanceStore((state) => state.loadSampleData);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -52,8 +55,11 @@ export const AuthScreen = () => {
   };
 
   // Lets you explore the whole app (with sample classes + records) without
-  // creating an account — handy for testing and first-run previews.
+  // creating an account — handy for testing and first-run previews. Loads the
+  // demo data and skips onboarding so the app looks populated immediately.
   const handleGuest = () => {
+    loadSampleData();
+    completeOnboarding();
     completeSignIn("email", "Guest", "guest@demo.app");
   };
 

@@ -191,7 +191,7 @@ export const EditClassScreen = ({ classId }: EditClassScreenProps) => {
   };
 
   return (
-    <ScreenContainer>
+    <ScreenContainer wideMaxWidth={720}>
       {/* Cancel / Save header */}
       <View className="mb-2 flex-row items-center justify-between">
         <Pressable onPress={() => router.back()}>

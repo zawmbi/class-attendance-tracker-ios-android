@@ -1,26 +1,27 @@
 import { PropsWithChildren } from "react";
-import { ScrollView, useWindowDimensions, View } from "react-native";
+import { ScrollView, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAppPalette } from "@/theme/useAppPalette";
+import { useIsWide } from "@/theme/responsive";
 
 interface ScreenContainerProps extends PropsWithChildren {
   scroll?: boolean;
-  /** Max content width. Defaults to 460 (phone). Pass a larger value for iPad multi-column layouts. */
+  /** Max content width on phones. Defaults to 460. */
   maxWidth?: number;
+  /** Max content width on tablet-width screens. Falls back to `maxWidth` when unset. */
+  wideMaxWidth?: number;
 }
 
-// Width ≥ 900 = tablet/landscape. The left sidebar inset is applied by the Tabs
-// sceneStyle (tab scenes only), so here we just widen content + padding.
-const TABLET_BREAKPOINT = 900;
-
-export const ScreenContainer = ({ children, scroll = true, maxWidth = 460 }: ScreenContainerProps) => {
+// On tablet width the left sidebar inset is applied by the Tabs sceneStyle (tab
+// scenes only), so here we just widen content + padding.
+export const ScreenContainer = ({ children, scroll = true, maxWidth = 460, wideMaxWidth }: ScreenContainerProps) => {
   const activePalette = useAppPalette();
-  const { width } = useWindowDimensions();
-  const wide = width >= TABLET_BREAKPOINT;
+  const wide = useIsWide();
+  const effectiveMaxWidth = wide && wideMaxWidth ? wideMaxWidth : maxWidth;
 
   const content = (
     <View style={{ paddingHorizontal: wide ? 36 : 20, paddingTop: wide ? 28 : 12, paddingBottom: wide ? 48 : 128 }}>
-      <View style={{ width: "100%", maxWidth, alignSelf: "center" }}>{children}</View>
+      <View style={{ width: "100%", maxWidth: effectiveMaxWidth, alignSelf: "center" }}>{children}</View>
     </View>
   );
 

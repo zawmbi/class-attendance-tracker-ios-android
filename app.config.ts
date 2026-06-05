@@ -37,7 +37,7 @@ const config: ExpoConfig = {
   ],
   icon: "./assets/icon/attendize-icon-1024.png",
   ios: {
-    supportsTablet: false,
+    supportsTablet: true,
     usesAppleSignIn: true,
     bundleIdentifier: "com.attendancetrackerappsorganization.attendancetrackerapp",
     googleServicesFile: "./GoogleService-Info.plist",

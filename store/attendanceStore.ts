@@ -27,14 +27,17 @@ interface AttendanceState {
   updateClassColor: (classId: string, color: string) => void;
   updateClassPriority: (classId: string, priority: PriorityLevel) => void;
   updateRequiredAttendance: (classId: string, requiredAttendance: number) => void;
+  loadSampleData: () => void;
   reset: () => void;
 }
 
 export const useAttendanceStore = create<AttendanceState>()(
   persist(
     (set) => ({
-      classes: seedClasses,
-      records: seedRecords,
+      // New installs start empty; the onboarding flow lets users add their first
+      // class or load the demo set on demand (see loadSampleData).
+      classes: [],
+      records: [],
       settings: defaultSettings,
       addClass: (classItem) =>
         set((state) => ({
@@ -119,8 +122,10 @@ export const useAttendanceStore = create<AttendanceState>()(
             classItem.id === classId ? { ...classItem, requiredAttendance } : classItem
           )
         })),
-      // Clears all class/attendance data back to seed defaults (account deletion).
-      reset: () => set({ classes: seedClasses, records: seedRecords, settings: defaultSettings })
+      // Populates the demo classes/records (offered during onboarding / guest mode).
+      loadSampleData: () => set({ classes: seedClasses, records: seedRecords, settings: defaultSettings }),
+      // Clears all class/attendance data (account deletion / start fresh).
+      reset: () => set({ classes: [], records: [], settings: defaultSettings })
     }),
     {
       name: "attendance-tracker-storage",

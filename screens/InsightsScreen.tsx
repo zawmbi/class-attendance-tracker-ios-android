@@ -69,7 +69,7 @@ export const InsightsScreen = () => {
     v === 0 ? palette.hairline : v === 1 ? palette.absent : v === 2 ? palette.late : palette.present;
 
   return (
-    <ScreenContainer>
+    <ScreenContainer wideMaxWidth={720}>
       <View className="mb-4">
         <Text className="text-[13px] tracking-[1.5px]" style={{ color: palette.goldDeep, fontFamily: "Outfit_800ExtraBold" }}>
           YOUR PATTERNS

@@ -11,12 +11,14 @@ import { ScreenContainer } from "@/components/ScreenContainer";
 import { useAttendanceStore } from "@/store/attendanceStore";
 import { useGamificationStore } from "@/store/gamificationStore";
 import { useAppPalette } from "@/theme/useAppPalette";
+import { useIsWide } from "@/theme/responsive";
 import { achievementIcon } from "@/utils/attenza";
 import { Achievement, RANKS, getGamificationProfile } from "@/utils/gamification";
 
 export const AchievementsScreen = () => {
   const palette = useAppPalette();
   const router = useRouter();
+  const wide = useIsWide();
   const { classes, records, settings } = useAttendanceStore();
   const { acknowledgedAchievements, acknowledgeAchievements } = useGamificationStore();
   const [selected, setSelected] = useState<Achievement | null>(null);
@@ -49,7 +51,7 @@ export const AchievementsScreen = () => {
   const currentRankIndex = profile.rank.index;
 
   return (
-    <ScreenContainer>
+    <ScreenContainer wideMaxWidth={1040}>
       {/* Back + header */}
       <Pressable onPress={() => router.back()} className="mb-2 flex-row items-center gap-1 py-1" accessibilityLabel="Back">
         <Icon name="back" size={21} color={palette.forest} stroke={2.2} />
@@ -170,7 +172,7 @@ export const AchievementsScreen = () => {
 
       <View className="flex-row flex-wrap" style={{ marginHorizontal: -5 }}>
         {ordered.map((badge) => (
-          <View key={badge.id} style={{ width: "33.333%", paddingHorizontal: 5, marginBottom: 12 }}>
+          <View key={badge.id} style={{ width: wide ? "16.666%" : "33.333%", paddingHorizontal: 5, marginBottom: 12 }}>
             <Pressable onPress={() => setSelected(badge)}>
               <View
                 className="items-center justify-center rounded-[22px]"

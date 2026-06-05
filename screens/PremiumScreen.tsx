@@ -30,7 +30,7 @@ export const PremiumScreen = () => {
       </Svg>
 
       <SafeAreaView className="flex-1">
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 40 }}>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 40, width: "100%", maxWidth: 640, alignSelf: "center" }}>
           <View className="flex-row justify-end pt-1">
             <Pressable
               accessibilityLabel="Close"

@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link, useRouter } from "expo-router";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 
 import { Icon, IconName } from "@/components/Icon";
@@ -26,7 +26,7 @@ const EDIT_OPTIONS: { status: AttenzaStatus; icon: IconName; label: string }[] =
 export const ClassDetailScreen = ({ classId }: { classId: string }) => {
   const palette = useAppPalette();
   const router = useRouter();
-  const { classes, records, settings, updateRecordStatus } = useAttendanceStore();
+  const { classes, records, settings, updateRecordStatus, deleteClass } = useAttendanceStore();
   const classItem = classes.find((item) => item.id === classId);
   const [editId, setEditId] = useState<string | null>(null);
 
@@ -38,7 +38,7 @@ export const ClassDetailScreen = ({ classId }: { classId: string }) => {
 
   if (!classItem || !derived) {
     return (
-      <ScreenContainer>
+      <ScreenContainer wideMaxWidth={720}>
         <Text className="text-[22px]" style={{ color: palette.ink, fontFamily: "Outfit_700Bold" }}>
           Class not found
         </Text>
@@ -55,8 +55,26 @@ export const ClassDetailScreen = ({ classId }: { classId: string }) => {
   const timeLabel = formatTimeLabel(classItem.schedule[0]?.startTime ?? "09:00");
   const editing = history.find((r) => r.id === editId);
 
+  const confirmDelete = () => {
+    Alert.alert(
+      "Delete class?",
+      `This permanently removes "${classItem.name}" and all of its attendance history. This can't be undone.`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: () => {
+            deleteClass(classItem.id);
+            router.back();
+          }
+        }
+      ]
+    );
+  };
+
   return (
-    <ScreenContainer>
+    <ScreenContainer wideMaxWidth={720}>
       {/* Back + edit */}
       <View className="mb-2 flex-row items-center justify-between">
         <Pressable
@@ -189,13 +207,19 @@ export const ClassDetailScreen = ({ classId }: { classId: string }) => {
       </View>
 
       {/* History */}
-      <View className="mb-2 flex-row items-end justify-between">
+      <View className="mb-2 flex-row items-center justify-between">
         <Text className="text-[22px]" style={{ color: palette.ink, fontFamily: "Outfit_700Bold" }}>
           History
         </Text>
-        <Text className="text-[13px]" style={{ color: palette.ink3, fontFamily: "Outfit_600SemiBold" }}>
-          Tap to edit
-        </Text>
+        <Link href={`/class/${classItem.id}/record`} asChild>
+          <Pressable
+            className="flex-row items-center gap-1 rounded-full px-3 py-1.5"
+            style={{ backgroundColor: palette.forestSoft }}
+          >
+            <Icon name="plus" size={15} color={palette.forest} stroke={2.4} />
+            <Text style={{ color: palette.forest, fontFamily: "Outfit_700Bold", fontSize: 12.5 }}>Add record</Text>
+          </Pressable>
+        </Link>
       </View>
 
       {history.length > 0 ? (
@@ -225,6 +249,16 @@ export const ClassDetailScreen = ({ classId }: { classId: string }) => {
           </Text>
         </View>
       )}
+
+      {/* Delete class */}
+      <Pressable
+        onPress={confirmDelete}
+        className="mt-5 flex-row items-center justify-center gap-2 rounded-[18px] py-3.5"
+        style={{ borderWidth: 1, borderColor: `${palette.absent}55` }}
+      >
+        <Icon name="trash" size={18} color={palette.absent} stroke={2} />
+        <Text style={{ color: palette.absent, fontFamily: "Outfit_700Bold", fontSize: 14.5 }}>Delete class</Text>
+      </Pressable>
 
       {/* Edit sheet */}
       <Sheet open={editId !== null} onClose={() => setEditId(null)}>

@@ -93,7 +93,7 @@ export const QuickCheckInScreen = () => {
   };
 
   return (
-    <ScreenContainer>
+    <ScreenContainer wideMaxWidth={720}>
       <Burst trigger={burst} />
 
       {/* Header */}
@@ -129,31 +129,43 @@ export const QuickCheckInScreen = () => {
 
       {/* All caught up */}
       {allDone ? (
-        <View
-          className="mt-4 flex-row items-center gap-3.5 overflow-hidden rounded-[22px] p-4"
-          style={{ backgroundColor: palette.forestSoft }}
-        >
+        <View className="mt-4 gap-3">
           <View
-            className="h-12 w-12 items-center justify-center rounded-full"
-            style={{
-              backgroundColor: palette.gold,
-              shadowColor: palette.goldDeep,
-              shadowOpacity: 0.4,
-              shadowRadius: 12,
-              shadowOffset: { width: 0, height: 6 },
-              elevation: 4
-            }}
+            className="flex-row items-center gap-3.5 overflow-hidden rounded-[22px] p-4"
+            style={{ backgroundColor: palette.forestSoft }}
           >
-            <Icon name="laurel" size={26} color="#fff" stroke={2} />
+            <View
+              className="h-12 w-12 items-center justify-center rounded-full"
+              style={{
+                backgroundColor: palette.gold,
+                shadowColor: palette.goldDeep,
+                shadowOpacity: 0.4,
+                shadowRadius: 12,
+                shadowOffset: { width: 0, height: 6 },
+                elevation: 4
+              }}
+            >
+              <Icon name="laurel" size={26} color="#fff" stroke={2} />
+            </View>
+            <View className="flex-1">
+              <Text className="text-[16.5px]" style={{ color: palette.ink, fontFamily: "Outfit_800ExtraBold" }}>
+                All caught up!
+              </Text>
+              <Text className="text-[13.5px]" style={{ color: palette.ink2, fontFamily: "Outfit_600SemiBold" }}>
+                Every class logged today. See where you&apos;re headed.
+              </Text>
+            </View>
           </View>
-          <View className="flex-1">
-            <Text className="text-[16.5px]" style={{ color: palette.ink, fontFamily: "Outfit_800ExtraBold" }}>
-              All caught up!
+          <Pressable
+            onPress={() => router.navigate("/(tabs)/analytics")}
+            className="flex-row items-center justify-center gap-2 rounded-[18px] py-3.5"
+            style={{ backgroundColor: palette.forest }}
+          >
+            <Icon name="chart" size={19} color={palette.onGradient} stroke={2.2} />
+            <Text style={{ color: palette.onGradient, fontFamily: "Outfit_800ExtraBold", fontSize: 15 }}>
+              See your forecast
             </Text>
-            <Text className="text-[13.5px]" style={{ color: palette.ink2, fontFamily: "Outfit_600SemiBold" }}>
-              Every class logged today. See you tomorrow.
-            </Text>
-          </View>
+          </Pressable>
         </View>
       ) : null}
 

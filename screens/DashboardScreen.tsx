@@ -1,6 +1,6 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { Href, Link } from "expo-router";
-import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 
 import { Icon } from "@/components/Icon";
@@ -8,9 +8,11 @@ import { MomentumRing } from "@/components/attenza/MomentumRing";
 import { Meter } from "@/components/attenza/Meter";
 import { StatusPill, AttenzaStatus } from "@/components/attenza/StatusPill";
 import { ScreenContainer } from "@/components/ScreenContainer";
+import { GetStartedChecklist, ChecklistStep } from "@/components/GetStartedChecklist";
 import { useAttendanceStore } from "@/store/attendanceStore";
 import { useUserStore } from "@/store/userStore";
 import { useAppPalette } from "@/theme/useAppPalette";
+import { useIsWide } from "@/theme/responsive";
 import { getAttendanceSummary } from "@/utils/attendance";
 import { XP_PER_STATUS, getGamificationProfile } from "@/utils/gamification";
 import { achievementIcon, deriveClass, ringPropsFromProfile } from "@/utils/attenza";
@@ -41,8 +43,15 @@ const HeroStat = ({ icon, value, label }: { icon: "flame" | "bolt"; value: numbe
 export const DashboardScreen = () => {
   const palette = useAppPalette();
   const { classes, records, settings } = useAttendanceStore();
+  const loadSampleData = useAttendanceStore((state) => state.loadSampleData);
   const userName = useUserStore((state) => state.userName);
+  const onboarded = useUserStore((state) => state.onboarded);
+  const completeOnboarding = useUserStore((state) => state.completeOnboarding);
+  const viewedForecast = useUserStore((state) => state.viewedForecast);
   const today = new Date().toISOString().slice(0, 10);
+
+  const hasClasses = classes.length > 0;
+  const hasAnyRecord = records.length > 0;
 
   const profile = useMemo(() => getGamificationProfile(classes, records, settings), [classes, records, settings]);
   const strongestStreak = useMemo(
@@ -73,9 +82,93 @@ export const DashboardScreen = () => {
   const unlockedBadges = profile.achievements.filter((b) => b.unlocked);
   const firstName = userName ? userName.split(" ")[0] : "there";
   const initial = (userName || "A").trim().charAt(0).toUpperCase();
-  const { width } = useWindowDimensions();
-  const wide = width >= 900;
+  const wide = useIsWide();
   const ringSize = wide ? 168 : 132;
+
+  // Auto-complete onboarding once all three get-started steps are satisfied.
+  useEffect(() => {
+    if (hasClasses && hasAnyRecord && viewedForecast && !onboarded) {
+      completeOnboarding();
+    }
+  }, [hasClasses, hasAnyRecord, viewedForecast, onboarded, completeOnboarding]);
+
+  const getStartedSteps: ChecklistStep[] = [
+    { key: "add", label: "Add a class", hint: "Set up your schedule", done: hasClasses, href: "/class/new" },
+    { key: "checkin", label: "Check in", hint: "Log today's attendance", done: hasAnyRecord, href: "/(tabs)/check-in" },
+    { key: "forecast", label: "See your forecast", hint: "Project your end-of-term %", done: viewedForecast, href: "/(tabs)/analytics" }
+  ];
+
+  const quickActions = (
+    <View className="mb-5 flex-row gap-3">
+      <Link href={"/class/new" as Href} asChild>
+        <Pressable
+          className="flex-1 flex-row items-center justify-center gap-2 rounded-[18px] py-3.5"
+          style={{ backgroundColor: palette.forestSoft, borderWidth: 1, borderColor: palette.hairline }}
+        >
+          <Icon name="plus" size={20} color={palette.forest} stroke={2.4} />
+          <Text style={{ color: palette.forest, fontFamily: "Outfit_800ExtraBold", fontSize: 15 }}>Add class</Text>
+        </Pressable>
+      </Link>
+      <Link href={"/(tabs)/check-in" as Href} asChild>
+        <Pressable
+          className="flex-1 flex-row items-center justify-center gap-2 rounded-[18px] py-3.5"
+          style={{ backgroundColor: palette.forest }}
+        >
+          <Icon name="checkin" size={20} color={palette.onGradient} stroke={2.2} />
+          <Text style={{ color: palette.onGradient, fontFamily: "Outfit_800ExtraBold", fontSize: 15 }}>Check in</Text>
+        </Pressable>
+      </Link>
+    </View>
+  );
+
+  const welcomeBlock = (
+    <View className="mt-2">
+      <View
+        className="overflow-hidden rounded-[28px] p-6"
+        style={{ shadowColor: palette.forestDeep, shadowOpacity: 0.3, shadowRadius: 22, shadowOffset: { width: 0, height: 12 }, elevation: 6 }}
+      >
+        <Svg style={StyleSheet.absoluteFill}>
+          <Defs>
+            <LinearGradient id="welcomeGrad" x1="0" y1="0" x2="1" y2="1">
+              <Stop offset="0" stopColor={palette.forest} />
+              <Stop offset="1" stopColor={palette.forestDeep} />
+            </LinearGradient>
+          </Defs>
+          <Rect x="0" y="0" width="100%" height="100%" fill="url(#welcomeGrad)" />
+        </Svg>
+        <View className="h-12 w-12 items-center justify-center rounded-[16px]" style={{ backgroundColor: "rgba(255,255,255,0.16)" }}>
+          <Icon name="today" size={26} color="#fff" stroke={2} />
+        </View>
+        <Text className="mt-4 text-[26px] leading-[30px]" style={{ color: palette.onGradient, fontFamily: "Fraunces_600SemiBold" }}>
+          Welcome to Attendize
+        </Text>
+        <Text className="mt-2 text-[15px] leading-[21px]" style={{ color: palette.onGradient, opacity: 0.85, fontFamily: "Outfit_500Medium" }}>
+          Add your first class to start tracking attendance, protect your streak, and forecast your term.
+        </Text>
+      </View>
+
+      <Link href={"/class/new" as Href} asChild>
+        <Pressable
+          className="mt-4 flex-row items-center justify-center gap-2 rounded-[20px] py-4"
+          style={{ backgroundColor: palette.forest, shadowColor: palette.forestDeep, shadowOpacity: 0.22, shadowRadius: 14, shadowOffset: { width: 0, height: 8 } }}
+        >
+          <Icon name="plus" size={20} color={palette.onGradient} stroke={2.4} />
+          <Text className="text-[16px]" style={{ color: palette.onGradient, fontFamily: "Outfit_800ExtraBold" }}>
+            Add your first class
+          </Text>
+        </Pressable>
+      </Link>
+      <Pressable
+        onPress={loadSampleData}
+        className="mt-3 items-center rounded-[20px] py-3.5"
+        style={{ borderWidth: 1.5, borderColor: palette.border }}
+      >
+        <Text className="text-[14.5px]" style={{ color: palette.ink2, fontFamily: "Outfit_700Bold" }}>
+          Load sample data to explore
+        </Text>
+      </Pressable>
+    </View>
+  );
 
   const greetingBlock = (
     <View className="mb-5 flex-row items-center justify-between">
@@ -276,23 +369,35 @@ export const DashboardScreen = () => {
   return (
     <ScreenContainer maxWidth={wide ? 1180 : 460}>
       {greetingBlock}
-      {wide ? (
-        <>
-          <View className="flex-row items-stretch" style={{ gap: 20 }}>
-            <View style={{ flex: 1.4 }}>{heroBlock}</View>
-            <View style={{ flex: 1, gap: 16 }}>
-              {atRiskBlock}
-              {todayBlock}
-            </View>
-          </View>
-          {trophyBlock ? <View className="mt-6">{trophyBlock}</View> : null}
-        </>
+      {!hasClasses ? (
+        welcomeBlock
       ) : (
         <>
-          <View className="mb-5">{heroBlock}</View>
-          {atRiskBlock ? <View className="mb-5">{atRiskBlock}</View> : null}
-          <View className="mb-5">{todayBlock}</View>
-          {trophyBlock}
+          {!onboarded ? (
+            <View className="mb-5">
+              <GetStartedChecklist steps={getStartedSteps} onDismiss={completeOnboarding} />
+            </View>
+          ) : null}
+          {quickActions}
+          {wide ? (
+            <>
+              <View className="flex-row items-stretch" style={{ gap: 20 }}>
+                <View style={{ flex: 1.4 }}>{heroBlock}</View>
+                <View style={{ flex: 1, gap: 16 }}>
+                  {atRiskBlock}
+                  {todayBlock}
+                </View>
+              </View>
+              {trophyBlock ? <View className="mt-6">{trophyBlock}</View> : null}
+            </>
+          ) : (
+            <>
+              <View className="mb-5">{heroBlock}</View>
+              {atRiskBlock ? <View className="mb-5">{atRiskBlock}</View> : null}
+              <View className="mb-5">{todayBlock}</View>
+              {trophyBlock}
+            </>
+          )}
         </>
       )}
     </ScreenContainer>

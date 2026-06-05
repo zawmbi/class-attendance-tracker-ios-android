@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
@@ -51,7 +51,13 @@ export const AnalyticsScreen = () => {
   const router = useRouter();
   const { classes, records, settings } = useAttendanceStore();
   const isPremium = useUserStore((s) => s.isPremium);
+  const markForecastViewed = useUserStore((s) => s.markForecastViewed);
   const [tab, setTab] = useState("forecast");
+
+  // Marks the third get-started step complete the first time the forecast opens.
+  useEffect(() => {
+    markForecastViewed();
+  }, [markForecastViewed]);
   const [attend, setAttend] = useState(85);
 
   const derived = useMemo(() => classes.map((c) => deriveClass(c, records, settings)), [classes, records, settings]);
@@ -68,7 +74,7 @@ export const AnalyticsScreen = () => {
 
   if (!isPremium) {
     return (
-      <ScreenContainer>
+      <ScreenContainer wideMaxWidth={720}>
         <Pressable onPress={() => router.back()} className="mb-2 flex-row items-center gap-1 py-1">
           <Icon name="back" size={21} color={palette.forest} stroke={2.2} />
           <Text className="text-[16px]" style={{ color: palette.forest, fontFamily: "Outfit_700Bold" }}>
@@ -100,7 +106,7 @@ export const AnalyticsScreen = () => {
   }
 
   return (
-    <ScreenContainer>
+    <ScreenContainer wideMaxWidth={720}>
       {/* Header */}
       <View className="mb-2 flex-row items-center justify-between">
         <Pressable onPress={() => router.back()} className="flex-row items-center gap-1 py-1">

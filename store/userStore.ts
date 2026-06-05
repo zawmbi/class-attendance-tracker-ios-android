@@ -26,6 +26,12 @@ interface UserState extends UserProfile {
   signIn: (provider: AuthProvider, userName: string, userEmail: string) => void;
   signOut: () => void;
   reset: () => void;
+  // First-run onboarding: false until the user finishes the get-started flow.
+  onboarded: boolean;
+  completeOnboarding: () => void;
+  // Drives the third get-started step; set the first time the forecast is opened.
+  viewedForecast: boolean;
+  markForecastViewed: () => void;
   markPromptSeen: (reason: UpgradeTrigger) => void;
 }
 
@@ -42,7 +48,9 @@ const initialUserState = {
   usageDays: 6,
   consistencyDays: 4,
   upgradePrompt: null as UpgradeTrigger | null,
-  seenUpgradePrompts: [] as UpgradeTrigger[]
+  seenUpgradePrompts: [] as UpgradeTrigger[],
+  onboarded: false,
+  viewedForecast: false
 };
 
 export const useUserStore = create<UserState>()(
@@ -85,6 +93,8 @@ export const useUserStore = create<UserState>()(
         }),
       // Wipes the profile back to a fresh-install state (used by account deletion).
       reset: () => set({ ...initialUserState }),
+      completeOnboarding: () => set({ onboarded: true }),
+      markForecastViewed: () => set({ viewedForecast: true }),
       markPromptSeen: (reason) =>
         set((state) => ({
           seenUpgradePrompts: state.seenUpgradePrompts.includes(reason)

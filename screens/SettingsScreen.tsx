@@ -145,7 +145,7 @@ export const SettingsScreen = () => {
   };
 
   return (
-    <ScreenContainer>
+    <ScreenContainer wideMaxWidth={720}>
       <Text className="mb-4 text-[32px]" style={{ color: palette.ink, fontFamily: "Outfit_800ExtraBold" }}>
         Settings
       </Text>

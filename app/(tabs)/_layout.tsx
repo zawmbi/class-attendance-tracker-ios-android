@@ -1,7 +1,7 @@
 import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { Redirect, Tabs, useRouter } from "expo-router";
 import { useMemo } from "react";
-import { Pressable, Text, useWindowDimensions, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Defs, LinearGradient, Path, Rect, Stop } from "react-native-svg";
 
@@ -9,9 +9,8 @@ import { Icon, IconName } from "@/components/Icon";
 import { useAttendanceStore } from "@/store/attendanceStore";
 import { useUserStore } from "@/store/userStore";
 import { useAppPalette } from "@/theme/useAppPalette";
+import { useIsWide } from "@/theme/responsive";
 import { getGamificationProfile } from "@/utils/gamification";
-
-const TABLET_BREAKPOINT = 900;
 
 // Tab bar IA from the handoff: Today · Calendar · [Check-In FAB] · Insights · Trophy.
 type Slot =
@@ -134,6 +133,16 @@ function Sidebar({ state, navigation }: BottomTabBarProps) {
         <Text style={{ fontFamily: "Outfit_800ExtraBold", fontSize: 16, color: "#fff" }}>Check in</Text>
       </Pressable>
 
+      {/* Add class */}
+      <Pressable
+        onPress={() => router.push("/class/new" as never)}
+        className="mt-2.5 flex-row items-center justify-center gap-2 rounded-[16px] py-3"
+        style={{ backgroundColor: palette.forestSoft, borderWidth: 1, borderColor: palette.hairline }}
+      >
+        <Icon name="plus" size={20} color={palette.forest} stroke={2.4} />
+        <Text style={{ fontFamily: "Outfit_800ExtraBold", fontSize: 15, color: palette.forest }}>Add class</Text>
+      </Pressable>
+
       <View className="flex-1" />
 
       {/* Profile */}
@@ -240,15 +249,14 @@ function BottomBar({ state, navigation }: BottomTabBarProps) {
 }
 
 function ResponsiveTabBar(props: BottomTabBarProps) {
-  const { width } = useWindowDimensions();
-  return width >= TABLET_BREAKPOINT ? <Sidebar {...props} /> : <BottomBar {...props} />;
+  const wide = useIsWide();
+  return wide ? <Sidebar {...props} /> : <BottomBar {...props} />;
 }
 
 export default function TabsLayout() {
   const palette = useAppPalette();
   const isAuthenticated = useUserStore((state) => state.isAuthenticated);
-  const { width } = useWindowDimensions();
-  const wide = width >= TABLET_BREAKPOINT;
+  const wide = useIsWide();
 
   if (!isAuthenticated) {
     return <Redirect href="/auth" />;
