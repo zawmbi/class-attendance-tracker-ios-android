@@ -1,364 +1,300 @@
-import { ReactElement, useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Href, Link } from "expo-router";
-import { Pressable, Text, View } from "react-native";
-import Animated, { useAnimatedStyle, useSharedValue, withRepeat, withTiming } from "react-native-reanimated";
-import Svg, { Circle, Line, Path } from "react-native-svg";
+import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from "react-native";
+import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 
-import { ClassCard } from "@/components/ClassCard";
-import { LevelProgress } from "@/components/LevelProgress";
+import { Icon } from "@/components/Icon";
+import { MomentumRing } from "@/components/attenza/MomentumRing";
+import { Meter } from "@/components/attenza/Meter";
+import { StatusPill, AttenzaStatus } from "@/components/attenza/StatusPill";
 import { ScreenContainer } from "@/components/ScreenContainer";
-import { SectionHeader } from "@/components/SectionHeader";
 import { useAttendanceStore } from "@/store/attendanceStore";
-import { useGamificationStore } from "@/store/gamificationStore";
-import { DASHBOARD_WIDGETS, useUserStore } from "@/store/userStore";
+import { useUserStore } from "@/store/userStore";
 import { useAppPalette } from "@/theme/useAppPalette";
 import { getAttendanceSummary } from "@/utils/attendance";
-import { getGamificationProfile } from "@/utils/gamification";
-import { isClassToday } from "@/utils/date";
-import { getMotivationInsights } from "@/utils/motivation";
-import { DashboardWidget } from "@/utils/types";
+import { XP_PER_STATUS, getGamificationProfile } from "@/utils/gamification";
+import { achievementIcon, deriveClass, ringPropsFromProfile } from "@/utils/attenza";
+import { BadgeMedallion } from "@/components/attenza/BadgeMedallion";
+import { formatTimeLabel, isClassToday } from "@/utils/date";
 
-const ToolbarIconButton = ({
-  children,
-  active = false
-}: {
-  children: ReactElement;
-  active?: boolean;
-}) => {
-  const palette = useAppPalette();
+const greeting = () => {
+  const h = new Date().getHours();
+  return h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
+};
 
-  return (
-    <View
-      className="h-12 w-12 items-center justify-center rounded-full"
-      style={{
-        backgroundColor: active ? palette.primary : palette.surface,
-        borderWidth: 1,
-        borderColor: active ? palette.primary : palette.border
-      }}
-    >
-      {children}
+const dateKicker = () =>
+  new Intl.DateTimeFormat("en-US", { weekday: "long", month: "long", day: "numeric" }).format(new Date()).toUpperCase();
+
+// Two-line glassy stat chip for the hero (big value + label under it).
+const HeroStat = ({ icon, value, label }: { icon: "flame" | "bolt"; value: number; label: string }) => (
+  <View className="flex-1 rounded-[16px] px-3 py-2" style={{ backgroundColor: "rgba(255,255,255,0.14)" }}>
+    <View className="flex-row items-center gap-1.5">
+      <Icon name={icon} size={16} color="#F2D89B" stroke={2.2} />
+      <Text style={{ color: "#fff", fontFamily: "Outfit_800ExtraBold", fontSize: 18, fontVariant: ["tabular-nums"] }}>{value}</Text>
     </View>
-  );
-};
-
-const ReorderIcon = ({ color }: { color: string }) => (
-  <Svg width={18} height={18} viewBox="0 0 18 18" fill="none">
-    <Circle cx="4" cy="4" r="1.4" fill={color} />
-    <Circle cx="4" cy="9" r="1.4" fill={color} />
-    <Circle cx="4" cy="14" r="1.4" fill={color} />
-    <Line x1="8" y1="4" x2="14" y2="4" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
-    <Line x1="8" y1="9" x2="14" y2="9" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
-    <Line x1="8" y1="14" x2="14" y2="14" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
-  </Svg>
+    <Text className="mt-0.5 text-[11px]" style={{ color: "rgba(255,255,255,0.85)", fontFamily: "Outfit_600SemiBold" }}>
+      {label}
+    </Text>
+  </View>
 );
-
-const MoveButton = ({
-  direction,
-  disabled,
-  onPress
-}: {
-  direction: "up" | "down";
-  disabled: boolean;
-  onPress: () => void;
-}) => {
-  const palette = useAppPalette();
-
-  return (
-    <Pressable
-      className="h-9 w-9 items-center justify-center rounded-full"
-      style={{
-        backgroundColor: palette.surface,
-        borderWidth: 1,
-        borderColor: palette.border,
-        opacity: disabled ? 0.35 : 1
-      }}
-      onPress={onPress}
-      disabled={disabled}
-    >
-      <Text style={{ color: palette.primary, fontSize: 16 }}>{direction === "up" ? "↑" : "↓"}</Text>
-    </Pressable>
-  );
-};
-
-const WidgetShell = ({
-  editing,
-  index,
-  canMoveUp,
-  canMoveDown,
-  onMoveUp,
-  onMoveDown,
-  children
-}: {
-  editing: boolean;
-  index: number;
-  canMoveUp: boolean;
-  canMoveDown: boolean;
-  onMoveUp: () => void;
-  onMoveDown: () => void;
-  children: ReactElement;
-}) => {
-  const rotation = useSharedValue(0);
-
-  useEffect(() => {
-    if (editing) {
-      const start = index % 2 === 0 ? -0.35 : 0.35;
-      rotation.value = start;
-      rotation.value = withRepeat(withTiming(start * -1, { duration: 185 }), -1, true);
-      return;
-    }
-
-    rotation.value = withTiming(0, { duration: 160 });
-  }, [editing, index, rotation]);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${rotation.value}deg` }]
-  }));
-
-  return (
-    <Animated.View className="mb-6" style={animatedStyle}>
-      {editing ? (
-        <View className="absolute right-3 top-3 z-10 flex-row gap-2">
-          <MoveButton direction="up" disabled={!canMoveUp} onPress={onMoveUp} />
-          <MoveButton direction="down" disabled={!canMoveDown} onPress={onMoveDown} />
-        </View>
-      ) : null}
-      {children}
-    </Animated.View>
-  );
-};
 
 export const DashboardScreen = () => {
   const palette = useAppPalette();
   const { classes, records, settings } = useAttendanceStore();
-  const { dashboardWidgetOrder, moveDashboardWidget, setDashboardWidgetOrder } = useUserStore();
-  const acknowledgedAchievements = useGamificationStore((state) => state.acknowledgedAchievements);
-  const [isEditing, setIsEditing] = useState(false);
+  const userName = useUserStore((state) => state.userName);
+  const today = new Date().toISOString().slice(0, 10);
 
-  const todaysClasses = useMemo(
-    () => classes.filter((classItem) => isClassToday(classItem.schedule)),
-    [classes]
-  );
-  const otherClasses = useMemo(
-    () => classes.filter((classItem) => !todaysClasses.some((todayClass) => todayClass.id === classItem.id)),
-    [classes, todaysClasses]
-  );
-
-  const profile = useMemo(
-    () => getGamificationProfile(classes, records, settings),
-    [classes, records, settings]
-  );
+  const profile = useMemo(() => getGamificationProfile(classes, records, settings), [classes, records, settings]);
   const strongestStreak = useMemo(
     () =>
-      classes.reduce((best, classItem) => {
-        const summary = getAttendanceSummary(classItem, records, settings);
-        return summary.streak > best ? summary.streak : best;
+      classes.reduce((best, c) => {
+        const s = getAttendanceSummary(c, records, settings);
+        return s.streak > best ? s.streak : best;
       }, 0),
     [classes, records, settings]
   );
-  const motivationInsights = useMemo(
-    () => getMotivationInsights(classes, records, settings),
-    [classes, records, settings]
-  );
+  const ring = ringPropsFromProfile(profile, strongestStreak);
 
-  const topInsight = motivationInsights[0];
-  const shouldHideMotivationCard =
-    settings.incentiveSystemEnabled && topInsight?.tone === "streak";
+  // XP earned from this week's check-ins (Monday-anchored).
+  const weekXP = useMemo(() => {
+    const monday = new Date();
+    monday.setHours(0, 0, 0, 0);
+    monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7));
+    return records.reduce((sum, r) => (new Date(r.date) >= monday ? sum + XP_PER_STATUS[r.status] : sum), 0);
+  }, [records]);
+  const xpToNext = Math.max(0, profile.xpForNextRank - profile.xpIntoRank);
 
-  const nextAchievement = useMemo(
-    () =>
-      profile.achievements
-        .filter((item) => !item.unlocked)
-        .sort((left, right) => right.progress - left.progress)[0] ?? null,
-    [profile.achievements]
-  );
-  const newBadgeCount = useMemo(
-    () =>
-      profile.achievements.filter((item) => item.unlocked && !acknowledgedAchievements.includes(item.id)).length,
-    [profile.achievements, acknowledgedAchievements]
-  );
+  const todays = useMemo(() => classes.filter((c) => isClassToday(c.schedule)), [classes]);
+  const loggedToday = todays.filter((c) => records.some((r) => r.classId === c.id && r.date === today)).length;
 
-  // Migrate persisted orders that predate newer widgets so nothing disappears.
-  useEffect(() => {
-    const missing = DASHBOARD_WIDGETS.filter((widget) => !dashboardWidgetOrder.includes(widget));
-    const stale = dashboardWidgetOrder.filter((widget) => !DASHBOARD_WIDGETS.includes(widget));
-    if (missing.length > 0 || stale.length > 0) {
-      setDashboardWidgetOrder([
-        ...dashboardWidgetOrder.filter((widget) => DASHBOARD_WIDGETS.includes(widget)),
-        ...missing
-      ]);
-    }
-  }, [dashboardWidgetOrder, setDashboardWidgetOrder]);
+  const derived = useMemo(() => classes.map((c) => deriveClass(c, records, settings)), [classes, records, settings]);
+  const atRisk = derived.filter((d) => d.risk === "danger").sort((a, b) => a.buffer - b.buffer)[0];
 
-  const widgets: Record<DashboardWidget, ReactElement | null> = {
-    actions: (
-      <View key="actions" className="flex-row gap-3">
-        <Link href="/(tabs)/check-in" asChild>
-          <Pressable className="flex-1 items-center justify-center rounded-[24px] px-4 py-4" style={{ backgroundColor: palette.primary }}>
-            <Text className="font-serif text-[18px]" style={{ color: palette.background }}>
-              Check In
-            </Text>
-          </Pressable>
-        </Link>
-        <Link href="/class/new" asChild>
-          <Pressable
-            className="flex-1 items-center justify-center rounded-[24px] px-4 py-4"
-            style={{ backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.border }}
-          >
-            <Text className="font-serif text-[18px]" style={{ color: palette.primary }}>
-              Add Class
-            </Text>
-          </Pressable>
-        </Link>
+  const unlockedBadges = profile.achievements.filter((b) => b.unlocked);
+  const firstName = userName ? userName.split(" ")[0] : "there";
+  const initial = (userName || "A").trim().charAt(0).toUpperCase();
+  const { width } = useWindowDimensions();
+  const wide = width >= 900;
+  const ringSize = wide ? 168 : 132;
+
+  const greetingBlock = (
+    <View className="mb-5 flex-row items-center justify-between">
+      <View className="flex-1 pr-3">
+        <Text className="text-[12px] tracking-[1.5px]" style={{ color: palette.goldDeep, fontFamily: "Outfit_700Bold" }}>
+          {dateKicker()}
+        </Text>
+        <Text className={wide ? "mt-1 text-[38px]" : "mt-1 text-[30px]"} style={{ color: palette.ink, fontFamily: "Outfit_800ExtraBold" }}>
+          {greeting()}, {firstName}
+        </Text>
       </View>
-    ),
-    momentum: settings.incentiveSystemEnabled ? (
-      <Link key="momentum" href={"/achievements" as Href} asChild>
-        <Pressable>
-          <LevelProgress profile={profile} streak={strongestStreak} />
-        </Pressable>
-      </Link>
-    ) : null,
-    trophies: settings.incentiveSystemEnabled ? (
-      <Link key="trophies" href={"/achievements" as Href} asChild>
-        <Pressable
-          className="rounded-[28px] px-5 py-5"
-          style={{ backgroundColor: palette.surface, borderColor: palette.border, borderWidth: 1 }}
-        >
-          <View className="flex-row items-center justify-between">
-            <Text className="text-[11px] uppercase tracking-[1.8px]" style={{ color: palette.muted }}>
-              Trophy Case
-            </Text>
-            <Text className="text-xs" style={{ color: palette.accent }}>
-              {newBadgeCount > 0 ? `${newBadgeCount} new →` : "View all →"}
-            </Text>
-          </View>
+      {wide ? null : (
+        <Link href="/(tabs)/settings" asChild>
+          <Pressable className="h-12 w-12 items-center justify-center rounded-full" style={{ backgroundColor: palette.forest }}>
+            <Text style={{ color: palette.onGradient, fontFamily: "Outfit_700Bold", fontSize: 18 }}>{initial}</Text>
+          </Pressable>
+        </Link>
+      )}
+    </View>
+  );
 
-          {nextAchievement ? (
-            <View className="mt-4 flex-row items-center">
-              <View
-                className="h-12 w-12 items-center justify-center rounded-full"
-                style={{ backgroundColor: palette.background, borderWidth: 1, borderColor: palette.border }}
-              >
-                <Text className="text-[22px]">🔒</Text>
-              </View>
-              <View className="ml-4 flex-1">
-                <Text className="font-serif text-[20px]" style={{ color: palette.primary }}>
-                  {nextAchievement.title}
-                </Text>
-                <Text className="mt-0.5 text-xs leading-5" style={{ color: palette.muted }}>
-                  {nextAchievement.description}
-                </Text>
-                <View
-                  className="mt-2 h-2 w-full overflow-hidden rounded-full"
-                  style={{ backgroundColor: palette.background, borderWidth: 1, borderColor: palette.border }}
-                >
-                  <View
-                    className="h-full rounded-full"
-                    style={{ width: `${Math.max(3, nextAchievement.progress * 100)}%`, backgroundColor: palette.accent }}
-                  />
-                </View>
+  const heroBlock = (
+    <Link href={"/achievements" as Href} asChild>
+      <Pressable
+        className="overflow-hidden rounded-[28px]"
+        style={{
+          flex: wide ? 1 : undefined,
+          shadowColor: palette.forestDeep,
+          shadowOpacity: 0.32,
+          shadowRadius: 24,
+          shadowOffset: { width: 0, height: 14 },
+          elevation: 6
+        }}
+      >
+        <Svg style={StyleSheet.absoluteFill}>
+          <Defs>
+            <LinearGradient id="heroGrad" x1="0" y1="0" x2="1" y2="1">
+              <Stop offset="0" stopColor={palette.forest} />
+              <Stop offset="0.7" stopColor={palette.forestDeep} />
+              <Stop offset="1" stopColor={palette.forestDeep} />
+            </LinearGradient>
+          </Defs>
+          <Rect x="0" y="0" width="100%" height="100%" fill="url(#heroGrad)" />
+        </Svg>
+
+        <View className={wide ? "flex-1 justify-center p-7" : "p-5"}>
+          <View className={wide ? "flex-row items-center" : "flex-row items-center"} style={wide ? { gap: 24 } : undefined}>
+            <MomentumRing size={ringSize} {...ring} />
+            <View className={wide ? "flex-1" : "ml-5 flex-1"}>
+              <Text className="text-[11px] tracking-[2px]" style={{ color: palette.onGradient, opacity: 0.7, fontFamily: "Outfit_700Bold" }}>
+                MOMENTUM
+              </Text>
+              <Text className={wide ? "mt-1 text-[30px] leading-[34px]" : "mt-1 text-[25px] leading-[28px]"} style={{ color: palette.onGradient, fontFamily: "Fraunces_600SemiBold" }}>
+                {strongestStreak >= 3 ? `You're on a roll${wide ? `, ${firstName}` : ""}.` : "Build your streak."}
+              </Text>
+              <View className="mt-3 flex-row gap-2">
+                <HeroStat icon="flame" value={strongestStreak} label="day streak" />
+                <HeroStat icon="bolt" value={weekXP} label="XP this week" />
               </View>
             </View>
-          ) : (
-            <Text className="mt-4 text-sm leading-6" style={{ color: palette.ink }}>
-              Every badge unlocked. You are running a flawless semester. 🏆
-            </Text>
-          )}
-        </Pressable>
-      </Link>
-    ) : null,
-    motivation:
-      settings.motivationMessagesEnabled && topInsight && !shouldHideMotivationCard ? (
-        <View
-          key="motivation"
-          className="rounded-[28px] px-5 py-5"
-          style={{ backgroundColor: palette.surface, borderColor: palette.border, borderWidth: 1 }}
-        >
-          <Text className="text-center text-[11px] uppercase tracking-[1.8px]" style={{ color: palette.muted }}>
-            {topInsight.title}
+          </View>
+
+          <View className="mt-4">
+            <View className="mb-1.5 flex-row items-center justify-between">
+              <Text className="text-[12.5px]" style={{ color: palette.onGradient, opacity: 0.9, fontFamily: "Outfit_700Bold" }}>
+                {profile.nextRank ? `${xpToNext} XP to Level ${profile.level + 1}` : "Top rank reached"}
+              </Text>
+              {profile.nextRank ? (
+                <Text className="text-[12.5px]" style={{ color: palette.onGradient, opacity: 0.9, fontFamily: "Outfit_700Bold" }}>
+                  Next rank: {profile.nextRank.title}
+                </Text>
+              ) : null}
+            </View>
+            <Meter value={profile.progressToNext} tone={palette.gold} height={8} />
+          </View>
+        </View>
+      </Pressable>
+    </Link>
+  );
+
+  const atRiskBlock = atRisk ? (
+    <Link href={`/class/${atRisk.classItem.id}`} asChild>
+      <Pressable
+        className="flex-row items-center rounded-[22px] p-4"
+        style={{ backgroundColor: palette.absentSoft, borderWidth: 1, borderColor: `${palette.riskDanger}55` }}
+      >
+        <View className="h-11 w-11 items-center justify-center rounded-full" style={{ backgroundColor: `${palette.riskDanger}22` }}>
+          <Icon name="target" size={22} color={palette.riskDanger} />
+        </View>
+        <View className="ml-3 flex-1">
+          <Text className="text-[11px] tracking-[1.5px]" style={{ color: palette.riskDanger, fontFamily: "Outfit_700Bold" }}>
+            NEEDS ATTENTION
           </Text>
-          <Text className="mt-3 text-center text-sm leading-6" style={{ color: palette.ink }}>
-            {topInsight.message}
+          <Text className="mt-0.5 text-[16px]" style={{ color: palette.ink, fontFamily: "Outfit_700Bold" }}>
+            {atRisk.classItem.name}
+          </Text>
+          <Text className="text-[13px]" style={{ color: palette.ink2, fontFamily: "Outfit_500Medium" }}>
+            {atRisk.buffer <= 0 ? "Buffer empty — every class counts now." : `Only ${atRisk.buffer} more miss before risk.`}
           </Text>
         </View>
-      ) : null,
-    today: (
-      <View key="today">
-        <SectionHeader
-          title="Today"
-          subtitle={todaysClasses.length > 0 ? "Classes scheduled for today." : "Nothing scheduled today."}
-          centered
-        />
-        {todaysClasses.length > 0 ? (
-          todaysClasses.length === 1 ? (
-            <ClassCard classItem={todaysClasses[0]} records={records} settings={settings} index={0} />
-          ) : (
-            <View className="mb-4 flex-row flex-wrap justify-between">
-              {todaysClasses.map((classItem, index) => (
-                <View key={classItem.id} style={{ width: "48.5%" }}>
-                  <ClassCard classItem={classItem} records={records} settings={settings} index={index} compact />
-                </View>
-              ))}
-            </View>
-          )
-        ) : (
-          <View className="mb-2 items-center rounded-card border border-dashed px-5 py-6" style={{ borderColor: palette.border }}>
-            <Text className="max-w-[280px] text-center" style={{ color: palette.muted }}>
-              Use Quick Check-In to record any ad-hoc attendance today.
-            </Text>
-          </View>
-        )}
+        <Icon name="chevron" size={20} color={palette.ink3} />
+      </Pressable>
+    </Link>
+  ) : null;
+
+  const todayBlock = (
+    <View>
+      <View className="mb-3 flex-row items-end justify-between">
+        <Text className="text-[22px]" style={{ color: palette.ink, fontFamily: "Outfit_700Bold" }}>
+          Today
+        </Text>
+        <Text className="text-[13px]" style={{ color: palette.ink3, fontFamily: "Outfit_600SemiBold" }}>
+          {loggedToday} of {todays.length} logged
+        </Text>
       </View>
-    ),
-    more_classes: otherClasses.length > 0 ? (
-      <View key="more_classes">
-        <SectionHeader title="More Classes" subtitle="A condensed view with the same key details." centered />
-        <View className="flex-row flex-wrap justify-between">
-          {otherClasses.map((classItem, index) => (
-            <View key={classItem.id} style={{ width: "48.5%" }}>
-              <ClassCard classItem={classItem} records={records} settings={settings} index={index} compact />
+
+      {todays.length > 0 ? (
+        <View className="overflow-hidden rounded-[22px]" style={{ backgroundColor: palette.card, borderWidth: 1, borderColor: palette.border }}>
+          {todays.map((c, i) => {
+            const status = records.find((r) => r.classId === c.id && r.date === today)?.status as AttenzaStatus | undefined;
+            return (
+              <Link key={c.id} href={`/class/${c.id}`} asChild>
+                <Pressable
+                  className="flex-row items-center px-4 py-3.5"
+                  style={i > 0 ? { borderTopWidth: 1, borderTopColor: palette.border } : undefined}
+                >
+                  <Text className="w-14 text-[13px]" style={{ color: palette.ink2, fontFamily: "Outfit_600SemiBold" }}>
+                    {formatTimeLabel(c.schedule[0]?.startTime ?? "09:00")}
+                  </Text>
+                  <View className="mr-3 h-9 w-1.5 rounded-full" style={{ backgroundColor: c.color }} />
+                  <View className="flex-1 pr-2">
+                    <Text numberOfLines={1} className="text-[16px]" style={{ color: palette.ink, fontFamily: "Outfit_700Bold" }}>
+                      {c.name}
+                    </Text>
+                    <Text className="text-[12px]" style={{ color: palette.ink3, fontFamily: "Outfit_500Medium" }}>
+                      {c.sectionLabel ? `${c.sectionLabel} · ` : ""}Room {c.room}
+                    </Text>
+                  </View>
+                  {status ? (
+                    <StatusPill status={status} size="sm" />
+                  ) : (
+                    <Link href="/(tabs)/check-in" asChild>
+                      <Pressable className="flex-row items-center gap-1 rounded-full px-3 py-1.5" style={{ backgroundColor: palette.forestSoft }}>
+                        <Text style={{ color: palette.forest, fontFamily: "Outfit_700Bold", fontSize: 12.5 }}>Check in</Text>
+                        <Icon name="chevron" size={13} color={palette.forest} stroke={2.2} />
+                      </Pressable>
+                    </Link>
+                  )}
+                </Pressable>
+              </Link>
+            );
+          })}
+        </View>
+      ) : (
+        <View className="items-center rounded-[22px] px-5 py-7" style={{ backgroundColor: palette.card, borderWidth: 1, borderColor: palette.border }}>
+          <Icon name="inbox" size={28} color={palette.ink3} />
+          <Text className="mt-2 text-center text-[14px]" style={{ color: palette.ink2, fontFamily: "Outfit_500Medium" }}>
+            Nothing scheduled today. Enjoy the breather.
+          </Text>
+        </View>
+      )}
+    </View>
+  );
+
+  const trophyBlock =
+    unlockedBadges.length > 0 ? (
+      <View>
+        <View className="mb-3 flex-row items-end justify-between">
+          <Text className="text-[22px]" style={{ color: palette.ink, fontFamily: "Outfit_700Bold" }}>
+            Badges
+          </Text>
+          <Link href={"/achievements" as Href} asChild>
+            <Pressable>
+              <Text className="text-[13px]" style={{ color: palette.forest, fontFamily: "Outfit_600SemiBold" }}>
+                View all
+              </Text>
+            </Pressable>
+          </Link>
+        </View>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingRight: 8 }}>
+          {unlockedBadges.map((b) => (
+            <View key={b.id} className="items-center" style={{ width: 92 }}>
+              <View
+                className="h-[92px] w-[92px] items-center justify-center rounded-[22px]"
+                style={{ backgroundColor: palette.goldSoft, borderWidth: 1, borderColor: palette.hairline }}
+              >
+                <BadgeMedallion icon={achievementIcon(b.id)} size={56} />
+              </View>
+              <Text numberOfLines={2} className="mt-1.5 text-center text-[12px]" style={{ color: palette.ink, fontFamily: "Outfit_700Bold" }}>
+                {b.title}
+              </Text>
             </View>
           ))}
-        </View>
+        </ScrollView>
       </View>
-    ) : null
-  };
-
-  const visibleWidgetOrder = dashboardWidgetOrder.filter((widget) => widgets[widget]);
+    ) : null;
 
   return (
-    <ScreenContainer>
-      <View className="mb-4 flex-row items-center justify-between">
-        <Pressable onPress={() => setIsEditing((current) => !current)}>
-          <ToolbarIconButton active={isEditing}>
-            <ReorderIcon color={isEditing ? palette.background : palette.primary} />
-          </ToolbarIconButton>
-        </Pressable>
-      </View>
-
-      <SectionHeader
-        title="Attendance"
-        subtitle={
-          isEditing
-            ? "Edit mode is on. Use the arrows on each card to reshape your dashboard."
-            : "Today first, with everything else tucked into a calmer grid."
-        }
-        centered
-      />
-
-      {visibleWidgetOrder.map((widget, index) => (
-        <WidgetShell
-          key={widget}
-          editing={isEditing}
-          index={index}
-          canMoveUp={index > 0}
-          canMoveDown={index < visibleWidgetOrder.length - 1}
-          onMoveUp={() => moveDashboardWidget(widget, "up")}
-          onMoveDown={() => moveDashboardWidget(widget, "down")}
-        >
-          <View>{widgets[widget]}</View>
-        </WidgetShell>
-      ))}
+    <ScreenContainer maxWidth={wide ? 1180 : 460}>
+      {greetingBlock}
+      {wide ? (
+        <>
+          <View className="flex-row items-stretch" style={{ gap: 20 }}>
+            <View style={{ flex: 1.4 }}>{heroBlock}</View>
+            <View style={{ flex: 1, gap: 16 }}>
+              {atRiskBlock}
+              {todayBlock}
+            </View>
+          </View>
+          {trophyBlock ? <View className="mt-6">{trophyBlock}</View> : null}
+        </>
+      ) : (
+        <>
+          <View className="mb-5">{heroBlock}</View>
+          {atRiskBlock ? <View className="mb-5">{atRiskBlock}</View> : null}
+          <View className="mb-5">{todayBlock}</View>
+          {trophyBlock}
+        </>
+      )}
     </ScreenContainer>
   );
 };

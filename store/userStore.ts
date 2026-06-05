@@ -25,24 +25,31 @@ interface UserState extends UserProfile {
   moveDashboardWidget: (widget: DashboardWidget, direction: "up" | "down") => void;
   signIn: (provider: AuthProvider, userName: string, userEmail: string) => void;
   signOut: () => void;
+  reset: () => void;
   markPromptSeen: (reason: UpgradeTrigger) => void;
 }
+
+// Initial profile/data fields, reused by reset() on account deletion.
+const initialUserState = {
+  isPremium: true,
+  preferredTheme: "fern" as ThemePreset,
+  themeMode: "light" as ThemeMode,
+  isAuthenticated: false,
+  authProvider: null as AuthProvider | null,
+  userName: "",
+  userEmail: "",
+  dashboardWidgetOrder: [...DASHBOARD_WIDGETS],
+  usageDays: 6,
+  consistencyDays: 4,
+  upgradePrompt: null as UpgradeTrigger | null,
+  seenUpgradePrompts: [] as UpgradeTrigger[]
+};
 
 export const useUserStore = create<UserState>()(
   persist(
     (set) => ({
-      isPremium: false,
-      preferredTheme: "fern",
-      themeMode: "light",
-      isAuthenticated: false,
-      authProvider: null,
-      userName: "",
-      userEmail: "",
-      dashboardWidgetOrder: [...DASHBOARD_WIDGETS],
-      usageDays: 6,
-      consistencyDays: 4,
-      upgradePrompt: null,
-      seenUpgradePrompts: [],
+      // All features are free (no in-app purchases). Premium is always on.
+      ...initialUserState,
       openUpgradeModal: (reason) =>
         set((state) => ({
           upgradePrompt: state.seenUpgradePrompts.includes(reason) ? state.upgradePrompt : reason
@@ -76,6 +83,8 @@ export const useUserStore = create<UserState>()(
           userName: "",
           userEmail: ""
         }),
+      // Wipes the profile back to a fresh-install state (used by account deletion).
+      reset: () => set({ ...initialUserState }),
       markPromptSeen: (reason) =>
         set((state) => ({
           seenUpgradePrompts: state.seenUpgradePrompts.includes(reason)
@@ -85,7 +94,14 @@ export const useUserStore = create<UserState>()(
     }),
     {
       name: "attendance-user-storage",
-      storage: createJSONStorage(() => AsyncStorage)
+      storage: createJSONStorage(() => AsyncStorage),
+      // Force premium on for any install that predates the free-for-all switch,
+      // so no purchase/gated UI is ever shown.
+      onRehydrateStorage: () => (state) => {
+        if (state && !state.isPremium) {
+          state.isPremium = true;
+        }
+      }
     }
   )
 );

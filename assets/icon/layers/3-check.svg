@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+<defs>
+  <linearGradient id="ckL" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1C3A2E"></stop><stop offset="100%" stop-color="#0E2A20"></stop></linearGradient>
+  <filter id="csL" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="6"></feGaussianBlur></filter>
+  </defs>
+  <path d="M 360 512 L 466 620 L 660 408" fill="none" stroke="#0c241b" stroke-width="92" stroke-linecap="round" stroke-linejoin="round" opacity="0.18" transform="translate(0,7)" filter="url(#csL)"></path>
+  <path d="M 360 512 L 466 620 L 660 408" fill="none" stroke="url(#ckL)" stroke-width="92" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>

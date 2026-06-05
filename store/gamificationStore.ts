@@ -7,6 +7,7 @@ interface GamificationState {
   // not in this list is surfaced as "new" until acknowledged.
   acknowledgedAchievements: string[];
   acknowledgeAchievements: (ids: string[]) => void;
+  reset: () => void;
 }
 
 export const useGamificationStore = create<GamificationState>()(
@@ -24,7 +25,8 @@ export const useGamificationStore = create<GamificationState>()(
             }
           }
           return changed ? { acknowledgedAchievements: Array.from(next) } : state;
-        })
+        }),
+      reset: () => set({ acknowledgedAchievements: [] })
     }),
     {
       name: "attendance-gamification-storage",

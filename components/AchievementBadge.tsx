@@ -1,7 +1,9 @@
 import { Text, View } from "react-native";
 
+import { BadgeMedallion } from "@/components/attenza/BadgeMedallion";
 import { useAppPalette } from "@/theme/useAppPalette";
 import { Achievement, tierColor } from "@/utils/gamification";
+import { achievementIcon } from "@/utils/attenza";
 
 interface AchievementBadgeProps {
   achievement: Achievement;
@@ -34,18 +36,7 @@ export const AchievementBadge = ({ achievement, isNew = false }: AchievementBadg
         </View>
       ) : null}
 
-      <View
-        className="h-14 w-14 items-center justify-center rounded-full"
-        style={{
-          backgroundColor: unlocked ? `${accent}22` : palette.background,
-          borderWidth: 1,
-          borderColor: unlocked ? accent : palette.border
-        }}
-      >
-        <Text className="text-[26px]" style={{ opacity: unlocked ? 1 : 0.45 }}>
-          {unlocked ? achievement.glyph : "🔒"}
-        </Text>
-      </View>
+      <BadgeMedallion icon={achievementIcon(achievement.id)} size={56} unlocked={unlocked} />
 
       <Text className="mt-3 font-serif text-[19px] leading-[24px]" style={{ color: palette.primary }}>
         {achievement.title}

@@ -1,6 +1,6 @@
-# Attendance Tracker
+# Attenza
 
-iOS and Android app for tracking class attendance with React Native, TypeScript, Zustand, and NativeWind.
+Attenza is an iOS and Android app for tracking class attendance, built with React Native, TypeScript, Zustand, and NativeWind.
 
 Built for college and graduate students who want quick, thorough, and customizable
 self-tracking — with a gamified momentum system that makes showing up feel rewarding.

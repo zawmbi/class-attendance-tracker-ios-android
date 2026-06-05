@@ -5,30 +5,52 @@ module.exports = {
     "./components/**/*.{ts,tsx}",
     "./screens/**/*.{ts,tsx}"
   ],
-  presets: [require("nativewind/preset")], 
+  presets: [require("nativewind/preset")],
   theme: {
     extend: {
       colors: {
-        background: "#F5F1E8",
-        primary: "#2F5D50",
-        secondary: "#A3B18A",
-        accent: "#D4A373",
-        surface: "#FCF8F1",
-        ink: "#1F352E",
-        muted: "#6B7C72",
-        border: "#E3DBCD",
-        warning: "#C98B42",
-        critical: "#B65B4A",
-        success: "#4C7A5D"
+        background: "#FAF8F2",
+        paper: "#FAF8F2",
+        "paper-2": "#F2EFE5",
+        card: "#FFFFFF",
+        "card-2": "#FCFBF7",
+        primary: "#2F5247",
+        forest: "#2F5247",
+        "forest-deep": "#223D34",
+        secondary: "#6E8C7E",
+        moss: "#6E8C7E",
+        accent: "#E0A53D",
+        gold: "#E0A53D",
+        "gold-deep": "#C08527",
+        surface: "#FFFFFF",
+        ink: "#2B3A33",
+        "ink-2": "#5C6B62",
+        "ink-3": "#828E86",
+        muted: "#5C6B62",
+        border: "#E6E2D8",
+        present: "#5C8170",
+        late: "#D69A3E",
+        absent: "#C45B3C",
+        excused: "#7186A8",
+        warning: "#D69A3E",
+        critical: "#C45B3C",
+        success: "#5C8170"
       },
       fontFamily: {
-        serif: ["Alice"]
+        // Outfit is the UI font (body, labels, titles). Fraunces (display) is
+        // reserved for hero numerals + rank names, exposed as `font-display`.
+        sans: ["Outfit_400Regular"],
+        serif: ["Outfit_700Bold"],
+        display: ["Fraunces_600SemiBold"],
+        medium: ["Outfit_500Medium"],
+        semibold: ["Outfit_600SemiBold"],
+        bold: ["Outfit_700Bold"]
       },
       boxShadow: {
-        card: "0px 10px 30px rgba(47, 93, 80, 0.08)"
+        card: "0px 4px 10px rgba(34, 61, 52, 0.07)"
       },
       borderRadius: {
-        card: "24px"
+        card: "22px"
       }
     }
   },

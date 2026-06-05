@@ -1,10 +1,12 @@
-import { Link, router } from "expo-router";
-import { useMemo, useState } from "react";
-import { Alert, Pressable, Text, View } from "react-native";
+import { PropsWithChildren, useMemo, useState } from "react";
+import { router } from "expo-router";
+import { Alert, Pressable, Text, TextInput, TextInputProps, View } from "react-native";
 
-import { FormField, FormInput } from "@/components/FormField";
+import { Icon } from "@/components/Icon";
+import { Segmented } from "@/components/attenza/Segmented";
+import { Slider } from "@/components/attenza/Slider";
+import { Stepper } from "@/components/attenza/Stepper";
 import { ScreenContainer } from "@/components/ScreenContainer";
-import { SectionHeader } from "@/components/SectionHeader";
 import { useAttendanceStore } from "@/store/attendanceStore";
 import { useUserStore } from "@/store/userStore";
 import { appConfig } from "@/theme";
@@ -13,7 +15,44 @@ import { formatEditableTime, parseTimeInput } from "@/utils/date";
 import { draftToClassPayload, parseSyllabusText } from "@/utils/syllabus";
 import { AcademicTermType, AttendanceType, PriorityLevel, SyllabusImportDraft, Weekday } from "@/utils/types";
 
-const weekdays: Weekday[] = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+const WEEKDAYS: Weekday[] = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+
+const Group = ({ header, footer, children }: PropsWithChildren<{ header?: string; footer?: string }>) => {
+  const palette = useAppPalette();
+  return (
+    <View className="mb-5">
+      {header ? (
+        <Text className="mb-2 ml-1 text-[12.5px] tracking-[0.5px]" style={{ color: palette.ink3, fontFamily: "Outfit_700Bold" }}>
+          {header.toUpperCase()}
+        </Text>
+      ) : null}
+      <View className="overflow-hidden rounded-[18px]" style={{ backgroundColor: palette.card, borderWidth: 1, borderColor: palette.hairline }}>
+        {children}
+      </View>
+      {footer ? (
+        <Text className="ml-1 mt-2 text-[12.5px] leading-[17px]" style={{ color: palette.ink3, fontFamily: "Outfit_500Medium" }}>
+          {footer}
+        </Text>
+      ) : null}
+    </View>
+  );
+};
+
+const Field = ({ label, first, ...props }: { label: string; first?: boolean } & TextInputProps) => {
+  const palette = useAppPalette();
+  return (
+    <View className="px-3.5 py-2.5" style={first ? undefined : { borderTopWidth: 1, borderTopColor: palette.hairline }}>
+      <Text className="text-[12px]" style={{ color: palette.ink3, fontFamily: "Outfit_700Bold" }}>
+        {label}
+      </Text>
+      <TextInput
+        placeholderTextColor={palette.ink3}
+        style={{ marginTop: 2, fontSize: 16, color: palette.ink, fontFamily: "Outfit_600SemiBold", paddingVertical: 2 }}
+        {...props}
+      />
+    </View>
+  );
+};
 
 interface EditClassScreenProps {
   classId?: string;
@@ -24,8 +63,8 @@ export const EditClassScreen = ({ classId }: EditClassScreenProps) => {
   const { classes, settings, addClass, updateClass, deleteClass } = useAttendanceStore();
   const { isPremium, openUpgradeModal } = useUserStore();
   const existing = classes.find((item) => item.id === classId);
+
   const [name, setName] = useState(existing?.name ?? "");
-  const [linkedGroup, setLinkedGroup] = useState(existing?.linkedGroup ?? "");
   const [sectionLabel, setSectionLabel] = useState(existing?.sectionLabel ?? "");
   const [professor, setProfessor] = useState(existing?.professor ?? "");
   const [ta, setTa] = useState(existing?.ta ?? "");
@@ -34,27 +73,22 @@ export const EditClassScreen = ({ classId }: EditClassScreenProps) => {
   const [notes, setNotes] = useState(existing?.notes ?? "");
   const [startTime, setStartTime] = useState(formatEditableTime(existing?.schedule[0]?.startTime ?? "09:00"));
   const [endTime, setEndTime] = useState(formatEditableTime(existing?.schedule[0]?.endTime ?? "10:15"));
-  const [selectedDays, setSelectedDays] = useState<Weekday[]>(existing?.schedule.map((item) => item.day) ?? ["Monday"]);
+  const [selectedDays, setSelectedDays] = useState<Weekday[]>(existing?.schedule.map((item) => item.day) ?? ["Monday", "Wednesday"]);
   const [attendanceType, setAttendanceType] = useState<AttendanceType>(existing?.attendanceType ?? "percentage");
   const [termType, setTermType] = useState<AcademicTermType>(existing?.termType ?? settings.defaultTermType);
-  const [courseLengthWeeks, setCourseLengthWeeks] = useState(String(existing?.courseLengthWeeks ?? settings.defaultCourseLengthWeeks));
-  const [requiredAttendance, setRequiredAttendance] = useState(String(existing?.requiredAttendance ?? 80));
-  const [excusedAllowance, setExcusedAllowance] = useState(String(existing?.excusedAllowance ?? 2));
-  const [hoursPerWeek, setHoursPerWeek] = useState(String(existing?.hoursPerWeek ?? 3));
+  const [courseLengthWeeks, setCourseLengthWeeks] = useState(existing?.courseLengthWeeks ?? settings.defaultCourseLengthWeeks);
+  const [requiredAttendance, setRequiredAttendance] = useState(existing?.requiredAttendance ?? 80);
+  const [excusedAllowance, setExcusedAllowance] = useState(existing?.excusedAllowance ?? 2);
   const [priority, setPriority] = useState<PriorityLevel>(existing?.priority ?? "medium");
   const [color, setColor] = useState(existing?.color ?? appConfig.classColorOptions[0]);
   const [syllabusText, setSyllabusText] = useState("");
   const [drafts, setDrafts] = useState<SyllabusImportDraft[]>([]);
 
   const canSave = useMemo(() => name.trim().length > 0 && selectedDays.length > 0, [name, selectedDays]);
-
-  const toggleDay = (day: Weekday) => {
-    setSelectedDays((current) => (current.includes(day) ? current.filter((item) => item !== day) : [...current, day]));
-  };
+  const toggleDay = (day: Weekday) => setSelectedDays((cur) => (cur.includes(day) ? cur.filter((d) => d !== day) : [...cur, day]));
 
   const applyDraftToForm = (draft: SyllabusImportDraft) => {
     setName(draft.name);
-    setLinkedGroup(draft.linkedGroup);
     setSectionLabel(draft.sectionLabel);
     setProfessor(draft.professor);
     setTa(draft.ta);
@@ -63,11 +97,9 @@ export const EditClassScreen = ({ classId }: EditClassScreenProps) => {
     setNotes(draft.notes);
     setAttendanceType(draft.attendanceType);
     setTermType(draft.termType);
-    setCourseLengthWeeks(String(draft.courseLengthWeeks));
-    setRequiredAttendance(String(draft.requiredAttendance));
-    setExcusedAllowance(String(draft.excusedAllowance));
-    setHoursPerWeek(String(draft.hoursPerWeek));
-
+    setCourseLengthWeeks(draft.courseLengthWeeks);
+    setRequiredAttendance(draft.requiredAttendance);
+    setExcusedAllowance(draft.excusedAllowance);
     if (draft.schedule.length > 0) {
       setSelectedDays(draft.schedule.map((item) => item.day));
       setStartTime(formatEditableTime(draft.schedule[0].startTime));
@@ -80,21 +112,16 @@ export const EditClassScreen = ({ classId }: EditClassScreenProps) => {
       Alert.alert("Paste a syllabus first", "Add syllabus text or OCR text before scanning.");
       return;
     }
-
-    const parsedDrafts = parseSyllabusText(syllabusText);
-    if (!parsedDrafts.length) {
+    const parsed = parseSyllabusText(syllabusText);
+    if (!parsed.length) {
       Alert.alert("Nothing matched yet", "Try pasting the course title, meeting schedule, and attendance policy lines.");
       return;
     }
-
-    setDrafts(parsedDrafts);
+    setDrafts(parsed);
   };
 
   const handleImportAllDrafts = () => {
-    if (existing || drafts.length === 0) {
-      return;
-    }
-
+    if (existing || drafts.length === 0) return;
     drafts.forEach((draft, index) => {
       addClass(
         draftToClassPayload(draft, {
@@ -104,7 +131,6 @@ export const EditClassScreen = ({ classId }: EditClassScreenProps) => {
         })
       );
     });
-
     Alert.alert("Classes imported", `${drafts.length} classes were created from your syllabus text.`);
     router.replace("/(tabs)/dashboard");
   };
@@ -114,55 +140,43 @@ export const EditClassScreen = ({ classId }: EditClassScreenProps) => {
       Alert.alert("Missing info", "Add a class name and at least one schedule day.");
       return;
     }
-
-    const normalizedStartTime = parseTimeInput(startTime);
-    const normalizedEndTime = parseTimeInput(endTime);
-
-    if (!normalizedStartTime || !normalizedEndTime) {
+    const normalizedStart = parseTimeInput(startTime);
+    const normalizedEnd = parseTimeInput(endTime);
+    if (!normalizedStart || !normalizedEnd) {
       Alert.alert("Invalid time", "Use a normal typed time like 9:30 AM or 1:15 PM.");
       return;
     }
-
     const payload = {
       id: existing?.id ?? `class-${Date.now()}`,
       name: name.trim(),
-      linkedGroup: linkedGroup.trim(),
+      linkedGroup: existing?.linkedGroup ?? "",
       sectionLabel: sectionLabel.trim(),
       professor: professor.trim(),
       ta: ta.trim(),
       location: location.trim(),
       room: room.trim(),
-      schedule: selectedDays.map((day) => ({
-        day,
-        startTime: normalizedStartTime,
-        endTime: normalizedEndTime
-      })),
+      schedule: selectedDays.map((day) => ({ day, startTime: normalizedStart, endTime: normalizedEnd })),
       attendanceType,
       termType,
-      courseLengthWeeks: Number(courseLengthWeeks) || settings.defaultCourseLengthWeeks,
-      requiredAttendance: Number(requiredAttendance) || 0,
-      excusedAllowance: Number(excusedAllowance) || 0,
-      hoursPerWeek: Number(hoursPerWeek) || 0,
+      courseLengthWeeks,
+      requiredAttendance,
+      excusedAllowance,
+      hoursPerWeek: existing?.hoursPerWeek ?? 3,
       color,
       priority,
       notes: notes.trim()
     };
-
     if (existing) {
       updateClass(existing.id, payload);
       router.replace(`/class/${existing.id}`);
       return;
     }
-
     addClass(payload);
     router.replace(`/class/${payload.id}`);
   };
 
   const handleDelete = () => {
-    if (!existing) {
-      return;
-    }
-
+    if (!existing) return;
     Alert.alert("Delete class?", "This removes the class and its attendance history from the app.", [
       { text: "Cancel", style: "cancel" },
       {
@@ -176,344 +190,249 @@ export const EditClassScreen = ({ classId }: EditClassScreenProps) => {
     ]);
   };
 
-  const getChipStyle = (active: boolean) => ({
-    backgroundColor: active ? palette.primary : palette.surface,
-    borderWidth: active ? 0 : 1,
-    borderColor: palette.border
-  });
-
   return (
     <ScreenContainer>
-      <Link href={existing ? `/class/${existing.id}` : "/(tabs)/dashboard"} asChild>
-        <Pressable
-          className="mb-5 self-start rounded-full px-4 py-2.5"
-          style={{ backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.border }}
-        >
-          <Text className="text-sm" style={{ color: palette.muted }}>
-            ‹ Back
+      {/* Cancel / Save header */}
+      <View className="mb-2 flex-row items-center justify-between">
+        <Pressable onPress={() => router.back()}>
+          <Text className="text-[16px]" style={{ color: palette.ink2, fontFamily: "Outfit_600SemiBold" }}>
+            Cancel
           </Text>
         </Pressable>
-      </Link>
+        <Pressable onPress={handleSave} disabled={!canSave}>
+          <Text className="text-[16px]" style={{ color: canSave ? palette.forest : palette.ink3, fontFamily: "Outfit_800ExtraBold" }}>
+            Save
+          </Text>
+        </Pressable>
+      </View>
+      <Text className="mb-4 text-[32px]" style={{ color: palette.ink, fontFamily: "Outfit_800ExtraBold" }}>
+        {existing ? "Edit Class" : "New Class"}
+      </Text>
 
-      <SectionHeader title={existing ? "Edit Class" : "New Class"} subtitle="Add your real class details directly in the app." />
-
-      <View
-        className="mb-6 rounded-[28px] px-5 py-5"
-        style={{ backgroundColor: palette.surface, borderColor: palette.border, borderWidth: 1 }}
-      >
-        <Text className="font-serif text-[24px]" style={{ color: palette.primary }}>
-          Premium syllabus scan
-        </Text>
-        <Text className="mt-2 text-sm leading-6" style={{ color: palette.muted }}>
-          Paste syllabus text or OCR output to auto-fill class details. On new classes, you can also import multiple syllabi at once.
-        </Text>
-
+      {/* Syllabus scan (premium) */}
+      <Group header="Syllabus scan" footer="Premium pulls name, schedule, attendance policy and more from pasted syllabus text.">
         {isPremium ? (
-          <>
-            <FormField
-              label="Syllabus text"
-              helper={
-                existing
-                  ? "Paste one syllabus to update this class."
-                  : "Separate multiple syllabi with --- or paste several Course:/Syllabus sections together."
-              }
-            >
-              <FormInput
-                multiline
-                numberOfLines={8}
-                textAlignVertical="top"
-                value={syllabusText}
-                onChangeText={(value) => {
-                  setSyllabusText(value);
-                  setDrafts([]);
-                }}
-                placeholder={`Course: Biology 101
-Instructor: Dr. Rivera
-Schedule: Tue/Thu 9:30 AM - 10:45 AM
-Attendance: 80% required, 2 excused absences...`}
-                style={{ minHeight: 176 }}
-              />
-            </FormField>
-
-            <View className="flex-row gap-3">
-              <Pressable
-                className="flex-1 items-center rounded-[22px] px-4 py-4"
-                style={{ backgroundColor: palette.primary }}
-                onPress={handleParseSyllabus}
-              >
-                <Text style={{ color: palette.background }}>Scan syllabus</Text>
+          <View className="p-3.5">
+            <TextInput
+              multiline
+              textAlignVertical="top"
+              value={syllabusText}
+              onChangeText={(v) => {
+                setSyllabusText(v);
+                setDrafts([]);
+              }}
+              placeholder={"Course: Biology 101\nInstructor: Dr. Rivera\nSchedule: Tue/Thu 9:30–10:45\nAttendance: 80% required, 2 excused"}
+              placeholderTextColor={palette.ink3}
+              style={{ minHeight: 110, borderRadius: 14, borderWidth: 1, borderColor: palette.hairline, backgroundColor: palette.card2, padding: 12, color: palette.ink, fontFamily: "Outfit_500Medium", fontSize: 14.5 }}
+            />
+            <View className="mt-3 flex-row gap-2.5">
+              <Pressable onPress={handleParseSyllabus} className="flex-1 items-center rounded-[14px] py-3" style={{ backgroundColor: palette.forest }}>
+                <Text style={{ color: "#fff", fontFamily: "Outfit_800ExtraBold", fontSize: 14.5 }}>Scan syllabus</Text>
               </Pressable>
               {drafts.length > 1 && !existing ? (
-                <Pressable
-                  className="flex-1 items-center rounded-[22px] px-4 py-4"
-                  style={{ backgroundColor: palette.background, borderWidth: 1, borderColor: palette.border }}
-                  onPress={handleImportAllDrafts}
-                >
-                  <Text style={{ color: palette.primary }}>Import all</Text>
+                <Pressable onPress={handleImportAllDrafts} className="flex-1 items-center rounded-[14px] py-3" style={{ backgroundColor: palette.card2, borderWidth: 1, borderColor: palette.hairline }}>
+                  <Text style={{ color: palette.forest, fontFamily: "Outfit_800ExtraBold", fontSize: 14.5 }}>Import all</Text>
                 </Pressable>
               ) : null}
             </View>
-
-            {drafts.length > 0 ? (
-              <View className="mt-4 gap-3">
-                {drafts.map((draft, index) => (
-                  <View
-                    key={`${draft.name}-${index}`}
-                    className="rounded-[24px] px-4 py-4"
-                    style={{ backgroundColor: palette.background, borderWidth: 1, borderColor: palette.border }}
-                  >
-                    <Text className="font-serif text-[20px]" style={{ color: palette.primary }}>
-                      {draft.name}
-                    </Text>
-                    <Text className="mt-2 text-sm leading-6" style={{ color: palette.muted }}>
-                      {draft.professor ? `${draft.professor} • ` : ""}
-                      {draft.schedule.length > 0
-                        ? `${draft.schedule.map((item) => item.day.slice(0, 3)).join(", ")} ${formatEditableTime(
-                            draft.schedule[0].startTime
-                          )} - ${formatEditableTime(draft.schedule[0].endTime)}`
-                        : "No schedule detected yet"}
-                    </Text>
-                    <Text className="mt-2 text-sm leading-6" style={{ color: palette.muted }}>
-                      {draft.requiredAttendance}% required • {draft.excusedAllowance} excused • about {draft.estimatedSessions} sessions
-                      {draft.attendanceType !== "optional"
-                        ? ` • about ${draft.allowedAbsencesEstimate} safe absences`
-                        : " • optional attendance"}
-                    </Text>
-                    {draft.notes ? (
-                      <Text className="mt-2 text-sm leading-6" style={{ color: palette.ink }}>
-                        {draft.notes}
-                      </Text>
-                    ) : null}
-                    <Pressable
-                      className="mt-3 self-start rounded-full px-4 py-3"
-                      style={{ backgroundColor: palette.primary }}
-                      onPress={() => applyDraftToForm(draft)}
-                    >
-                      <Text style={{ color: palette.background }}>
-                        {existing ? "Apply to this class" : drafts.length > 1 ? "Fill editor with this one" : "Use these details"}
-                      </Text>
-                    </Pressable>
-                  </View>
-                ))}
-              </View>
-            ) : null}
-          </>
+            {drafts.map((draft, index) => (
+              <Pressable
+                key={`${draft.name}-${index}`}
+                onPress={() => applyDraftToForm(draft)}
+                className="mt-2.5 rounded-[14px] p-3"
+                style={{ backgroundColor: palette.card2, borderWidth: 1, borderColor: palette.hairline }}
+              >
+                <Text className="text-[15px]" style={{ color: palette.ink, fontFamily: "Outfit_700Bold" }}>
+                  {draft.name}
+                </Text>
+                <Text className="mt-0.5 text-[12.5px]" style={{ color: palette.ink2, fontFamily: "Outfit_500Medium" }}>
+                  {draft.requiredAttendance}% required · {draft.excusedAllowance} excused · ~{draft.estimatedSessions} sessions
+                </Text>
+                <Text className="mt-1.5 text-[12.5px]" style={{ color: palette.forest, fontFamily: "Outfit_800ExtraBold" }}>
+                  {existing ? "Apply to this class" : "Fill editor with this one"}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
         ) : (
-          <View className="mt-4 rounded-[24px] px-4 py-4" style={{ backgroundColor: palette.background }}>
-            <Text className="text-sm leading-6" style={{ color: palette.muted }}>
-              Premium can pull course name, instructor, meeting schedule, attendance policy, excused absence limits, and course length from pasted syllabus text.
+          <Pressable onPress={() => openUpgradeModal("syllabus_import")} className="flex-row items-center gap-3 p-3.5">
+            <View className="h-9 w-9 items-center justify-center rounded-[10px]" style={{ backgroundColor: palette.goldSoft }}>
+              <Icon name="sparkles" size={20} color={palette.goldDeep} stroke={2} />
+            </View>
+            <Text className="flex-1 text-[14.5px]" style={{ color: palette.ink2, fontFamily: "Outfit_600SemiBold" }}>
+              Auto-fill from a syllabus with Premium
             </Text>
-            <Pressable
-              className="mt-4 self-start rounded-full px-4 py-3"
-              style={{ backgroundColor: palette.primary }}
-              onPress={() => openUpgradeModal("syllabus_import")}
-            >
-              <Text style={{ color: palette.background }}>Unlock syllabus scan</Text>
-            </Pressable>
+            <Icon name="lock" size={18} color={palette.goldDeep} stroke={2} />
+          </Pressable>
+        )}
+      </Group>
+
+      {/* Details */}
+      <Group header="Details">
+        <Field first label="Class name" value={name} onChangeText={setName} placeholder="e.g. Organic Chemistry" />
+        <Field label="Course code / section" value={sectionLabel} onChangeText={setSectionLabel} placeholder="e.g. CHEM 210" />
+        <Field label="Professor" value={professor} onChangeText={setProfessor} placeholder="Dr. Rivera" />
+        <Field label="TA / section" value={ta} onChangeText={setTa} placeholder="Jamie Chen" />
+        <Field label="Location" value={location} onChangeText={setLocation} placeholder="Science Hall" />
+        <Field label="Room" value={room} onChangeText={setRoom} placeholder="204" />
+      </Group>
+
+      {/* Schedule */}
+      <Group header="Schedule">
+        <View className="px-3.5 pt-3">
+          <Text className="mb-2 text-[12px]" style={{ color: palette.ink3, fontFamily: "Outfit_700Bold" }}>
+            DAYS
+          </Text>
+          <View className="flex-row gap-2 pb-1">
+            {WEEKDAYS.slice(0, 5).map((day) => {
+              const on = selectedDays.includes(day);
+              return (
+                <Pressable
+                  key={day}
+                  onPress={() => toggleDay(day)}
+                  className="flex-1 items-center rounded-[11px] py-2.5"
+                  style={{ backgroundColor: on ? palette.forest : palette.paper2 }}
+                >
+                  <Text className="text-[13px]" style={{ color: on ? "#fff" : palette.ink2, fontFamily: "Outfit_700Bold" }}>
+                    {day[0]}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
+        <View className="flex-row">
+          <View className="flex-1">
+            <Field label="Start time" value={startTime} onChangeText={setStartTime} placeholder="9:30 AM" />
+          </View>
+          <View className="flex-1" style={{ borderLeftWidth: 1, borderLeftColor: palette.hairline }}>
+            <Field label="End time" value={endTime} onChangeText={setEndTime} placeholder="10:45 AM" />
+          </View>
+        </View>
+      </Group>
+
+      {/* Attendance requirement */}
+      <Group header="Attendance requirement">
+        <View className="px-3.5 pt-3">
+          <Segmented
+            options={[{ value: "percentage", label: "Percentage" }, { value: "optional", label: "Optional" }]}
+            value={attendanceType === "optional" ? "optional" : "percentage"}
+            onChange={(v) => setAttendanceType(v as AttendanceType)}
+          />
+        </View>
+        {attendanceType !== "optional" ? (
+          <View className="px-3.5 pb-3 pt-3">
+            <View className="mb-1 flex-row items-center justify-between">
+              <Text className="text-[13px]" style={{ color: palette.ink2, fontFamily: "Outfit_700Bold" }}>
+                Minimum attendance
+              </Text>
+              <Text style={{ fontFamily: "Fraunces_600SemiBold", fontSize: 22, color: palette.forest, fontVariant: ["tabular-nums"] }}>
+                {requiredAttendance}%
+              </Text>
+            </View>
+            <Slider value={requiredAttendance} onChange={setRequiredAttendance} min={50} max={100} tone={palette.forest} />
+            <View className="flex-row justify-between">
+              <Text className="text-[12px]" style={{ color: palette.ink3, fontFamily: "Outfit_600SemiBold" }}>
+                50%
+              </Text>
+              <Text className="text-[12px]" style={{ color: palette.ink3, fontFamily: "Outfit_600SemiBold" }}>
+                100%
+              </Text>
+            </View>
+          </View>
+        ) : (
+          <View className="px-3.5 py-3" style={{ borderTopWidth: 1, borderTopColor: palette.hairline }}>
+            <Text className="text-[13.5px]" style={{ color: palette.ink2, fontFamily: "Outfit_500Medium" }}>
+              Attendance is optional — sessions won&apos;t count against a target.
+            </Text>
           </View>
         )}
-      </View>
+      </Group>
 
-      <FormField label="Class name">
-        <FormInput value={name} onChangeText={setName} placeholder="Biology 101" />
-      </FormField>
+      <Group header="Excused absences" footer="Absences that don't count against you (illness, approved leave).">
+        <View className="px-3.5 py-3.5">
+          <Stepper label="Allowed this term" value={excusedAllowance} onChange={setExcusedAllowance} min={0} max={15} />
+        </View>
+      </Group>
 
-      <View className="flex-row gap-3">
-        <View className="flex-1">
-          <FormField label="Linked group" helper="Use the same value for lecture/lab pairs, like BIOS 210">
-            <FormInput value={linkedGroup} onChangeText={setLinkedGroup} placeholder="BIOS 210" />
-          </FormField>
+      {/* Term / length */}
+      <Group header="Term">
+        <View className="px-3.5 pt-3">
+          <Text className="mb-2 text-[12px]" style={{ color: palette.ink3, fontFamily: "Outfit_700Bold" }}>
+            TYPE
+          </Text>
+          <View className="flex-row flex-wrap gap-2 pb-1">
+            {appConfig.academicTermOptions.map((t) => {
+              const on = termType === t;
+              return (
+                <Pressable key={t} onPress={() => setTermType(t)} className="rounded-full px-3.5 py-2" style={{ backgroundColor: on ? palette.forest : palette.paper2, borderWidth: on ? 0 : 1, borderColor: palette.hairline }}>
+                  <Text className="text-[13px] capitalize" style={{ color: on ? "#fff" : palette.ink2, fontFamily: "Outfit_700Bold" }}>
+                    {t}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
         </View>
-        <View className="flex-1">
-          <FormField label="Section label">
-            <FormInput value={sectionLabel} onChangeText={setSectionLabel} placeholder="Lecture, Lab, TA" />
-          </FormField>
+        <View className="px-3.5 py-3" style={{ borderTopWidth: 1, borderTopColor: palette.hairline }}>
+          <Text className="mb-2 text-[12px]" style={{ color: palette.ink3, fontFamily: "Outfit_700Bold" }}>
+            LENGTH
+          </Text>
+          <View className="flex-row flex-wrap gap-2">
+            {appConfig.courseLengthOptions.map((w) => {
+              const on = courseLengthWeeks === w;
+              return (
+                <Pressable key={w} onPress={() => setCourseLengthWeeks(w)} className="rounded-full px-3.5 py-2" style={{ backgroundColor: on ? palette.forest : palette.paper2, borderWidth: on ? 0 : 1, borderColor: palette.hairline }}>
+                  <Text className="text-[13px]" style={{ color: on ? "#fff" : palette.ink2, fontFamily: "Outfit_700Bold" }}>
+                    {w} wk
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
         </View>
-      </View>
+      </Group>
 
-      <FormField label="Professor">
-        <FormInput value={professor} onChangeText={setProfessor} placeholder="Dr. Rivera" />
-      </FormField>
-
-      <FormField label="TA section / TA">
-        <FormInput value={ta} onChangeText={setTa} placeholder="Jamie Chen or Section A" />
-      </FormField>
-
-      <View className="flex-row gap-3">
-        <View className="flex-1">
-          <FormField label="Location">
-            <FormInput value={location} onChangeText={setLocation} placeholder="Science Hall" />
-          </FormField>
-        </View>
-        <View className="w-[120px]">
-          <FormField label="Room">
-            <FormInput value={room} onChangeText={setRoom} placeholder="204" />
-          </FormField>
-        </View>
-      </View>
-
-      <FormField label="Days">
-        <View className="flex-row flex-wrap">
-          {weekdays.map((day) => {
-            const active = selectedDays.includes(day);
-            return (
-              <Pressable key={day} className="mb-3 mr-2 rounded-full px-4 py-3" style={getChipStyle(active)} onPress={() => toggleDay(day)}>
-                <Text style={{ color: active ? palette.background : palette.primary }}>{day.slice(0, 3)}</Text>
-              </Pressable>
-            );
-          })}
-        </View>
-      </FormField>
-
-      <View className="flex-row gap-3">
-        <View className="flex-1">
-          <FormField label="Start time" helper="Type times like 9:30 AM">
-            <FormInput value={startTime} onChangeText={setStartTime} placeholder="9:30 AM" />
-          </FormField>
-        </View>
-        <View className="flex-1">
-          <FormField label="End time">
-            <FormInput value={endTime} onChangeText={setEndTime} placeholder="10:15 AM" />
-          </FormField>
-        </View>
-      </View>
-
-      <FormField label="Attendance type">
-        <View className="flex-row flex-wrap">
-          {appConfig.attendanceTypeOptions.map((option) => {
-            const active = attendanceType === option;
-            return (
-              <Pressable key={option} className="mb-3 mr-2 rounded-full px-4 py-3" style={getChipStyle(active)} onPress={() => setAttendanceType(option)}>
-                <Text className="capitalize" style={{ color: active ? palette.background : palette.primary }}>
-                  {option}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
-      </FormField>
-
-      <FormField label="Academic term">
-        <View className="flex-row flex-wrap">
-          {appConfig.academicTermOptions.map((option) => {
-            const active = termType === option;
-            return (
-              <Pressable key={option} className="mb-3 mr-2 rounded-full px-4 py-3" style={getChipStyle(active)} onPress={() => setTermType(option)}>
-                <Text className="capitalize" style={{ color: active ? palette.background : palette.primary }}>
-                  {option}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
-      </FormField>
-
-      <View className="flex-row gap-3">
-        <View className="flex-1">
-          <FormField label="Course length">
-            <View className="flex-row flex-wrap">
-              {appConfig.courseLengthOptions.map((option) => {
-                const active = Number(courseLengthWeeks) === option;
-                return (
-                  <Pressable
-                    key={option}
-                    className="mb-3 mr-2 rounded-full px-4 py-3"
-                    style={getChipStyle(active)}
-                    onPress={() => setCourseLengthWeeks(String(option))}
-                  >
-                    <Text style={{ color: active ? palette.background : palette.primary }}>{option} wk</Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-          </FormField>
-        </View>
-      </View>
-
-      <View className="flex-row gap-3">
-        <View className="flex-1">
-          <FormField label="Required attendance">
-            <FormInput keyboardType="numeric" value={requiredAttendance} onChangeText={setRequiredAttendance} placeholder="80" />
-          </FormField>
-        </View>
-        <View className="flex-1">
-          <FormField label="Excused allowed">
-            <FormInput keyboardType="numeric" value={excusedAllowance} onChangeText={setExcusedAllowance} placeholder="2" />
-          </FormField>
-        </View>
-      </View>
-
-      <View className="flex-row gap-3">
-        <View className="flex-1">
-          <FormField label="Hours">
-            <FormInput keyboardType="numeric" value={hoursPerWeek} onChangeText={setHoursPerWeek} placeholder="3" />
-          </FormField>
-        </View>
-        <View className="flex-1" />
-      </View>
-
-      <View className="flex-row gap-3">
-        <View className="flex-1">
-          <FormField label="Priority">
-            <View className="flex-row flex-wrap">
-              {appConfig.priorityOptions.map((option) => {
-                const active = priority === option;
-                return (
-                  <Pressable key={option} className="mb-3 mr-2 rounded-full px-4 py-3" style={getChipStyle(active)} onPress={() => setPriority(option)}>
-                    <Text className="capitalize" style={{ color: active ? palette.background : palette.primary }}>
-                      {option}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-          </FormField>
-        </View>
-      </View>
-
-      <FormField label="Color">
-        <View className="flex-row flex-wrap">
+      {/* Color */}
+      <Group header="Color">
+        <View className="flex-row flex-wrap gap-3 p-4">
           {appConfig.classColorOptions.map((option) => (
             <Pressable
               key={option}
-              className="mb-3 mr-3 h-11 w-11 rounded-full border-2"
-              style={{ backgroundColor: option, borderColor: color === option ? palette.ink : palette.background }}
               onPress={() => setColor(option)}
+              className="h-9 w-9 rounded-full"
+              style={{ backgroundColor: option, borderWidth: 3, borderColor: color === option ? palette.ink : "transparent" }}
             />
           ))}
         </View>
-      </FormField>
+      </Group>
 
-      <FormField label="Notes">
-        <FormInput
-          multiline
-          numberOfLines={4}
-          textAlignVertical="top"
-          value={notes}
-          onChangeText={setNotes}
-          placeholder="Any reminder or attendance policy note"
-          style={{ minHeight: 112 }}
-        />
-      </FormField>
-
-      <Pressable
-        className="mb-3 items-center rounded-[24px] px-5 py-4"
-        style={{ backgroundColor: canSave ? palette.primary : `${palette.muted}55` }}
-        onPress={handleSave}
-      >
-        <Text className="font-serif text-[20px]" style={{ color: canSave ? palette.background : palette.muted }}>
-          {existing ? "Save Changes" : "Create Class"}
-        </Text>
-      </Pressable>
+      {/* Notes */}
+      <Group header="Notes">
+        <View className="p-3.5">
+          <TextInput
+            multiline
+            textAlignVertical="top"
+            value={notes}
+            onChangeText={setNotes}
+            placeholder="Any reminder or attendance policy note"
+            placeholderTextColor={palette.ink3}
+            style={{ minHeight: 80, color: palette.ink, fontFamily: "Outfit_500Medium", fontSize: 15 }}
+          />
+        </View>
+      </Group>
 
       {existing ? (
-        <Pressable
-          className="items-center rounded-[24px] px-5 py-4"
-          style={{ backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.border }}
-          onPress={handleDelete}
-        >
-          <Text style={{ color: palette.critical }}>Delete Class</Text>
-        </Pressable>
+        <Group>
+          <Pressable onPress={handleDelete} className="flex-row items-center gap-3 px-3.5 py-3">
+            <View className="h-8 w-8 items-center justify-center rounded-[9px]" style={{ backgroundColor: palette.absent }}>
+              <Icon name="trash" size={18} color="#fff" stroke={2} />
+            </View>
+            <Text className="text-[15.5px]" style={{ color: palette.absent, fontFamily: "Outfit_700Bold" }}>
+              Delete class
+            </Text>
+          </Pressable>
+        </Group>
       ) : null}
     </ScreenContainer>
   );

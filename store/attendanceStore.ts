@@ -27,6 +27,7 @@ interface AttendanceState {
   updateClassColor: (classId: string, color: string) => void;
   updateClassPriority: (classId: string, priority: PriorityLevel) => void;
   updateRequiredAttendance: (classId: string, requiredAttendance: number) => void;
+  reset: () => void;
 }
 
 export const useAttendanceStore = create<AttendanceState>()(
@@ -117,7 +118,9 @@ export const useAttendanceStore = create<AttendanceState>()(
           classes: state.classes.map((classItem) =>
             classItem.id === classId ? { ...classItem, requiredAttendance } : classItem
           )
-        }))
+        })),
+      // Clears all class/attendance data back to seed defaults (account deletion).
+      reset: () => set({ classes: seedClasses, records: seedRecords, settings: defaultSettings })
     }),
     {
       name: "attendance-tracker-storage",
