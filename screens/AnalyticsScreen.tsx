@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useRouter } from "expo-router";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 
 import { Icon, IconName } from "@/components/Icon";
@@ -139,16 +139,7 @@ export const AnalyticsScreen = () => {
       {tab === "forecast" ? (
         <View>
           {/* Projected hero */}
-          <View className="mt-4 overflow-hidden rounded-[22px] p-4" style={{ borderWidth: 1, borderColor: palette.hairline }}>
-            <Svg style={StyleSheet.absoluteFill}>
-              <Defs>
-                <LinearGradient id="fcHero" x1="0" y1="0" x2="1" y2="1">
-                  <Stop offset="0" stopColor={palette.forestSoft} />
-                  <Stop offset="1" stopColor={palette.card} />
-                </LinearGradient>
-              </Defs>
-              <Rect x="0" y="0" width="100%" height="100%" fill="url(#fcHero)" />
-            </Svg>
+          <View className="mt-4 rounded-[22px] p-4" style={{ backgroundColor: palette.card, borderWidth: 1, borderColor: palette.hairline }}>
             <View className="mb-1.5 flex-row items-end justify-between">
               <View>
                 <Text className="text-[13px]" style={{ color: palette.ink2, fontFamily: "Outfit_700Bold" }}>
@@ -408,16 +399,7 @@ const RecordsTab = ({ derived, profile, overallNow }: { derived: ReturnType<type
   return (
     <View>
       {/* Grade */}
-      <View className="mt-4 flex-row items-center gap-4 overflow-hidden rounded-[22px] p-4" style={{ borderWidth: 1, borderColor: palette.hairline }}>
-        <Svg style={StyleSheet.absoluteFill}>
-          <Defs>
-            <LinearGradient id="gradeBg" x1="0" y1="0" x2="1" y2="1">
-              <Stop offset="0" stopColor={palette.forestSoft} />
-              <Stop offset="1" stopColor={palette.card} />
-            </LinearGradient>
-          </Defs>
-          <Rect x="0" y="0" width="100%" height="100%" fill="url(#gradeBg)" />
-        </Svg>
+      <View className="mt-4 flex-row items-center gap-4 rounded-[22px] p-4" style={{ backgroundColor: palette.card, borderWidth: 1, borderColor: palette.hairline }}>
         <View
           className="h-[84px] w-[84px] items-center justify-center overflow-hidden rounded-full"
           style={{ shadowColor: palette.forestDeep, shadowOpacity: 0.3, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: 5 }}
