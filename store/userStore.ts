@@ -24,6 +24,10 @@ interface UserState extends UserProfile {
   setDashboardWidgetOrder: (order: DashboardWidget[]) => void;
   moveDashboardWidget: (widget: DashboardWidget, direction: "up" | "down") => void;
   signIn: (provider: AuthProvider, userName: string, userEmail: string) => void;
+  setUserName: (userName: string) => void;
+  // True only for the hidden dev/review login; gates demo & data tooling.
+  isDev: boolean;
+  setIsDev: (isDev: boolean) => void;
   signOut: () => void;
   reset: () => void;
   // First-run onboarding: false until the user finishes the get-started flow.
@@ -52,7 +56,8 @@ const initialUserState = {
   upgradePrompt: null as UpgradeTrigger | null,
   seenUpgradePrompts: [] as UpgradeTrigger[],
   onboarded: false,
-  viewedForecast: false
+  viewedForecast: false,
+  isDev: false
 };
 
 export const useUserStore = create<UserState>()(
@@ -86,12 +91,15 @@ export const useUserStore = create<UserState>()(
           userName,
           userEmail
         }),
+      setUserName: (userName) => set({ userName }),
+      setIsDev: (isDev) => set({ isDev }),
       signOut: () =>
         set({
           isAuthenticated: false,
           authProvider: null,
           userName: "",
-          userEmail: ""
+          userEmail: "",
+          isDev: false
         }),
       // Wipes the profile back to a fresh-install state (used by account deletion).
       reset: () => set({ ...initialUserState }),

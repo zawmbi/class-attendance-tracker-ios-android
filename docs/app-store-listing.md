@@ -23,6 +23,17 @@ Education
 ## Secondary Category (optional)
 Productivity
 
+## Copyright (App Information field)
+2026 Linda Mansour
+<!-- Apple's Copyright field = "<year> <rights holder>". Use your legal name as
+an Individual developer (matches the account "Linda Mansour"); if you later form
+a company, switch it to e.g. "2026 Zawmbi Productions LLC". No © symbol needed. -->
+
+## Apple Account / seller name
+Shown on the store as "Linda Mansour" (Individual account). To display a brand
+like "Zawmbi Productions" you'd convert to an Organization account (needs a
+D-U-N-S number) — separate from this Copyright field.
+
 ---
 
 ## Description (≤4000 chars)
@@ -63,10 +74,15 @@ First release of Attendize:
 
 ---
 
-## App Review Information → Notes (important — prevents login rejections)
-This app does not require an account to review. On the login screen, tap
-"Skip for now — explore the demo" to enter with sample classes and full access
-to every feature. No credentials needed.
+## App Review Information
+**Sign-In required:** Yes — provide this demo account (fill the Sign-In Information fields):
+- **Username:** `devtest`
+- **Password:** `devtestpassword`
+
+**Notes:** On the login screen, enter the username/password above to sign in.
+This loads sample classes and gives full access to every feature (it's a local
+demo login, so it works offline). Alternatively, "Skip for now — explore the
+demo" enters as a guest with the same sample data. No real account needed.
 
 ## Support URL (required)
 [your support page or a simple contact page URL]
