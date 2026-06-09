@@ -11,7 +11,7 @@ const getGoogleIosUrlScheme = () => {
 };
 
 const config: ExpoConfig = {
-  name: "Attendance Tracker",
+  name: "Attendize",
   slug: "attendance-tracker-app",
   scheme: "attendance-tracker",
   version: "1.0.0",
@@ -23,6 +23,7 @@ const config: ExpoConfig = {
   },
   plugins: [
     "expo-router",
+    "expo-font",
     "expo-notifications",
     "expo-web-browser",
     "expo-apple-authentication",
@@ -31,24 +32,27 @@ const config: ExpoConfig = {
       {
         iosUrlScheme: getGoogleIosUrlScheme()
       }
-    ]
+    ],
+    "./plugins/withFmtConstevalFix"
   ],
-  icon: "./AppLogo.png",
+  icon: "./assets/icon/attendize-icon-1024.png",
   ios: {
     supportsTablet: true,
     usesAppleSignIn: true,
     bundleIdentifier: "com.attendancetrackerappsorganization.attendancetrackerapp",
     googleServicesFile: "./GoogleService-Info.plist",
     infoPlist: {
-      ITSAppUsesNonExemptEncryption: false
+      ITSAppUsesNonExemptEncryption: false,
+      NSLocationWhenInUseUsageDescription:
+        "Attendize reminds you when you're near class. You can turn this off anytime."
     }
   },
   android: {
     package: "com.attendancetrackerappsorganization.attendancetrackerapp",
     googleServicesFile: "./google-services.json",
     adaptiveIcon: {
-      backgroundColor: "#F5F1E8",
-      foregroundImage: "./AppLogo.png"
+      backgroundColor: "#0F2820",
+      foregroundImage: "./assets/icon/attendize-icon-1024.png"
     }
   },
   extra: {

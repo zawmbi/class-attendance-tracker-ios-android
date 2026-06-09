@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+<defs>
+  <radialGradient id="fL" cx="42%" cy="34%" r="86%"><stop offset="0%" stop-color="#54836D"></stop><stop offset="48%" stop-color="#2C5443"></stop><stop offset="100%" stop-color="#0F2820"></stop></radialGradient>
+  <radialGradient id="hL" cx="50%" cy="47%" r="46%"><stop offset="0%" stop-color="#D89A3C" stop-opacity="0.34"></stop><stop offset="72%" stop-color="#D89A3C" stop-opacity="0"></stop></radialGradient>
+  <radialGradient id="vL" cx="50%" cy="50%" r="76%"><stop offset="68%" stop-color="#000" stop-opacity="0"></stop><stop offset="100%" stop-color="#000" stop-opacity="0.08"></stop></radialGradient>
+  <linearGradient id="sL" x1="0.1" y1="0" x2="0.4" y2="1"><stop offset="0%" stop-color="#fff" stop-opacity="0.16"></stop><stop offset="38%" stop-color="#fff" stop-opacity="0"></stop></linearGradient>
+  <filter id="gL"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch"></feTurbulence><feColorMatrix type="saturate" values="0"></feColorMatrix></filter>
+  </defs>
+  <rect width="1024" height="1024" fill="url(#fL)"></rect>
+  <rect width="1024" height="1024" fill="url(#hL)"></rect>
+  <rect width="1024" height="1024" fill="url(#vL)"></rect>
+  <rect width="1024" height="1024" filter="url(#gL)" opacity="0.06" style="mix-blend-mode:soft-light"></rect>
+  <rect width="1024" height="1024" fill="url(#sL)"></rect>
+</svg>

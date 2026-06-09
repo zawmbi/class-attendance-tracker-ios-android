@@ -9,7 +9,8 @@ import { DashboardWidget } from "@/utils/types";
 
 const labels: Record<DashboardWidget, { title: string; description: string }> = {
   actions: { title: "Quick actions", description: "Check In and Add Class buttons." },
-  momentum: { title: "Momentum", description: "Your current streak card." },
+  momentum: { title: "Momentum", description: "Your rank, XP, and current streak." },
+  trophies: { title: "Trophy Case", description: "Next badge progress and your level." },
   motivation: { title: "Motivation", description: "Supportive message block." },
   today: { title: "Today", description: "Classes scheduled for today." },
   more_classes: { title: "More Classes", description: "Your condensed class grid." }

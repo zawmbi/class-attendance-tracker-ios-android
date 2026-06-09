@@ -1,5 +1,6 @@
 import {
   createUserWithEmailAndPassword,
+  deleteUser,
   GoogleAuthProvider,
   OAuthProvider,
   signInWithEmailAndPassword,
@@ -84,5 +85,15 @@ export const authService = {
 
   logOut: async (): Promise<void> => {
     await signOut(auth);
+  },
+
+  // Permanently deletes the signed-in Firebase user (App Store Guideline
+  // 5.1.1(v) requires in-app account deletion for apps that create accounts).
+  // No-op for guest/demo sessions that never created a Firebase account.
+  deleteAccount: async (): Promise<void> => {
+    const current = auth.currentUser;
+    if (current) {
+      await deleteUser(current);
+    }
   }
 };

@@ -2,16 +2,31 @@ import "@/global.css";
 
 import { Stack } from "expo-router";
 import { useFonts } from "expo-font";
+import {
+  Fraunces_500Medium,
+  Fraunces_600SemiBold,
+  Fraunces_700Bold
+} from "@expo-google-fonts/fraunces";
+import {
+  Outfit_400Regular,
+  Outfit_500Medium,
+  Outfit_600SemiBold,
+  Outfit_700Bold,
+  Outfit_800ExtraBold
+} from "@expo-google-fonts/outfit";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import { ActivityIndicator, Text, TextInput, View } from "react-native";
 
-import { UpgradeModal } from "@/components/UpgradeModal";
 import { useUserStore } from "@/store/userStore";
 import { getPalette } from "@/theme";
 
+// Body/UI default font (Outfit). Hero numerals + rank names opt into the
+// Fraunces display serif via the `font-display` class.
+const BODY_FONT = "Outfit_400Regular";
+
 const applyGlobalTypography = () => {
-  const textStyle = { fontFamily: "Alice" };
+  const textStyle = { fontFamily: BODY_FONT };
   const TextComponent = Text as typeof Text & {
     defaultProps?: {
       style?: unknown;
@@ -32,15 +47,22 @@ const applyGlobalTypography = () => {
 export default function RootLayout() {
   const themeMode = useUserStore((state) => state.themeMode);
   const activePalette = getPalette(themeMode);
-  const [loaded] = useFonts({
-    Alice: require("../Alice/Alice-Regular.ttf")
+  const [loaded, error] = useFonts({
+    Fraunces_500Medium,
+    Fraunces_600SemiBold,
+    Fraunces_700Bold,
+    Outfit_400Regular,
+    Outfit_500Medium,
+    Outfit_600SemiBold,
+    Outfit_700Bold,
+    Outfit_800ExtraBold
   });
 
   useEffect(() => {
     applyGlobalTypography();
   }, []);
 
-  if (!loaded) {
+  if (!loaded && !error) {
     return (
       <View className="flex-1 items-center justify-center" style={{ backgroundColor: activePalette.background }}>
         <ActivityIndicator size="large" color={activePalette.primary} />
@@ -63,13 +85,13 @@ export default function RootLayout() {
         <Stack.Screen name="auth" />
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="premium" />
+        <Stack.Screen name="achievements" />
         <Stack.Screen name="dashboard/customize" />
         <Stack.Screen name="class/new" />
         <Stack.Screen name="class/edit/[id]" />
         <Stack.Screen name="class/[id]/record" />
         <Stack.Screen name="class/[id]" />
       </Stack>
-      <UpgradeModal />
     </>
   );
 }

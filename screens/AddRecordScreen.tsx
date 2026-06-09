@@ -19,7 +19,7 @@ export const AddRecordScreen = ({ classId }: { classId: string }) => {
 
   if (!classItem) {
     return (
-      <ScreenContainer>
+      <ScreenContainer wideMaxWidth={720}>
         <Text style={{ color: palette.primary }}>Class not found.</Text>
       </ScreenContainer>
     );
@@ -43,7 +43,7 @@ export const AddRecordScreen = ({ classId }: { classId: string }) => {
   };
 
   return (
-    <ScreenContainer>
+    <ScreenContainer wideMaxWidth={720}>
       <Link href={`/class/${classId}`} asChild>
         <Pressable
           className="mb-5 self-start rounded-full px-4 py-2.5"

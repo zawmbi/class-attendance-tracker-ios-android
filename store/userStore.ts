@@ -4,6 +4,17 @@ import { createJSONStorage, persist } from "zustand/middleware";
 
 import { AuthProvider, DashboardWidget, ThemeMode, ThemePreset, UpgradeTrigger, UserProfile } from "@/utils/types";
 
+// Canonical widget set + default order. Used to migrate persisted orders that
+// predate newer widgets (e.g. the trophy case) so nothing silently disappears.
+export const DASHBOARD_WIDGETS: DashboardWidget[] = [
+  "actions",
+  "momentum",
+  "trophies",
+  "motivation",
+  "today",
+  "more_classes"
+];
+
 interface UserState extends UserProfile {
   openUpgradeModal: (reason: UpgradeTrigger) => void;
   closeUpgradeModal: () => void;
@@ -14,24 +25,41 @@ interface UserState extends UserProfile {
   moveDashboardWidget: (widget: DashboardWidget, direction: "up" | "down") => void;
   signIn: (provider: AuthProvider, userName: string, userEmail: string) => void;
   signOut: () => void;
+  reset: () => void;
+  // First-run onboarding: false until the user finishes the get-started flow.
+  onboarded: boolean;
+  completeOnboarding: () => void;
+  // Drives the third get-started step; set the first time the forecast is opened.
+  viewedForecast: boolean;
+  markForecastViewed: () => void;
+  // Replays the first-run experience (used by "Start fresh" in Settings).
+  resetOnboarding: () => void;
   markPromptSeen: (reason: UpgradeTrigger) => void;
 }
+
+// Initial profile/data fields, reused by reset() on account deletion.
+const initialUserState = {
+  isPremium: true,
+  preferredTheme: "fern" as ThemePreset,
+  themeMode: "light" as ThemeMode,
+  isAuthenticated: false,
+  authProvider: null as AuthProvider | null,
+  userName: "",
+  userEmail: "",
+  dashboardWidgetOrder: [...DASHBOARD_WIDGETS],
+  usageDays: 6,
+  consistencyDays: 4,
+  upgradePrompt: null as UpgradeTrigger | null,
+  seenUpgradePrompts: [] as UpgradeTrigger[],
+  onboarded: false,
+  viewedForecast: false
+};
 
 export const useUserStore = create<UserState>()(
   persist(
     (set) => ({
-      isPremium: false,
-      preferredTheme: "fern",
-      themeMode: "light",
-      isAuthenticated: false,
-      authProvider: null,
-      userName: "",
-      userEmail: "",
-      dashboardWidgetOrder: ["actions", "momentum", "motivation", "today", "more_classes"],
-      usageDays: 6,
-      consistencyDays: 4,
-      upgradePrompt: null,
-      seenUpgradePrompts: [],
+      // All features are free (no in-app purchases). Premium is always on.
+      ...initialUserState,
       openUpgradeModal: (reason) =>
         set((state) => ({
           upgradePrompt: state.seenUpgradePrompts.includes(reason) ? state.upgradePrompt : reason
@@ -65,6 +93,11 @@ export const useUserStore = create<UserState>()(
           userName: "",
           userEmail: ""
         }),
+      // Wipes the profile back to a fresh-install state (used by account deletion).
+      reset: () => set({ ...initialUserState }),
+      completeOnboarding: () => set({ onboarded: true }),
+      markForecastViewed: () => set({ viewedForecast: true }),
+      resetOnboarding: () => set({ onboarded: false, viewedForecast: false }),
       markPromptSeen: (reason) =>
         set((state) => ({
           seenUpgradePrompts: state.seenUpgradePrompts.includes(reason)
@@ -74,7 +107,14 @@ export const useUserStore = create<UserState>()(
     }),
     {
       name: "attendance-user-storage",
-      storage: createJSONStorage(() => AsyncStorage)
+      storage: createJSONStorage(() => AsyncStorage),
+      // Force premium on for any install that predates the free-for-all switch,
+      // so no purchase/gated UI is ever shown.
+      onRehydrateStorage: () => (state) => {
+        if (state && !state.isPremium) {
+          state.isPremium = true;
+        }
+      }
     }
   )
 );

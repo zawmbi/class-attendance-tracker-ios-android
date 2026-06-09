@@ -22,7 +22,7 @@ export type UpgradeTrigger =
 export type ThemePreset = "fern" | "sage" | "sandstone";
 export type ThemeMode = "light" | "dark";
 export type AuthProvider = "email" | "google" | "apple";
-export type DashboardWidget = "actions" | "momentum" | "motivation" | "today" | "more_classes";
+export type DashboardWidget = "actions" | "momentum" | "trophies" | "motivation" | "today" | "more_classes";
 
 export interface ClassSchedule {
   day: Weekday;
