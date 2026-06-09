@@ -29,13 +29,16 @@ export const AchievementCelebration = () => {
   const [burst, setBurst] = useState(0);
 
   useEffect(() => {
+    const ids = new Set(unlocked.map((a) => a.id));
     if (seenRef.current === null) {
-      seenRef.current = new Set(unlocked.map((a) => a.id));
+      // First render baselines whatever's already unlocked (e.g. demo data).
+      seenRef.current = ids;
       return;
     }
     const fresh = unlocked.filter((a) => !seenRef.current!.has(a.id));
+    // Track the current set (so re-earning after a data reset celebrates again).
+    seenRef.current = ids;
     if (fresh.length > 0) {
-      fresh.forEach((a) => seenRef.current!.add(a.id));
       setQueue((q) => [...q, ...fresh]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
