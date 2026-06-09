@@ -24,6 +24,7 @@ interface UserState extends UserProfile {
   setDashboardWidgetOrder: (order: DashboardWidget[]) => void;
   moveDashboardWidget: (widget: DashboardWidget, direction: "up" | "down") => void;
   signIn: (provider: AuthProvider, userName: string, userEmail: string) => void;
+  setUserName: (userName: string) => void;
   signOut: () => void;
   reset: () => void;
   // First-run onboarding: false until the user finishes the get-started flow.
@@ -86,6 +87,7 @@ export const useUserStore = create<UserState>()(
           userName,
           userEmail
         }),
+      setUserName: (userName) => set({ userName }),
       signOut: () =>
         set({
           isAuthenticated: false,

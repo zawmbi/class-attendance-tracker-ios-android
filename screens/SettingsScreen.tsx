@@ -1,9 +1,11 @@
-import { PropsWithChildren, ReactNode, useMemo } from "react";
+import { PropsWithChildren, ReactNode, useMemo, useState } from "react";
 import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { Icon, IconName } from "@/components/Icon";
 import { Segmented } from "@/components/attenza/Segmented";
+import { Sheet } from "@/components/attenza/Sheet";
 import { Toggle } from "@/components/attenza/Toggle";
+import { FormInput } from "@/components/FormField";
 import { ScreenContainer } from "@/components/ScreenContainer";
 import { useAttendanceStore } from "@/store/attendanceStore";
 import { useUserStore } from "@/store/userStore";
@@ -115,7 +117,21 @@ const ChipRow = ({ label, options, value, onSelect, render, first }: {
 export const SettingsScreen = () => {
   const palette = useAppPalette();
   const { classes, records, settings, updateSettings, loadSampleData, reset: clearData } = useAttendanceStore();
-  const { themeMode, userName, setThemeMode, signOut, resetOnboarding } = useUserStore();
+  const { themeMode, userName, setThemeMode, setUserName, signOut, resetOnboarding } = useUserStore();
+  const [editingName, setEditingName] = useState(false);
+  const [nameDraft, setNameDraft] = useState("");
+
+  const openNameEdit = () => {
+    setNameDraft(userName);
+    setEditingName(true);
+  };
+  const saveName = () => {
+    const trimmed = nameDraft.trim();
+    if (trimmed) {
+      setUserName(trimmed);
+    }
+    setEditingName(false);
+  };
 
   const handleLoadSample = () => {
     Alert.alert(
@@ -180,7 +196,7 @@ export const SettingsScreen = () => {
       </Text>
 
       {/* Profile */}
-      <View className="mb-4 flex-row items-center gap-3.5 px-1">
+      <Pressable onPress={openNameEdit} className="mb-4 flex-row items-center gap-3.5 px-1">
         <View
           className="h-[62px] w-[62px] items-center justify-center rounded-full"
           style={{ backgroundColor: palette.forest, shadowColor: palette.forestDeep, shadowOpacity: 0.2, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 3 }}
@@ -195,7 +211,10 @@ export const SettingsScreen = () => {
             {profile.rank.title} · Level {profile.level}
           </Text>
         </View>
-      </View>
+        <View className="h-9 w-9 items-center justify-center rounded-full" style={{ backgroundColor: palette.card, borderWidth: 1, borderColor: palette.hairline }}>
+          <Icon name="edit" size={17} color={palette.ink2} stroke={2} />
+        </View>
+      </Pressable>
 
       {/* Appearance */}
       <Group header="Appearance">
@@ -281,6 +300,29 @@ export const SettingsScreen = () => {
       <Group footer="Permanently deletes your account and all data. This can't be undone.">
         <Row icon="close" iconBg={palette.absent} title="Delete account" danger onPress={confirmDeleteAccount} first />
       </Group>
+
+      <Sheet open={editingName} onClose={() => setEditingName(false)}>
+        <Text className="text-[13px] tracking-[0.5px]" style={{ color: palette.goldDeep, fontFamily: "Outfit_800ExtraBold" }}>
+          DISPLAY NAME
+        </Text>
+        <Text className="mb-4 mt-0.5 text-[19px]" style={{ color: palette.ink, fontFamily: "Outfit_800ExtraBold" }}>
+          Edit your nickname
+        </Text>
+        <FormInput
+          value={nameDraft}
+          onChangeText={setNameDraft}
+          placeholder="Your name"
+          autoFocus
+          returnKeyType="done"
+          onSubmitEditing={saveName}
+          maxLength={40}
+        />
+        <Pressable onPress={saveName} className="mt-4 items-center rounded-[16px] py-3.5" style={{ backgroundColor: palette.forest }}>
+          <Text className="text-[16px]" style={{ color: palette.onGradient, fontFamily: "Outfit_800ExtraBold" }}>
+            Save
+          </Text>
+        </Pressable>
+      </Sheet>
     </ScreenContainer>
   );
 };
