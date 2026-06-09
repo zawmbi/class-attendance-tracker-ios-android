@@ -85,7 +85,7 @@ demo login, so it works offline). Alternatively, "Skip for now — explore the
 demo" enters as a guest with the same sample data. No real account needed.
 
 ## Support URL (required)
-[your support page or a simple contact page URL]
+https://lindascomputing.xyz/class-attendance-tracker-ios-android/
 
 ## Marketing URL (optional)
 [optional]

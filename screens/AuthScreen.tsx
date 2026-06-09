@@ -97,7 +97,7 @@ export const AuthScreen = () => {
 
     // Hidden dev/review login (handed to Apple App Review). Local-only — bypasses
     // Firebase so it always works — and unlocks the demo & data tooling.
-    if (email.trim().toLowerCase() === "devtest" && password === "devtestpassword") {
+    if (email.trim().toLowerCase() === "devtest" && password.trim() === "devtestpassword") {
       loadSampleData();
       setIsDev(true);
       completeOnboarding();
@@ -200,18 +200,15 @@ export const AuthScreen = () => {
     <ScreenContainer>
       <View className="items-center pt-8">
         <View
-          className="h-[84px] w-[84px] items-center justify-center rounded-[26px]"
+          className="h-[84px] w-[84px] items-center justify-center overflow-hidden rounded-[24px]"
           style={{
-            backgroundColor: palette.surface,
-            borderWidth: 1,
-            borderColor: palette.border,
             shadowColor: palette.primary,
-            shadowOpacity: 0.12,
+            shadowOpacity: 0.2,
             shadowRadius: 18,
             shadowOffset: { width: 0, height: 10 }
           }}
         >
-          <Image source={require("../AppLogo.png")} style={{ width: 54, height: 54, resizeMode: "contain" }} />
+          <Image source={require("../assets/icon/attendize-icon-1024.png")} style={{ width: 84, height: 84 }} />
         </View>
         <Text className="mt-5 font-serif text-[36px] leading-[40px]" style={{ color: palette.primary }}>
           Attendize
@@ -253,7 +250,7 @@ export const AuthScreen = () => {
         ) : null}
 
         <FormField label="Email">
-          <FormInput value={email} onChangeText={setEmail} placeholder="you@example.com" autoCapitalize="none" />
+          <FormInput value={email} onChangeText={setEmail} placeholder="you@example.com" autoCapitalize="none" autoCorrect={false} />
         </FormField>
 
         <FormField label="Password">
