@@ -24,6 +24,15 @@ const config: ExpoConfig = {
   plugins: [
     "expo-router",
     "expo-font",
+    [
+      "expo-splash-screen",
+      {
+        image: "./assets/icon/attendize-icon-1024.png",
+        imageWidth: 180,
+        backgroundColor: "#0F2820",
+        dark: { image: "./assets/icon/attendize-icon-1024.png", backgroundColor: "#0F2820" }
+      }
+    ],
     "expo-notifications",
     "expo-web-browser",
     "expo-apple-authentication",
