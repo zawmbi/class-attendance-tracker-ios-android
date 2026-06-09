@@ -118,18 +118,9 @@ function Sidebar({ state, navigation }: BottomTabBarProps) {
       {/* Check in */}
       <Pressable
         onPress={() => navigation.navigate("check-in" as never)}
-        className="mt-4 flex-row items-center justify-center gap-2 overflow-hidden rounded-[16px] py-3.5"
-        style={{ shadowColor: palette.forestDeep, shadowOpacity: 0.3, shadowRadius: 14, shadowOffset: { width: 0, height: 8 }, elevation: 5 }}
+        className="mt-4 flex-row items-center justify-center gap-2 rounded-[16px] py-3.5"
+        style={{ backgroundColor: palette.forest, shadowColor: palette.forestDeep, shadowOpacity: 0.3, shadowRadius: 14, shadowOffset: { width: 0, height: 8 }, elevation: 5 }}
       >
-        <Svg style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }} width="100%" height="100%">
-          <Defs>
-            <LinearGradient id="sideCheckGrad" x1="0" y1="0" x2="0" y2="1">
-              <Stop offset="0" stopColor={palette.forest} />
-              <Stop offset="1" stopColor={palette.forestDeep} />
-            </LinearGradient>
-          </Defs>
-          <Rect x="0" y="0" width="100%" height="100%" fill="url(#sideCheckGrad)" />
-        </Svg>
         <Icon name="checkin" size={22} color="#fff" stroke={2} />
         <Text style={{ fontFamily: "Outfit_800ExtraBold", fontSize: 16, color: "#fff" }}>Check in</Text>
       </Pressable>
