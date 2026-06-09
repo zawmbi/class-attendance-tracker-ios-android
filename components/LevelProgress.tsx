@@ -55,19 +55,9 @@ export const LevelProgress = ({ profile, streak, compact = false }: LevelProgres
 
   return (
     <View
-      className="overflow-hidden rounded-[28px]"
-      style={[cardStyles, { borderRadius: 28 }]}
+      className="rounded-[28px]"
+      style={[cardStyles, { borderRadius: 28, backgroundColor: palette.gradientStart }]}
     >
-      <Svg style={StyleSheet.absoluteFill}>
-        <Defs>
-          <LinearGradient id="momentumGradient" x1="0" y1="0" x2="1" y2="1">
-            <Stop offset="0" stopColor={palette.gradientStart} />
-            <Stop offset="1" stopColor={palette.gradientEnd} />
-          </LinearGradient>
-        </Defs>
-        <Rect x="0" y="0" width="100%" height="100%" fill="url(#momentumGradient)" />
-      </Svg>
-
       <View className={compact ? "px-5 py-5" : "px-6 py-6"}>
         <View className="flex-row items-center justify-between">
           <Text className="text-[11px] uppercase tracking-[2px]" style={{ color: onColor, opacity: 0.7 }}>

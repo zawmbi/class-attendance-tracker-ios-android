@@ -122,23 +122,9 @@ export const InsightsScreen = () => {
       {isPremium ? (
         <Pressable
           onPress={() => router.push("/(tabs)/analytics")}
-          className="mb-5 overflow-hidden rounded-[22px] p-4"
-          style={{ shadowColor: palette.forestDeep, shadowOpacity: 0.3, shadowRadius: 20, shadowOffset: { width: 0, height: 12 }, elevation: 6 }}
+          className="mb-5 rounded-[22px] p-4"
+          style={{ backgroundColor: palette.forest, shadowColor: palette.forestDeep, shadowOpacity: 0.3, shadowRadius: 20, shadowOffset: { width: 0, height: 12 }, elevation: 6 }}
         >
-          <Svg style={StyleSheet.absoluteFill}>
-            <Defs>
-              <LinearGradient id="fcGrad" x1="0" y1="0" x2="1" y2="1">
-                <Stop offset="0" stopColor={palette.forest} />
-                <Stop offset="1" stopColor={palette.forestDeep} />
-              </LinearGradient>
-              <RadialGradient id="fcGlow" cx="85%" cy="0%" r="60%">
-                <Stop offset="0" stopColor={palette.gold} stopOpacity={0.22} />
-                <Stop offset="1" stopColor={palette.gold} stopOpacity={0} />
-              </RadialGradient>
-            </Defs>
-            <Rect x="0" y="0" width="100%" height="100%" fill="url(#fcGrad)" />
-            <Rect x="0" y="0" width="100%" height="100%" fill="url(#fcGlow)" />
-          </Svg>
           <View className="flex-row items-center gap-3">
             <View
               className="h-11 w-11 items-center justify-center rounded-[13px]"
@@ -160,23 +146,9 @@ export const InsightsScreen = () => {
       ) : (
         <Pressable
           onPress={() => router.push("/premium")}
-          className="mb-5 overflow-hidden rounded-[22px] p-4"
-          style={{ shadowColor: palette.forestDeep, shadowOpacity: 0.3, shadowRadius: 20, shadowOffset: { width: 0, height: 12 }, elevation: 6 }}
+          className="mb-5 rounded-[22px] p-4"
+          style={{ backgroundColor: palette.forestDeep, shadowColor: palette.forestDeep, shadowOpacity: 0.3, shadowRadius: 20, shadowOffset: { width: 0, height: 12 }, elevation: 6 }}
         >
-          <Svg style={StyleSheet.absoluteFill}>
-            <Defs>
-              <LinearGradient id="fcGradLocked" x1="0" y1="0" x2="1" y2="1">
-                <Stop offset="0" stopColor={palette.forestDeep} />
-                <Stop offset="1" stopColor={palette.forestDeep} />
-              </LinearGradient>
-              <RadialGradient id="fcGlowLocked" cx="85%" cy="0%" r="60%">
-                <Stop offset="0" stopColor={palette.gold} stopOpacity={0.22} />
-                <Stop offset="1" stopColor={palette.gold} stopOpacity={0} />
-              </RadialGradient>
-            </Defs>
-            <Rect x="0" y="0" width="100%" height="100%" fill="url(#fcGradLocked)" />
-            <Rect x="0" y="0" width="100%" height="100%" fill="url(#fcGlowLocked)" />
-          </Svg>
           <View className="flex-row items-center gap-3">
             <View className="h-11 w-11 items-center justify-center rounded-[13px]" style={{ backgroundColor: palette.gold }}>
               <Icon name="chart" size={24} color="#fff" stroke={2} />

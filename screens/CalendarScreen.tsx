@@ -140,7 +140,7 @@ export const CalendarScreen = () => {
                       className="flex-row items-center gap-3 rounded-[18px] p-3.5"
                       style={{ backgroundColor: palette.card, borderWidth: 1, borderColor: palette.hairline }}
                     >
-                      <Text className="w-12 text-[14px]" style={{ color: palette.ink2, fontFamily: "Outfit_800ExtraBold", fontVariant: ["tabular-nums"] }}>
+                      <Text numberOfLines={1} className="w-[72px] text-[12.5px]" style={{ color: palette.ink2, fontFamily: "Outfit_800ExtraBold" }}>
                         {formatTimeLabel(c.schedule.find((s) => s.day === selected)?.startTime ?? c.schedule[0]?.startTime ?? "09:00")}
                       </Text>
                       <View className="h-9 w-1 rounded-full" style={{ backgroundColor: c.color }} />

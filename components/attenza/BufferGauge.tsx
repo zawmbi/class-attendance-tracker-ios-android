@@ -60,54 +60,58 @@ export const BufferGauge = ({
     strokeDashoffset: fullArcLength * (1 - progress.value)
   }));
 
-  const height = size * 0.82;
-
   return (
-    <View style={{ width: size, height }}>
-      <Svg width={size} height={height}>
-        <Defs>
-          <LinearGradient id="bufferGrad" x1="0" y1="0" x2="1" y2="0">
-            <Stop offset="0" stopColor={palette.forest} />
-            <Stop offset="1" stopColor={tone} />
-          </LinearGradient>
-        </Defs>
-        <Path d={arc(1)} fill="none" stroke={palette.hairline} strokeWidth={13} strokeLinecap="round" />
-        <AnimatedPath
-          d={arc(1)}
-          fill="none"
-          stroke="url(#bufferGrad)"
-          strokeWidth={13}
-          strokeLinecap="round"
-          strokeDasharray={fullArcLength}
-          animatedProps={animatedProps}
-        />
-      </Svg>
-      <View style={{ position: "absolute", inset: 0, top: size * 0.06, alignItems: "center", justifyContent: "center" }}>
-        <Text
-          style={{
-            fontFamily: "Fraunces_600SemiBold",
-            fontSize: size * 0.32,
-            lineHeight: size * 0.32,
-            color: tone,
-            fontVariant: ["tabular-nums"]
-          }}
-        >
-          {canMiss}
-        </Text>
+    <View style={{ width: size, alignItems: "center" }}>
+      <View style={{ width: size, height: size }}>
+        <Svg width={size} height={size}>
+          <Defs>
+            <LinearGradient id="bufferGrad" x1="0" y1="0" x2="1" y2="0">
+              <Stop offset="0" stopColor={palette.forest} />
+              <Stop offset="1" stopColor={tone} />
+            </LinearGradient>
+          </Defs>
+          <Path d={arc(1)} fill="none" stroke={palette.hairline} strokeWidth={13} strokeLinecap="round" />
+          <AnimatedPath
+            d={arc(1)}
+            fill="none"
+            stroke="url(#bufferGrad)"
+            strokeWidth={13}
+            strokeLinecap="round"
+            strokeDasharray={fullArcLength}
+            animatedProps={animatedProps}
+          />
+        </Svg>
+        {/* Number sits at the arc's center; the label lives below the ring so it
+            can't be overrun by the lower arc. */}
+        <View style={{ position: "absolute", inset: 0, alignItems: "center", justifyContent: "center" }}>
+          <Text
+            style={{
+              fontFamily: "Fraunces_600SemiBold",
+              fontSize: size * 0.34,
+              lineHeight: size * 0.34,
+              color: tone,
+              fontVariant: ["tabular-nums"]
+            }}
+          >
+            {canMiss}
+          </Text>
+        </View>
+      </View>
+      {label ? (
         <Text
           style={{
             fontFamily: "Outfit_600SemiBold",
-            fontSize: size * 0.07,
+            fontSize: 12.5,
+            lineHeight: 16,
             color: palette.ink2,
-            maxWidth: size * 0.62,
             textAlign: "center",
-            lineHeight: size * 0.085,
-            marginTop: 4
+            marginTop: 4,
+            maxWidth: size + 28
           }}
         >
           {label}
         </Text>
-      </View>
+      ) : null}
     </View>
   );
 };

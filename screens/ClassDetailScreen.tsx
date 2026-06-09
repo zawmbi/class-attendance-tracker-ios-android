@@ -73,7 +73,7 @@ export const ClassDetailScreen = ({ classId }: { classId: string }) => {
   };
 
   return (
-    <ScreenContainer wideMaxWidth={720}>
+    <ScreenContainer wideMaxWidth={880}>
       {/* Back + edit */}
       <View className="mb-2 flex-row items-center justify-between">
         <Pressable
@@ -152,7 +152,7 @@ export const ClassDetailScreen = ({ classId }: { classId: string }) => {
         </View>
         <View style={{ width: 1, alignSelf: "stretch", backgroundColor: palette.hairline, marginVertical: 4 }} />
         <View className="flex-1 items-center">
-          <BufferGauge canMiss={derived.buffer} total={derived.allowed} size={158} label="more you can miss" />
+          <BufferGauge canMiss={derived.buffer} total={derived.allowed} size={124} label="more you can miss" />
         </View>
       </View>
 

@@ -124,14 +124,30 @@ export const appConfig = {
     "Your streak is building calm momentum.",
     "Every check-in is one less thing to worry about later."
   ],
+  // Distinct course colors spanning the hue wheel, with a few shades per family.
+  // All mid-to-deep tones so the white time-badge text stays legible on them.
   classColorOptions: [
-    "#2F5D50",
-    "#6B8F71",
-    "#7C8A6D",
-    "#A3B18A",
-    "#B7BE96",
-    "#D4A373",
-    "#C08457"
+    "#2F5D50", // spruce
+    "#3E7D5A", // emerald
+    "#6B8F71", // sage
+    "#2C7A7B", // teal
+    "#3AA39B", // turquoise
+    "#2B6CB0", // ocean blue
+    "#4C7BD9", // azure
+    "#3E5C9A", // indigo
+    "#6C5CB0", // violet
+    "#8E5BA8", // purple
+    "#B4467E", // magenta
+    "#C75B8A", // rose
+    "#B5453B", // brick
+    "#CC6A4E", // terracotta
+    "#C0703A", // pumpkin
+    "#D99A4E", // amber
+    "#C9A24B", // gold
+    "#9C7A3C", // bronze
+    "#8A5A3C", // cocoa
+    "#5A6B72", // slate
+    "#6E7F87" // steel
   ],
   earthyThemes: [
     {
