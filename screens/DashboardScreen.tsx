@@ -298,7 +298,7 @@ export const DashboardScreen = () => {
                   className="flex-row items-center px-4 py-3.5"
                   style={i > 0 ? { borderTopWidth: 1, borderTopColor: palette.border } : undefined}
                 >
-                  <Text className="w-14 text-[13px]" style={{ color: palette.ink2, fontFamily: "Outfit_600SemiBold" }}>
+                  <Text numberOfLines={1} className="w-[70px] text-[12.5px]" style={{ color: palette.ink2, fontFamily: "Outfit_600SemiBold" }}>
                     {formatTimeLabel(c.schedule[0]?.startTime ?? "09:00")}
                   </Text>
                   <View className="mr-3 h-9 w-1.5 rounded-full" style={{ backgroundColor: c.color }} />
