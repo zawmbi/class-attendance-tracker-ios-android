@@ -41,7 +41,7 @@ Attendize is not directed to children under 13, and we do not knowingly collect 
 We may update this policy; the "Last updated" date will change accordingly. Material changes will be reflected here.
 
 ## Contact
-Questions about this policy? Contact us at: **[your support email]**
+Questions about this policy? Contact us at: **support@zawmbi.com**
 
 <!--
 HOSTING: Publish this as a public URL (required by App Store Connect).
