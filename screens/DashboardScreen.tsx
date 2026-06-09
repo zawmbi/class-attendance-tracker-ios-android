@@ -128,17 +128,8 @@ export const DashboardScreen = () => {
     <View className="mt-2">
       <View
         className="rounded-[28px] p-6"
-        style={{ backgroundColor: palette.forestDeep, shadowColor: palette.forestDeep, shadowOpacity: 0.3, shadowRadius: 22, shadowOffset: { width: 0, height: 12 }, elevation: 6 }}
+        style={{ backgroundColor: palette.forest, shadowColor: palette.forestDeep, shadowOpacity: 0.3, shadowRadius: 22, shadowOffset: { width: 0, height: 12 }, elevation: 6 }}
       >
-        <Svg style={StyleSheet.absoluteFill}>
-          <Defs>
-            <LinearGradient id="welcomeGrad" x1="0" y1="0" x2="1" y2="1">
-              <Stop offset="0" stopColor={palette.forest} />
-              <Stop offset="1" stopColor={palette.forestDeep} />
-            </LinearGradient>
-          </Defs>
-          <Rect x="0" y="0" width="100%" height="100%" rx="28" ry="28" fill="url(#welcomeGrad)" />
-        </Svg>
         <View className="h-12 w-12 items-center justify-center rounded-[16px]" style={{ backgroundColor: "rgba(255,255,255,0.16)" }}>
           <Icon name="today" size={26} color="#fff" stroke={2} />
         </View>
@@ -199,7 +190,7 @@ export const DashboardScreen = () => {
         className="rounded-[28px]"
         style={{
           flex: wide ? 1 : undefined,
-          backgroundColor: palette.forestDeep,
+          backgroundColor: palette.forest,
           shadowColor: palette.forestDeep,
           shadowOpacity: 0.32,
           shadowRadius: 24,
@@ -207,17 +198,6 @@ export const DashboardScreen = () => {
           elevation: 6
         }}
       >
-        <Svg style={StyleSheet.absoluteFill}>
-          <Defs>
-            <LinearGradient id="heroGrad" x1="0" y1="0" x2="1" y2="1">
-              <Stop offset="0" stopColor={palette.forest} />
-              <Stop offset="0.7" stopColor={palette.forestDeep} />
-              <Stop offset="1" stopColor={palette.forestDeep} />
-            </LinearGradient>
-          </Defs>
-          <Rect x="0" y="0" width="100%" height="100%" rx="28" ry="28" fill="url(#heroGrad)" />
-        </Svg>
-
         <View className={wide ? "flex-1 justify-center p-7" : "p-5"}>
           <View className={wide ? "flex-row items-center" : "flex-row items-center"} style={wide ? { gap: 24 } : undefined}>
             <MomentumRing size={ringSize} {...ring} />

@@ -71,7 +71,7 @@ export const AchievementsScreen = () => {
       <View
         className="mb-6 rounded-[28px] p-5"
         style={{
-          backgroundColor: palette.forestDeep,
+          backgroundColor: palette.forest,
           shadowColor: palette.forestDeep,
           shadowOpacity: 0.32,
           shadowRadius: 24,
@@ -79,17 +79,6 @@ export const AchievementsScreen = () => {
           elevation: 6
         }}
       >
-        <Svg style={StyleSheet.absoluteFill}>
-          <Defs>
-            <LinearGradient id="rankGrad" x1="0" y1="0" x2="1" y2="1">
-              <Stop offset="0" stopColor={palette.forest} />
-              <Stop offset="0.7" stopColor={palette.forestDeep} />
-              <Stop offset="1" stopColor={palette.forestDeep} />
-            </LinearGradient>
-          </Defs>
-          <Rect x="0" y="0" width="100%" height="100%" rx="28" ry="28" fill="url(#rankGrad)" />
-        </Svg>
-
         <View className="flex-row items-center gap-3.5">
           <View
             className="h-16 w-16 items-center justify-center rounded-full"
