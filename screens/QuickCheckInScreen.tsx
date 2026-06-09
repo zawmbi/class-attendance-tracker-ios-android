@@ -173,6 +173,7 @@ export const QuickCheckInScreen = () => {
       <View className="mt-4 gap-3">
         {checkInClasses.map((c) => {
           const current = statusFor(c.id);
+          const [clock, meridiem] = formatTimeLabel(c.schedule[0]?.startTime ?? "09:00").split(" ");
           return (
             <View
               key={c.id}
@@ -185,9 +186,14 @@ export const QuickCheckInScreen = () => {
                   className="h-11 w-11 items-center justify-center rounded-[16px]"
                   style={{ backgroundColor: c.color }}
                 >
-                  <Text style={{ color: "#fff", fontFamily: "Outfit_800ExtraBold", fontSize: 12, fontVariant: ["tabular-nums"] }}>
-                    {formatTimeLabel(c.schedule[0]?.startTime ?? "09:00")}
+                  <Text style={{ color: "#fff", fontFamily: "Outfit_800ExtraBold", fontSize: 13, lineHeight: 15, fontVariant: ["tabular-nums"] }}>
+                    {clock}
                   </Text>
+                  {meridiem ? (
+                    <Text style={{ color: "#fff", fontFamily: "Outfit_700Bold", fontSize: 8, lineHeight: 9, opacity: 0.9 }}>
+                      {meridiem}
+                    </Text>
+                  ) : null}
                 </View>
                 <View className="flex-1">
                   <Text numberOfLines={1} className="text-[16px]" style={{ color: palette.ink, fontFamily: "Outfit_700Bold" }}>

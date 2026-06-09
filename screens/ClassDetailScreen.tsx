@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link, useRouter } from "expo-router";
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
+import { Alert, Pressable, Text, View } from "react-native";
 
 import { Icon, IconName } from "@/components/Icon";
 import { BufferGauge } from "@/components/attenza/BufferGauge";
@@ -181,16 +180,7 @@ export const ClassDetailScreen = ({ classId }: { classId: string }) => {
       </View>
 
       {/* Projection */}
-      <View className="mb-4 overflow-hidden rounded-[22px] p-4" style={{ borderWidth: 1, borderColor: palette.hairline }}>
-        <Svg style={StyleSheet.absoluteFill}>
-          <Defs>
-            <LinearGradient id="projGrad" x1="0" y1="0" x2="1" y2="1">
-              <Stop offset="0" stopColor={palette.forestSoft} />
-              <Stop offset="1" stopColor={palette.card} />
-            </LinearGradient>
-          </Defs>
-          <Rect x="0" y="0" width="100%" height="100%" fill="url(#projGrad)" />
-        </Svg>
+      <View className="mb-4 rounded-[22px] p-4" style={{ backgroundColor: palette.card, borderWidth: 1, borderColor: palette.hairline }}>
         <View className="mb-2 flex-row items-center gap-2">
           <Icon name="chart" size={19} color={palette.forest} stroke={2} />
           <Text className="text-[14.5px]" style={{ color: palette.forest, fontFamily: "Outfit_800ExtraBold" }}>
