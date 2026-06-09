@@ -11,13 +11,13 @@ import { ScreenContainer } from "@/components/ScreenContainer";
 import { useAttendanceStore } from "@/store/attendanceStore";
 import { useGamificationStore } from "@/store/gamificationStore";
 import { useAppPalette } from "@/theme/useAppPalette";
-import { useIsTwoColumn } from "@/theme/responsive";
+import { useIsWide } from "@/theme/responsive";
 import { Achievement, RANKS, getGamificationProfile, tierColor } from "@/utils/gamification";
 
 export const AchievementsScreen = () => {
   const palette = useAppPalette();
   const router = useRouter();
-  const wide = useIsTwoColumn();
+  const wide = useIsWide();
   const { classes, records, settings } = useAttendanceStore();
   const { acknowledgedAchievements, acknowledgeAchievements } = useGamificationStore();
   const [selected, setSelected] = useState<Achievement | null>(null);
@@ -172,7 +172,7 @@ export const AchievementsScreen = () => {
 
       <View className="flex-row flex-wrap" style={{ marginHorizontal: -5 }}>
         {ordered.map((badge) => (
-          <View key={badge.id} style={{ width: wide ? "16.666%" : "33.333%", paddingHorizontal: 5, marginBottom: 12 }}>
+          <View key={badge.id} style={{ width: wide ? "16.666%" : "33.333%", paddingHorizontal: 6, marginBottom: 14 }}>
             <Pressable onPress={() => setSelected(badge)}>
               <View
                 className="items-center justify-center rounded-[22px]"
@@ -183,7 +183,7 @@ export const AchievementsScreen = () => {
                   borderColor: badge.unlocked ? `${tierColor(badge.tier)}55` : palette.hairline
                 }}
               >
-                <BadgeMedallion emoji={badge.glyph} tier={badge.tier} size={52} unlocked={badge.unlocked} />
+                <BadgeMedallion emoji={badge.glyph} tier={badge.tier} size={wide ? 60 : 52} unlocked={badge.unlocked} />
                 {!badge.unlocked && badge.progress > 0 ? (
                   <View style={{ position: "absolute", bottom: 8, left: 12, right: 12 }}>
                     <Meter value={badge.progress} tone={palette.goldDeep} height={4} />
