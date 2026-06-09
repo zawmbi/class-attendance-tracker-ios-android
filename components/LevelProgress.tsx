@@ -55,8 +55,8 @@ export const LevelProgress = ({ profile, streak, compact = false }: LevelProgres
 
   return (
     <View
-      className="overflow-hidden rounded-[28px]"
-      style={[cardStyles, { borderRadius: 28 }]}
+      className="rounded-[28px]"
+      style={[cardStyles, { borderRadius: 28, backgroundColor: palette.gradientEnd }]}
     >
       <Svg style={StyleSheet.absoluteFill}>
         <Defs>

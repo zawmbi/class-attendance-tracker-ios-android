@@ -127,8 +127,8 @@ export const DashboardScreen = () => {
   const welcomeBlock = (
     <View className="mt-2">
       <View
-        className="overflow-hidden rounded-[28px] p-6"
-        style={{ shadowColor: palette.forestDeep, shadowOpacity: 0.3, shadowRadius: 22, shadowOffset: { width: 0, height: 12 }, elevation: 6 }}
+        className="rounded-[28px] p-6"
+        style={{ backgroundColor: palette.forestDeep, shadowColor: palette.forestDeep, shadowOpacity: 0.3, shadowRadius: 22, shadowOffset: { width: 0, height: 12 }, elevation: 6 }}
       >
         <Svg style={StyleSheet.absoluteFill}>
           <Defs>
@@ -196,9 +196,10 @@ export const DashboardScreen = () => {
   const heroBlock = (
     <Link href={"/achievements" as Href} asChild>
       <Pressable
-        className="overflow-hidden rounded-[28px]"
+        className="rounded-[28px]"
         style={{
           flex: wide ? 1 : undefined,
+          backgroundColor: palette.forestDeep,
           shadowColor: palette.forestDeep,
           shadowOpacity: 0.32,
           shadowRadius: 24,

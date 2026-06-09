@@ -69,8 +69,9 @@ export const AchievementsScreen = () => {
 
       {/* Rank card */}
       <View
-        className="mb-6 overflow-hidden rounded-[28px] p-5"
+        className="mb-6 rounded-[28px] p-5"
         style={{
+          backgroundColor: palette.forestDeep,
           shadowColor: palette.forestDeep,
           shadowOpacity: 0.32,
           shadowRadius: 24,

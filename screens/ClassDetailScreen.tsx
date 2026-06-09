@@ -73,7 +73,7 @@ export const ClassDetailScreen = ({ classId }: { classId: string }) => {
   };
 
   return (
-    <ScreenContainer wideMaxWidth={720}>
+    <ScreenContainer wideMaxWidth={880}>
       {/* Back + edit */}
       <View className="mb-2 flex-row items-center justify-between">
         <Pressable

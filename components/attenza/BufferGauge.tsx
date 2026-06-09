@@ -60,7 +60,7 @@ export const BufferGauge = ({
     strokeDashoffset: fullArcLength * (1 - progress.value)
   }));
 
-  const height = size * 0.82;
+  const height = size;
 
   return (
     <View style={{ width: size, height }}>
