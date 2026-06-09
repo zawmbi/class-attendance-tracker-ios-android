@@ -32,6 +32,8 @@ interface UserState extends UserProfile {
   // Drives the third get-started step; set the first time the forecast is opened.
   viewedForecast: boolean;
   markForecastViewed: () => void;
+  // Replays the first-run experience (used by "Start fresh" in Settings).
+  resetOnboarding: () => void;
   markPromptSeen: (reason: UpgradeTrigger) => void;
 }
 
@@ -95,6 +97,7 @@ export const useUserStore = create<UserState>()(
       reset: () => set({ ...initialUserState }),
       completeOnboarding: () => set({ onboarded: true }),
       markForecastViewed: () => set({ viewedForecast: true }),
+      resetOnboarding: () => set({ onboarded: false, viewedForecast: false }),
       markPromptSeen: (reason) =>
         set((state) => ({
           seenUpgradePrompts: state.seenUpgradePrompts.includes(reason)

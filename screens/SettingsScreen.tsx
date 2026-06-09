@@ -114,8 +114,37 @@ const ChipRow = ({ label, options, value, onSelect, render, first }: {
 
 export const SettingsScreen = () => {
   const palette = useAppPalette();
-  const { classes, records, settings, updateSettings } = useAttendanceStore();
-  const { themeMode, userName, setThemeMode, signOut } = useUserStore();
+  const { classes, records, settings, updateSettings, loadSampleData, reset: clearData } = useAttendanceStore();
+  const { themeMode, userName, setThemeMode, signOut, resetOnboarding } = useUserStore();
+
+  const handleLoadSample = () => {
+    Alert.alert(
+      "Load sample data?",
+      "This replaces your current classes and records with the demo set so you can explore a populated app.",
+      [
+        { text: "Cancel", style: "cancel" },
+        { text: "Load demo", onPress: () => loadSampleData() }
+      ]
+    );
+  };
+
+  const handleClearData = () => {
+    Alert.alert(
+      "Start fresh?",
+      "This removes all your classes and records and restarts the get-started flow — as if it were a brand-new account. This can't be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Clear data",
+          style: "destructive",
+          onPress: () => {
+            clearData();
+            resetOnboarding();
+          }
+        }
+      ]
+    );
+  };
   const profile = useMemo(() => getGamificationProfile(classes, records, settings), [classes, records, settings]);
   const initial = (userName || "A").trim().charAt(0).toUpperCase();
 
@@ -238,6 +267,11 @@ export const SettingsScreen = () => {
       <Group header="General">
         <Row icon="book" iconBg={palette.ink2} title="Help & feedback" onPress={() => {}} first />
         <Row icon="laurel" iconBg={palette.goldDeep} title="About Attendize" detail="v1.0" />
+      </Group>
+
+      <Group header="Demo & data" footer="Switch between the demo set and a clean start to test both new-user and populated states.">
+        <Row icon="sparkles" iconBg={palette.goldDeep} title="Load sample data" onPress={handleLoadSample} first />
+        <Row icon="trash" iconBg={palette.absent} title="Clear all data & start fresh" danger onPress={handleClearData} />
       </Group>
 
       <Group footer="Signs you out of this device.">
