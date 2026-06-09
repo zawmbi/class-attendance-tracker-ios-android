@@ -173,7 +173,6 @@ export const QuickCheckInScreen = () => {
       <View className="mt-4 gap-3">
         {checkInClasses.map((c) => {
           const current = statusFor(c.id);
-          const [clock, meridiem] = formatTimeLabel(c.schedule[0]?.startTime ?? "09:00").split(" ");
           return (
             <View
               key={c.id}
@@ -183,24 +182,18 @@ export const QuickCheckInScreen = () => {
               {gain?.id === c.id ? <XpFloat amount={gain.amount} trigger={gain.nonce} /> : null}
               <View className="mb-3.5 flex-row items-center gap-3">
                 <View
-                  className="h-11 w-11 items-center justify-center rounded-[16px]"
+                  className="h-11 w-11 items-center justify-center rounded-[14px]"
                   style={{ backgroundColor: c.color }}
                 >
-                  <Text style={{ color: "#fff", fontFamily: "Outfit_800ExtraBold", fontSize: 13, lineHeight: 15, fontVariant: ["tabular-nums"] }}>
-                    {clock}
-                  </Text>
-                  {meridiem ? (
-                    <Text style={{ color: "#fff", fontFamily: "Outfit_700Bold", fontSize: 8, lineHeight: 9, opacity: 0.9 }}>
-                      {meridiem}
-                    </Text>
-                  ) : null}
+                  <Icon name="clock" size={22} color="#fff" stroke={2} />
                 </View>
                 <View className="flex-1">
                   <Text numberOfLines={1} className="text-[16px]" style={{ color: palette.ink, fontFamily: "Outfit_700Bold" }}>
                     {c.name}
                   </Text>
-                  <Text className="text-[13px]" style={{ color: palette.ink3, fontFamily: "Outfit_600SemiBold" }}>
-                    {c.sectionLabel ? `${c.sectionLabel} · ` : ""}Room {c.room}
+                  <Text numberOfLines={1} className="text-[13px]" style={{ color: palette.ink3, fontFamily: "Outfit_600SemiBold" }}>
+                    {formatTimeLabel(c.schedule[0]?.startTime ?? "09:00")}
+                    {c.sectionLabel ? ` · ${c.sectionLabel}` : ""} · Room {c.room}
                   </Text>
                 </View>
               </View>

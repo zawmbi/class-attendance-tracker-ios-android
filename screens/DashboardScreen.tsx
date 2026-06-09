@@ -12,10 +12,10 @@ import { GetStartedChecklist, ChecklistStep } from "@/components/GetStartedCheck
 import { useAttendanceStore } from "@/store/attendanceStore";
 import { useUserStore } from "@/store/userStore";
 import { useAppPalette } from "@/theme/useAppPalette";
-import { useIsWide } from "@/theme/responsive";
+import { useIsWide, useIsTwoColumn } from "@/theme/responsive";
 import { getAttendanceSummary } from "@/utils/attendance";
-import { XP_PER_STATUS, getGamificationProfile } from "@/utils/gamification";
-import { achievementIcon, deriveClass, ringPropsFromProfile } from "@/utils/attenza";
+import { XP_PER_STATUS, getGamificationProfile, tierColor } from "@/utils/gamification";
+import { deriveClass, ringPropsFromProfile } from "@/utils/attenza";
 import { BadgeMedallion } from "@/components/attenza/BadgeMedallion";
 import { formatTimeLabel, isClassToday } from "@/utils/date";
 
@@ -82,7 +82,10 @@ export const DashboardScreen = () => {
   const unlockedBadges = profile.achievements.filter((b) => b.unlocked);
   const firstName = userName ? userName.split(" ")[0] : "there";
   const initial = (userName || "A").trim().charAt(0).toUpperCase();
-  const wide = useIsWide();
+  // `wide` drives the multi-column hero/grid layout (needs real width); `sidebar`
+  // just means the tablet sidebar is present (so we hide the redundant avatar).
+  const wide = useIsTwoColumn();
+  const sidebar = useIsWide();
   const ringSize = wide ? 168 : 132;
 
   // Auto-complete onboarding once all three get-started steps are satisfied.
@@ -134,7 +137,7 @@ export const DashboardScreen = () => {
               <Stop offset="1" stopColor={palette.forestDeep} />
             </LinearGradient>
           </Defs>
-          <Rect x="0" y="0" width="100%" height="100%" fill="url(#welcomeGrad)" />
+          <Rect x="0" y="0" width="100%" height="100%" rx="28" ry="28" fill="url(#welcomeGrad)" />
         </Svg>
         <View className="h-12 w-12 items-center justify-center rounded-[16px]" style={{ backgroundColor: "rgba(255,255,255,0.16)" }}>
           <Icon name="today" size={26} color="#fff" stroke={2} />
@@ -180,7 +183,7 @@ export const DashboardScreen = () => {
           {greeting()}, {firstName}
         </Text>
       </View>
-      {wide ? null : (
+      {sidebar ? null : (
         <Link href="/(tabs)/settings" asChild>
           <Pressable className="h-12 w-12 items-center justify-center rounded-full" style={{ backgroundColor: palette.forest }}>
             <Text style={{ color: palette.onGradient, fontFamily: "Outfit_700Bold", fontSize: 18 }}>{initial}</Text>
@@ -211,7 +214,7 @@ export const DashboardScreen = () => {
               <Stop offset="1" stopColor={palette.forestDeep} />
             </LinearGradient>
           </Defs>
-          <Rect x="0" y="0" width="100%" height="100%" fill="url(#heroGrad)" />
+          <Rect x="0" y="0" width="100%" height="100%" rx="28" ry="28" fill="url(#heroGrad)" />
         </Svg>
 
         <View className={wide ? "flex-1 justify-center p-7" : "p-5"}>
@@ -353,9 +356,9 @@ export const DashboardScreen = () => {
             <View key={b.id} className="items-center" style={{ width: 92 }}>
               <View
                 className="h-[92px] w-[92px] items-center justify-center rounded-[22px]"
-                style={{ backgroundColor: palette.goldSoft, borderWidth: 1, borderColor: palette.hairline }}
+                style={{ backgroundColor: `${tierColor(b.tier)}22`, borderWidth: 1, borderColor: `${tierColor(b.tier)}55` }}
               >
-                <BadgeMedallion icon={achievementIcon(b.id)} size={56} />
+                <BadgeMedallion emoji={b.glyph} tier={b.tier} size={56} />
               </View>
               <Text numberOfLines={2} className="mt-1.5 text-center text-[12px]" style={{ color: palette.ink, fontFamily: "Outfit_700Bold" }}>
                 {b.title}
@@ -367,7 +370,7 @@ export const DashboardScreen = () => {
     ) : null;
 
   return (
-    <ScreenContainer maxWidth={wide ? 1180 : 460}>
+    <ScreenContainer maxWidth={wide ? 1180 : sidebar ? 600 : 460}>
       {greetingBlock}
       {!hasClasses ? (
         welcomeBlock

@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Defs, LinearGradient, Path, Rect, Stop } from "react-native-svg";
 
 import { Icon, IconName } from "@/components/Icon";
+import { AchievementCelebration } from "@/components/AchievementCelebration";
 import { useAttendanceStore } from "@/store/attendanceStore";
 import { useUserStore } from "@/store/userStore";
 import { useAppPalette } from "@/theme/useAppPalette";
@@ -263,19 +264,22 @@ export default function TabsLayout() {
   }
 
   return (
-    <Tabs
-      tabBar={(props) => <ResponsiveTabBar {...props} />}
-      screenOptions={{
-        headerShown: false,
-        sceneStyle: { backgroundColor: palette.background, paddingLeft: wide ? 248 : 0 }
-      }}
-    >
-      <Tabs.Screen name="dashboard" options={{ title: "Today" }} />
-      <Tabs.Screen name="calendar" options={{ title: "Calendar" }} />
-      <Tabs.Screen name="check-in" options={{ title: "Check-In" }} />
-      <Tabs.Screen name="insights" options={{ title: "Insights" }} />
-      <Tabs.Screen name="analytics" options={{ title: "Analytics", href: null }} />
-      <Tabs.Screen name="settings" options={{ title: "Settings", href: null }} />
-    </Tabs>
+    <>
+      <Tabs
+        tabBar={(props) => <ResponsiveTabBar {...props} />}
+        screenOptions={{
+          headerShown: false,
+          sceneStyle: { backgroundColor: palette.background, paddingLeft: wide ? 248 : 0 }
+        }}
+      >
+        <Tabs.Screen name="dashboard" options={{ title: "Today" }} />
+        <Tabs.Screen name="calendar" options={{ title: "Calendar" }} />
+        <Tabs.Screen name="check-in" options={{ title: "Check-In" }} />
+        <Tabs.Screen name="insights" options={{ title: "Insights" }} />
+        <Tabs.Screen name="analytics" options={{ title: "Analytics", href: null }} />
+        <Tabs.Screen name="settings" options={{ title: "Settings", href: null }} />
+      </Tabs>
+      <AchievementCelebration />
+    </>
   );
 }

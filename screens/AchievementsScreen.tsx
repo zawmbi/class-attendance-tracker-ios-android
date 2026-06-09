@@ -11,14 +11,13 @@ import { ScreenContainer } from "@/components/ScreenContainer";
 import { useAttendanceStore } from "@/store/attendanceStore";
 import { useGamificationStore } from "@/store/gamificationStore";
 import { useAppPalette } from "@/theme/useAppPalette";
-import { useIsWide } from "@/theme/responsive";
-import { achievementIcon } from "@/utils/attenza";
-import { Achievement, RANKS, getGamificationProfile } from "@/utils/gamification";
+import { useIsTwoColumn } from "@/theme/responsive";
+import { Achievement, RANKS, getGamificationProfile, tierColor } from "@/utils/gamification";
 
 export const AchievementsScreen = () => {
   const palette = useAppPalette();
   const router = useRouter();
-  const wide = useIsWide();
+  const wide = useIsTwoColumn();
   const { classes, records, settings } = useAttendanceStore();
   const { acknowledgedAchievements, acknowledgeAchievements } = useGamificationStore();
   const [selected, setSelected] = useState<Achievement | null>(null);
@@ -87,7 +86,7 @@ export const AchievementsScreen = () => {
               <Stop offset="1" stopColor={palette.forestDeep} />
             </LinearGradient>
           </Defs>
-          <Rect x="0" y="0" width="100%" height="100%" fill="url(#rankGrad)" />
+          <Rect x="0" y="0" width="100%" height="100%" rx="28" ry="28" fill="url(#rankGrad)" />
         </Svg>
 
         <View className="flex-row items-center gap-3.5">
@@ -178,12 +177,12 @@ export const AchievementsScreen = () => {
                 className="items-center justify-center rounded-[22px]"
                 style={{
                   aspectRatio: 1,
-                  backgroundColor: badge.unlocked ? palette.goldSoft : palette.paper2,
+                  backgroundColor: badge.unlocked ? `${tierColor(badge.tier)}22` : palette.paper2,
                   borderWidth: 1,
-                  borderColor: palette.hairline
+                  borderColor: badge.unlocked ? `${tierColor(badge.tier)}55` : palette.hairline
                 }}
               >
-                <BadgeMedallion icon={achievementIcon(badge.id)} size={52} unlocked={badge.unlocked} />
+                <BadgeMedallion emoji={badge.glyph} tier={badge.tier} size={52} unlocked={badge.unlocked} />
                 {!badge.unlocked && badge.progress > 0 ? (
                   <View style={{ position: "absolute", bottom: 8, left: 12, right: 12 }}>
                     <Meter value={badge.progress} tone={palette.goldDeep} height={4} />
@@ -207,7 +206,7 @@ export const AchievementsScreen = () => {
         {selected ? (
           <View className="items-center">
             <View className="mb-3.5">
-              <BadgeMedallion icon={achievementIcon(selected.id)} size={90} unlocked={selected.unlocked} />
+              <BadgeMedallion emoji={selected.glyph} tier={selected.tier} size={90} unlocked={selected.unlocked} />
             </View>
             <Text className="text-[12.5px] tracking-[1px]" style={{ color: palette.goldDeep, fontFamily: "Outfit_800ExtraBold" }}>
               {selected.tier.toUpperCase()}

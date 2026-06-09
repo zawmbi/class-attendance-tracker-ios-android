@@ -65,7 +65,7 @@ export const LevelProgress = ({ profile, streak, compact = false }: LevelProgres
             <Stop offset="1" stopColor={palette.gradientEnd} />
           </LinearGradient>
         </Defs>
-        <Rect x="0" y="0" width="100%" height="100%" fill="url(#momentumGradient)" />
+        <Rect x="0" y="0" width="100%" height="100%" rx="28" ry="28" fill="url(#momentumGradient)" />
       </Svg>
 
       <View className={compact ? "px-5 py-5" : "px-6 py-6"}>

@@ -136,8 +136,8 @@ export const InsightsScreen = () => {
                 <Stop offset="1" stopColor={palette.gold} stopOpacity={0} />
               </RadialGradient>
             </Defs>
-            <Rect x="0" y="0" width="100%" height="100%" fill="url(#fcGrad)" />
-            <Rect x="0" y="0" width="100%" height="100%" fill="url(#fcGlow)" />
+            <Rect x="0" y="0" width="100%" height="100%" rx="22" ry="22" fill="url(#fcGrad)" />
+            <Rect x="0" y="0" width="100%" height="100%" rx="22" ry="22" fill="url(#fcGlow)" />
           </Svg>
           <View className="flex-row items-center gap-3">
             <View
@@ -174,8 +174,8 @@ export const InsightsScreen = () => {
                 <Stop offset="1" stopColor={palette.gold} stopOpacity={0} />
               </RadialGradient>
             </Defs>
-            <Rect x="0" y="0" width="100%" height="100%" fill="url(#fcGradLocked)" />
-            <Rect x="0" y="0" width="100%" height="100%" fill="url(#fcGlowLocked)" />
+            <Rect x="0" y="0" width="100%" height="100%" rx="22" ry="22" fill="url(#fcGradLocked)" />
+            <Rect x="0" y="0" width="100%" height="100%" rx="22" ry="22" fill="url(#fcGlowLocked)" />
           </Svg>
           <View className="flex-row items-center gap-3">
             <View className="h-11 w-11 items-center justify-center rounded-[13px]" style={{ backgroundColor: palette.gold }}>
