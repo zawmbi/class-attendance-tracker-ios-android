@@ -41,6 +41,7 @@ export const AuthScreen = () => {
   const palette = useAppPalette();
   const signIn = useUserStore((state) => state.signIn);
   const completeOnboarding = useUserStore((state) => state.completeOnboarding);
+  const setIsDev = useUserStore((state) => state.setIsDev);
   const loadSampleData = useAttendanceStore((state) => state.loadSampleData);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -91,6 +92,16 @@ export const AuthScreen = () => {
   const handleEmail = async () => {
     if (!email.trim() || !password.trim()) {
       Alert.alert("Missing info", "Enter both your email and password.");
+      return;
+    }
+
+    // Hidden dev/review login (handed to Apple App Review). Local-only — bypasses
+    // Firebase so it always works — and unlocks the demo & data tooling.
+    if (email.trim().toLowerCase() === "devtest" && password === "devtestpassword") {
+      loadSampleData();
+      setIsDev(true);
+      completeOnboarding();
+      completeSignIn("email", "Dev", "devtest");
       return;
     }
 

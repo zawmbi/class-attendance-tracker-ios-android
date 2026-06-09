@@ -117,7 +117,7 @@ const ChipRow = ({ label, options, value, onSelect, render, first }: {
 export const SettingsScreen = () => {
   const palette = useAppPalette();
   const { classes, records, settings, updateSettings, loadSampleData, reset: clearData } = useAttendanceStore();
-  const { themeMode, userName, setThemeMode, setUserName, signOut, resetOnboarding } = useUserStore();
+  const { themeMode, userName, setThemeMode, setUserName, signOut, resetOnboarding, isDev } = useUserStore();
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState("");
 
@@ -288,10 +288,12 @@ export const SettingsScreen = () => {
         <Row icon="laurel" iconBg={palette.goldDeep} title="About Attendize" detail="v1.0" />
       </Group>
 
-      <Group header="Demo & data" footer="Switch between the demo set and a clean start to test both new-user and populated states.">
-        <Row icon="sparkles" iconBg={palette.goldDeep} title="Load sample data" onPress={handleLoadSample} first />
-        <Row icon="trash" iconBg={palette.absent} title="Clear all data & start fresh" danger onPress={handleClearData} />
-      </Group>
+      {isDev ? (
+        <Group header="Demo & data (dev)" footer="Only visible on the dev login. Switch between the demo set and a clean start to test both new-user and populated states.">
+          <Row icon="sparkles" iconBg={palette.goldDeep} title="Load sample data" onPress={handleLoadSample} first />
+          <Row icon="trash" iconBg={palette.absent} title="Clear all data & start fresh" danger onPress={handleClearData} />
+        </Group>
+      ) : null}
 
       <Group footer="Signs you out of this device.">
         <Row icon="back" iconBg={palette.absent} title="Sign out" danger onPress={signOut} first />
