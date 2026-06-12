@@ -1,3 +1,4 @@
+import { useRouter } from "expo-router";
 import { Modal, Pressable, Text, View } from "react-native";
 
 import { cardStyles } from "@/theme";
@@ -33,14 +34,21 @@ const copyByReason: Record<UpgradeTrigger, { title: string; body: string }> = {
 };
 
 export const UpgradeModal = () => {
+  const router = useRouter();
   const palette = useAppPalette();
-  const { upgradePrompt, closeUpgradeModal, upgradeToPremium, markPromptSeen } = useUserStore();
+  const { upgradePrompt, closeUpgradeModal, markPromptSeen } = useUserStore();
 
   if (!upgradePrompt) {
     return null;
   }
 
   const copy = copyByReason[upgradePrompt];
+
+  const seePlans = () => {
+    markPromptSeen(upgradePrompt);
+    closeUpgradeModal();
+    router.push("/premium");
+  };
 
   return (
     <Modal animationType="fade" transparent visible onRequestClose={closeUpgradeModal}>
@@ -49,20 +57,17 @@ export const UpgradeModal = () => {
         <View className="px-4 pb-8">
           <View className="self-center h-1.5 w-12 rounded-full" style={{ backgroundColor: `${palette.primary}33` }} />
           <View className="mt-3 w-full rounded-[32px] px-6 py-7" style={[cardStyles, { maxWidth: 460, alignSelf: "center", backgroundColor: palette.background, borderColor: palette.border, borderWidth: 1 }]}>
-            <Text className="text-center text-xs uppercase tracking-[1.5px]" style={{ color: palette.muted }}>Monthly subscription</Text>
+            <Text className="text-center text-xs uppercase tracking-[1.5px]" style={{ color: palette.muted }}>Premium</Text>
             <Text className="mt-3 text-center font-serif text-[30px]" style={{ color: palette.primary }}>{copy.title}</Text>
             <Text className="mt-3 text-center text-sm leading-6" style={{ color: palette.muted }}>{copy.body}</Text>
             <View className="mt-5 rounded-[22px] p-4" style={{ backgroundColor: palette.surface }}>
               <Text className="text-center text-sm leading-6" style={{ color: palette.ink }}>
-                Includes predictive attendance engine, behavioral insights, advanced reminders, and theme customization.
-              </Text>
-              <Text className="mt-2 text-center text-xs uppercase tracking-[1.4px]" style={{ color: palette.muted }}>
-                billed monthly
+                Includes the predictive attendance engine, behavioral insights, advanced reminders, syllabus scanning, and theme customization.
               </Text>
             </View>
             <View className="mt-6 gap-3">
-              <Pressable className="rounded-full px-4 py-4" style={{ backgroundColor: palette.primary }} onPress={upgradeToPremium}>
-                <Text className="text-center" style={{ color: palette.background }}>Start monthly plan</Text>
+              <Pressable className="rounded-full px-4 py-4" style={{ backgroundColor: palette.primary }} onPress={seePlans}>
+                <Text className="text-center" style={{ color: palette.background }}>See plans</Text>
               </Pressable>
               <Pressable
                 className="rounded-full px-4 py-4"

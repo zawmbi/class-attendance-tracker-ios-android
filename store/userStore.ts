@@ -18,7 +18,9 @@ export const DASHBOARD_WIDGETS: DashboardWidget[] = [
 interface UserState extends UserProfile {
   openUpgradeModal: (reason: UpgradeTrigger) => void;
   closeUpgradeModal: () => void;
-  upgradeToPremium: () => void;
+  // Sets the premium entitlement. Driven by the real subscription state
+  // (purchase / restore) in IapProvider — never granted for free.
+  setPremium: (active: boolean) => void;
   setTheme: (theme: ThemePreset) => void;
   setThemeMode: (mode: ThemeMode) => void;
   setDashboardWidgetOrder: (order: DashboardWidget[]) => void;
@@ -43,7 +45,9 @@ interface UserState extends UserProfile {
 
 // Initial profile/data fields, reused by reset() on account deletion.
 const initialUserState = {
-  isPremium: true,
+  // Premium starts locked; it's unlocked only by an active paid subscription
+  // (granted via IapProvider after a real purchase or restore).
+  isPremium: false,
   preferredTheme: "fern" as ThemePreset,
   themeMode: "light" as ThemeMode,
   isAuthenticated: false,
@@ -63,14 +67,13 @@ const initialUserState = {
 export const useUserStore = create<UserState>()(
   persist(
     (set) => ({
-      // All features are free (no in-app purchases). Premium is always on.
       ...initialUserState,
       openUpgradeModal: (reason) =>
         set((state) => ({
           upgradePrompt: state.seenUpgradePrompts.includes(reason) ? state.upgradePrompt : reason
         })),
       closeUpgradeModal: () => set({ upgradePrompt: null }),
-      upgradeToPremium: () => set({ isPremium: true, upgradePrompt: null }),
+      setPremium: (active) => set({ isPremium: active }),
       setTheme: (theme) => set({ preferredTheme: theme }),
       setThemeMode: (mode) => set({ themeMode: mode }),
       setDashboardWidgetOrder: (order) => set({ dashboardWidgetOrder: order }),
@@ -116,12 +119,17 @@ export const useUserStore = create<UserState>()(
     {
       name: "attendance-user-storage",
       storage: createJSONStorage(() => AsyncStorage),
-      // Force premium on for any install that predates the free-for-all switch,
-      // so no purchase/gated UI is ever shown.
-      onRehydrateStorage: () => (state) => {
-        if (state && !state.isPremium) {
-          state.isPremium = true;
+      // Bump when changing persisted shape/semantics so migrate() runs.
+      version: 1,
+      migrate: (persisted, version) => {
+        const state = persisted as Partial<UserProfile> | undefined;
+        if (state && version < 1) {
+          // Earlier builds granted "premium" to everyone for free. Reset it so
+          // the paid subscription is the only source of truth; IapProvider's
+          // restore() re-grants it on launch to anyone who actually purchased.
+          state.isPremium = false;
         }
+        return state as UserState;
       }
     }
   )
