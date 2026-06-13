@@ -5,13 +5,13 @@ import { getFirestore } from "firebase/firestore";
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "AIzaSyDM1j4o35Ykt91D-SIe3cPWO1Isla_cWkI",
-  authDomain: "attendance-tracker-4764d.firebaseapp.com",
-  projectId: "attendance-tracker-4764d",
-  storageBucket: "attendance-tracker-4764d.firebasestorage.app",
-  messagingSenderId: "612118404194",
-  appId: "1:612118404194:web:ff31a7fa7c7f94d392c53b",
-  measurementId: "G-4KLT4GVV9F"
+  apiKey: "AIzaSyBY3SogSIMYRchonfUShYkNvUKGC4JDOAI",
+  authDomain: "attendize-93f67.firebaseapp.com",
+  projectId: "attendize-93f67",
+  storageBucket: "attendize-93f67.firebasestorage.app",
+  messagingSenderId: "928649175841",
+  appId: "1:928649175841:web:8819adcd042eb526e0d460",
+  measurementId: "G-R9RCQCKXEE"
 };
 
 const app = initializeApp(firebaseConfig);
