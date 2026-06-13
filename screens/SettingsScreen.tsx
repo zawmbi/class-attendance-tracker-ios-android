@@ -8,6 +8,7 @@ import { Sheet } from "@/components/attenza/Sheet";
 import { Toggle } from "@/components/attenza/Toggle";
 import { FormInput } from "@/components/FormField";
 import { ScreenContainer } from "@/components/ScreenContainer";
+import { exportAttendanceCsv, exportAttendancePdf } from "@/services/exportService";
 import { useAttendanceStore } from "@/store/attendanceStore";
 import { useUserStore } from "@/store/userStore";
 import { appConfig } from "@/theme";
@@ -122,6 +123,33 @@ export const SettingsScreen = () => {
   const { themeMode, userName, setThemeMode, setUserName, signOut, resetOnboarding, isDev, isPremium } = useUserStore();
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState("");
+  const [exporting, setExporting] = useState<"csv" | "pdf" | null>(null);
+
+  const handleExportCsv = async () => {
+    try {
+      setExporting("csv");
+      await exportAttendanceCsv(classes, records);
+    } catch (error) {
+      Alert.alert("Export failed", error instanceof Error ? error.message : "Couldn't export your data.");
+    } finally {
+      setExporting(null);
+    }
+  };
+
+  const handleExportPdf = async () => {
+    if (!isPremium) {
+      router.push("/premium");
+      return;
+    }
+    try {
+      setExporting("pdf");
+      await exportAttendancePdf(classes, records, settings);
+    } catch (error) {
+      Alert.alert("Export failed", error instanceof Error ? error.message : "Couldn't build the report.");
+    } finally {
+      setExporting(null);
+    }
+  };
 
   const openNameEdit = () => {
     setNameDraft(userName);
@@ -294,6 +322,24 @@ export const SettingsScreen = () => {
           render={(v) => `${v} wk`}
         />
         <ToggleRow icon="lock" iconBg={palette.ink2} title="Lock attendance rules" value={settings.attendanceRulesLocked} onChange={(v) => updateSettings({ attendanceRulesLocked: v })} />
+      </Group>
+
+      {/* Data */}
+      <Group header="Data" footer="Export your attendance to share or back up. PDF reports are a Premium feature.">
+        <Row
+          icon="inbox"
+          iconBg={palette.moss}
+          title={exporting === "csv" ? "Exporting…" : "Export attendance (CSV)"}
+          onPress={exporting ? undefined : handleExportCsv}
+          first
+        />
+        <Row
+          icon="book"
+          iconBg={palette.goldDeep}
+          title={exporting === "pdf" ? "Building report…" : "Export PDF report"}
+          detail={isPremium ? undefined : "Premium"}
+          onPress={exporting ? undefined : handleExportPdf}
+        />
       </Group>
 
       {/* General */}
