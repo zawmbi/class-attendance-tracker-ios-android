@@ -28,6 +28,8 @@ interface AttendanceState {
   updateClassPriority: (classId: string, priority: PriorityLevel) => void;
   updateRequiredAttendance: (classId: string, requiredAttendance: number) => void;
   loadSampleData: () => void;
+  // Replaces all data wholesale (used when restoring a cloud backup).
+  replaceAll: (classes: ClassModel[], records: AttendanceRecord[], settings: AttendanceSettings) => void;
   reset: () => void;
 }
 
@@ -124,6 +126,7 @@ export const useAttendanceStore = create<AttendanceState>()(
         })),
       // Populates the demo classes/records (offered during onboarding / guest mode).
       loadSampleData: () => set({ classes: seedClasses, records: seedRecords, settings: defaultSettings }),
+      replaceAll: (classes, records, settings) => set({ classes, records, settings }),
       // Clears all class/attendance data (account deletion / start fresh).
       reset: () => set({ classes: [], records: [], settings: defaultSettings })
     }),

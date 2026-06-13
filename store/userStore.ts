@@ -30,6 +30,9 @@ interface UserState extends UserProfile {
   // True only for the hidden dev/review login; gates demo & data tooling.
   isDev: boolean;
   setIsDev: (isDev: boolean) => void;
+  // Epoch ms of the last successful cloud backup/sync (Premium), or null.
+  cloudLastSyncedAt: number | null;
+  setCloudLastSyncedAt: (epochMs: number | null) => void;
   signOut: () => void;
   reset: () => void;
   // First-run onboarding: false until the user finishes the get-started flow.
@@ -61,7 +64,8 @@ const initialUserState = {
   seenUpgradePrompts: [] as UpgradeTrigger[],
   onboarded: false,
   viewedForecast: false,
-  isDev: false
+  isDev: false,
+  cloudLastSyncedAt: null as number | null
 };
 
 export const useUserStore = create<UserState>()(
@@ -96,6 +100,7 @@ export const useUserStore = create<UserState>()(
         }),
       setUserName: (userName) => set({ userName }),
       setIsDev: (isDev) => set({ isDev }),
+      setCloudLastSyncedAt: (epochMs) => set({ cloudLastSyncedAt: epochMs }),
       signOut: () =>
         set({
           isAuthenticated: false,

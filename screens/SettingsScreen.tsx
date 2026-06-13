@@ -9,6 +9,8 @@ import { Toggle } from "@/components/attenza/Toggle";
 import { FormInput } from "@/components/FormField";
 import { ScreenContainer } from "@/components/ScreenContainer";
 import { exportAttendanceCsv, exportAttendancePdf } from "@/services/exportService";
+import { restoreFromCloud, syncNow } from "@/services/syncService";
+import { formatSyncedAt } from "@/utils/sync";
 import { useAttendanceStore } from "@/store/attendanceStore";
 import { useUserStore } from "@/store/userStore";
 import { appConfig } from "@/theme";
@@ -119,8 +121,19 @@ const ChipRow = ({ label, options, value, onSelect, render, first }: {
 export const SettingsScreen = () => {
   const palette = useAppPalette();
   const router = useRouter();
-  const { classes, records, settings, updateSettings, loadSampleData, reset: clearData } = useAttendanceStore();
-  const { themeMode, userName, setThemeMode, setUserName, signOut, resetOnboarding, isDev, isPremium } = useUserStore();
+  const { classes, records, settings, updateSettings, loadSampleData, replaceAll, reset: clearData } = useAttendanceStore();
+  const {
+    themeMode,
+    userName,
+    setThemeMode,
+    setUserName,
+    signOut,
+    resetOnboarding,
+    isDev,
+    isPremium,
+    cloudLastSyncedAt,
+    setCloudLastSyncedAt
+  } = useUserStore();
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState("");
   const [exporting, setExporting] = useState<"csv" | "pdf" | null>(null);
@@ -149,6 +162,63 @@ export const SettingsScreen = () => {
     } finally {
       setExporting(null);
     }
+  };
+
+  const [syncing, setSyncing] = useState<"sync" | "restore" | null>(null);
+
+  const handleSyncNow = async () => {
+    if (!isPremium) {
+      router.push("/premium");
+      return;
+    }
+    try {
+      setSyncing("sync");
+      const outcome = await syncNow(classes, records, settings);
+      if (outcome.pulledNewer) {
+        replaceAll(outcome.applied.classes, outcome.applied.records, outcome.applied.settings);
+      }
+      setCloudLastSyncedAt(Date.now());
+      Alert.alert("Synced", outcome.pulledNewer ? "Pulled the newer copy from the cloud." : "Backed up your latest data.");
+    } catch (error) {
+      Alert.alert("Sync failed", error instanceof Error ? error.message : "Couldn't reach the cloud.");
+    } finally {
+      setSyncing(null);
+    }
+  };
+
+  const handleRestore = () => {
+    if (!isPremium) {
+      router.push("/premium");
+      return;
+    }
+    Alert.alert(
+      "Restore from cloud?",
+      "This replaces the classes and records on this device with your most recent cloud backup.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Restore",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              setSyncing("restore");
+              const snap = await restoreFromCloud();
+              if (!snap) {
+                Alert.alert("Nothing to restore", "No cloud backup was found for this account.");
+                return;
+              }
+              replaceAll(snap.classes, snap.records, snap.settings);
+              setCloudLastSyncedAt(Date.now());
+              Alert.alert("Restored", "Your cloud backup is now on this device.");
+            } catch (error) {
+              Alert.alert("Restore failed", error instanceof Error ? error.message : "Couldn't reach the cloud.");
+            } finally {
+              setSyncing(null);
+            }
+          }
+        }
+      ]
+    );
   };
 
   const openNameEdit = () => {
@@ -339,6 +409,28 @@ export const SettingsScreen = () => {
           title={exporting === "pdf" ? "Building report…" : "Export PDF report"}
           detail={isPremium ? undefined : "Premium"}
           onPress={exporting ? undefined : handleExportPdf}
+        />
+      </Group>
+
+      {/* Cloud backup (Premium) */}
+      <Group
+        header="Cloud backup"
+        footer={isPremium ? formatSyncedAt(cloudLastSyncedAt) : "Premium — back up and sync your data across devices."}
+      >
+        <Row
+          icon="sparkles"
+          iconBg={palette.forest}
+          title={syncing === "sync" ? "Syncing…" : "Back up & sync now"}
+          detail={isPremium ? undefined : "Premium"}
+          onPress={syncing ? undefined : handleSyncNow}
+          first
+        />
+        <Row
+          icon="back"
+          iconBg={palette.ink2}
+          title={syncing === "restore" ? "Restoring…" : "Restore from cloud"}
+          detail={isPremium ? undefined : "Premium"}
+          onPress={syncing ? undefined : handleRestore}
         />
       </Group>
 
