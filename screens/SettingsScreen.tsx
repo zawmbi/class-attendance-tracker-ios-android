@@ -1,5 +1,6 @@
 import { PropsWithChildren, ReactNode, useMemo, useState } from "react";
 import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
+import { useRouter } from "expo-router";
 
 import { Icon, IconName } from "@/components/Icon";
 import { Segmented } from "@/components/attenza/Segmented";
@@ -7,6 +8,9 @@ import { Sheet } from "@/components/attenza/Sheet";
 import { Toggle } from "@/components/attenza/Toggle";
 import { FormInput } from "@/components/FormField";
 import { ScreenContainer } from "@/components/ScreenContainer";
+import { exportAttendanceCsv, exportAttendancePdf } from "@/services/exportService";
+import { restoreFromCloud, syncNow } from "@/services/syncService";
+import { formatSyncedAt } from "@/utils/sync";
 import { useAttendanceStore } from "@/store/attendanceStore";
 import { useUserStore } from "@/store/userStore";
 import { appConfig } from "@/theme";
@@ -116,10 +120,106 @@ const ChipRow = ({ label, options, value, onSelect, render, first }: {
 
 export const SettingsScreen = () => {
   const palette = useAppPalette();
-  const { classes, records, settings, updateSettings, loadSampleData, reset: clearData } = useAttendanceStore();
-  const { themeMode, userName, setThemeMode, setUserName, signOut, resetOnboarding, isDev } = useUserStore();
+  const router = useRouter();
+  const { classes, records, settings, updateSettings, loadSampleData, replaceAll, reset: clearData } = useAttendanceStore();
+  const {
+    themeMode,
+    userName,
+    setThemeMode,
+    setUserName,
+    signOut,
+    resetOnboarding,
+    isDev,
+    isPremium,
+    cloudLastSyncedAt,
+    setCloudLastSyncedAt
+  } = useUserStore();
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState("");
+  const [exporting, setExporting] = useState<"csv" | "pdf" | null>(null);
+
+  const handleExportCsv = async () => {
+    try {
+      setExporting("csv");
+      await exportAttendanceCsv(classes, records);
+    } catch (error) {
+      Alert.alert("Export failed", error instanceof Error ? error.message : "Couldn't export your data.");
+    } finally {
+      setExporting(null);
+    }
+  };
+
+  const handleExportPdf = async () => {
+    if (!isPremium) {
+      router.push("/premium");
+      return;
+    }
+    try {
+      setExporting("pdf");
+      await exportAttendancePdf(classes, records, settings);
+    } catch (error) {
+      Alert.alert("Export failed", error instanceof Error ? error.message : "Couldn't build the report.");
+    } finally {
+      setExporting(null);
+    }
+  };
+
+  const [syncing, setSyncing] = useState<"sync" | "restore" | null>(null);
+
+  const handleSyncNow = async () => {
+    if (!isPremium) {
+      router.push("/premium");
+      return;
+    }
+    try {
+      setSyncing("sync");
+      const outcome = await syncNow(classes, records, settings);
+      if (outcome.pulledNewer) {
+        replaceAll(outcome.applied.classes, outcome.applied.records, outcome.applied.settings);
+      }
+      setCloudLastSyncedAt(Date.now());
+      Alert.alert("Synced", outcome.pulledNewer ? "Pulled the newer copy from the cloud." : "Backed up your latest data.");
+    } catch (error) {
+      Alert.alert("Sync failed", error instanceof Error ? error.message : "Couldn't reach the cloud.");
+    } finally {
+      setSyncing(null);
+    }
+  };
+
+  const handleRestore = () => {
+    if (!isPremium) {
+      router.push("/premium");
+      return;
+    }
+    Alert.alert(
+      "Restore from cloud?",
+      "This replaces the classes and records on this device with your most recent cloud backup.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Restore",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              setSyncing("restore");
+              const snap = await restoreFromCloud();
+              if (!snap) {
+                Alert.alert("Nothing to restore", "No cloud backup was found for this account.");
+                return;
+              }
+              replaceAll(snap.classes, snap.records, snap.settings);
+              setCloudLastSyncedAt(Date.now());
+              Alert.alert("Restored", "Your cloud backup is now on this device.");
+            } catch (error) {
+              Alert.alert("Restore failed", error instanceof Error ? error.message : "Couldn't reach the cloud.");
+            } finally {
+              setSyncing(null);
+            }
+          }
+        }
+      ]
+    );
+  };
 
   const openNameEdit = () => {
     setNameDraft(userName);
@@ -216,6 +316,18 @@ export const SettingsScreen = () => {
         </View>
       </Pressable>
 
+      {/* Premium */}
+      <Group header="Subscription" footer={isPremium ? "Manage or cancel anytime in your App Store account settings." : undefined}>
+        <Row
+          icon="crown"
+          iconBg={palette.goldDeep}
+          title={isPremium ? "Attendize Premium" : "Upgrade to Premium"}
+          detail={isPremium ? "Active" : undefined}
+          onPress={() => router.push("/premium")}
+          first
+        />
+      </Group>
+
       {/* Appearance */}
       <Group header="Appearance">
         <View className="flex-row items-center gap-3 px-3.5 py-3">
@@ -280,6 +392,46 @@ export const SettingsScreen = () => {
           render={(v) => `${v} wk`}
         />
         <ToggleRow icon="lock" iconBg={palette.ink2} title="Lock attendance rules" value={settings.attendanceRulesLocked} onChange={(v) => updateSettings({ attendanceRulesLocked: v })} />
+      </Group>
+
+      {/* Data */}
+      <Group header="Data" footer="Export your attendance to share or back up. PDF reports are a Premium feature.">
+        <Row
+          icon="inbox"
+          iconBg={palette.moss}
+          title={exporting === "csv" ? "Exporting…" : "Export attendance (CSV)"}
+          onPress={exporting ? undefined : handleExportCsv}
+          first
+        />
+        <Row
+          icon="book"
+          iconBg={palette.goldDeep}
+          title={exporting === "pdf" ? "Building report…" : "Export PDF report"}
+          detail={isPremium ? undefined : "Premium"}
+          onPress={exporting ? undefined : handleExportPdf}
+        />
+      </Group>
+
+      {/* Cloud backup (Premium) */}
+      <Group
+        header="Cloud backup"
+        footer={isPremium ? formatSyncedAt(cloudLastSyncedAt) : "Premium — back up and sync your data across devices."}
+      >
+        <Row
+          icon="sparkles"
+          iconBg={palette.forest}
+          title={syncing === "sync" ? "Syncing…" : "Back up & sync now"}
+          detail={isPremium ? undefined : "Premium"}
+          onPress={syncing ? undefined : handleSyncNow}
+          first
+        />
+        <Row
+          icon="back"
+          iconBg={palette.ink2}
+          title={syncing === "restore" ? "Restoring…" : "Restore from cloud"}
+          detail={isPremium ? undefined : "Premium"}
+          onPress={syncing ? undefined : handleRestore}
+        />
       </Group>
 
       {/* General */}

@@ -18,11 +18,15 @@ const weekdayMap: Array<{ pattern: RegExp; day: Weekday }> = [
   { pattern: /\bsunday\b|\bsun\b/i, day: "Sunday" }
 ];
 
+// Compact codes are detected against a space-padded, whitespace-stripped copy of
+// the line, using [^A-Z] boundaries rather than \b. This matters when the code
+// is glued to the time (e.g. "MWF 9:00" -> "MWF9:00"): a digit is a word char,
+// so \b finds no boundary between "F" and "9", but [^A-Z] does.
 const compactDayPatterns: Array<{ pattern: RegExp; days: Weekday[] }> = [
-  { pattern: /\bMWF\b/, days: ["Monday", "Wednesday", "Friday"] },
-  { pattern: /\bTTH\b|\bTR\b|\bTU\/TH\b|\bT\/TH\b/, days: ["Tuesday", "Thursday"] },
-  { pattern: /\bMW\b/, days: ["Monday", "Wednesday"] },
-  { pattern: /\bWF\b/, days: ["Wednesday", "Friday"] }
+  { pattern: /[^A-Z]MWF[^A-Z]/, days: ["Monday", "Wednesday", "Friday"] },
+  { pattern: /[^A-Z](?:TTH|TR|TU\/TH|T\/TH)[^A-Z]/, days: ["Tuesday", "Thursday"] },
+  { pattern: /[^A-Z]MW[^A-Z]/, days: ["Monday", "Wednesday"] },
+  { pattern: /[^A-Z]WF[^A-Z]/, days: ["Wednesday", "Friday"] }
 ];
 
 const splitBlocks = (input: string) => {
@@ -117,7 +121,7 @@ const extractWeekdays = (line: string) => {
     }
   }
 
-  const compact = line.toUpperCase().replace(/\s+/g, "");
+  const compact = ` ${line.toUpperCase().replace(/\s+/g, "")} `;
   for (const entry of compactDayPatterns) {
     if (entry.pattern.test(compact)) {
       entry.days.forEach((day) => days.add(day));

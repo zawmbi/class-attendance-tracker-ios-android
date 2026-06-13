@@ -1,5 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
 
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
@@ -16,3 +17,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 
 export const auth = getAuth(app);
+// Backing store for Premium cloud backup/sync (see services/syncService.ts).
+// Requires Cloud Firestore to be enabled in the Firebase console with rules
+// that scope each user to their own /users/{uid} document.
+export const db = getFirestore(app);
