@@ -1,5 +1,6 @@
 import { PropsWithChildren, ReactNode, useMemo, useState } from "react";
 import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
+import { useRouter } from "expo-router";
 
 import { Icon, IconName } from "@/components/Icon";
 import { Segmented } from "@/components/attenza/Segmented";
@@ -116,8 +117,9 @@ const ChipRow = ({ label, options, value, onSelect, render, first }: {
 
 export const SettingsScreen = () => {
   const palette = useAppPalette();
+  const router = useRouter();
   const { classes, records, settings, updateSettings, loadSampleData, reset: clearData } = useAttendanceStore();
-  const { themeMode, userName, setThemeMode, setUserName, signOut, resetOnboarding, isDev } = useUserStore();
+  const { themeMode, userName, setThemeMode, setUserName, signOut, resetOnboarding, isDev, isPremium } = useUserStore();
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState("");
 
@@ -215,6 +217,18 @@ export const SettingsScreen = () => {
           <Icon name="edit" size={17} color={palette.ink2} stroke={2} />
         </View>
       </Pressable>
+
+      {/* Premium */}
+      <Group header="Subscription" footer={isPremium ? "Manage or cancel anytime in your App Store account settings." : undefined}>
+        <Row
+          icon="crown"
+          iconBg={palette.goldDeep}
+          title={isPremium ? "Attendize Premium" : "Upgrade to Premium"}
+          detail={isPremium ? "Active" : undefined}
+          onPress={() => router.push("/premium")}
+          first
+        />
+      </Group>
 
       {/* Appearance */}
       <Group header="Appearance">
