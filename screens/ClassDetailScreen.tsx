@@ -25,13 +25,13 @@ const EDIT_OPTIONS: { status: AttenzaStatus; icon: IconName; label: string }[] =
 export const ClassDetailScreen = ({ classId }: { classId: string }) => {
   const palette = useAppPalette();
   const router = useRouter();
-  const { classes, records, settings, updateRecordStatus, deleteClass } = useAttendanceStore();
+  const { classes, records, settings, canceledDates, updateRecordStatus, deleteClass } = useAttendanceStore();
   const classItem = classes.find((item) => item.id === classId);
   const [editId, setEditId] = useState<string | null>(null);
 
   const derived = useMemo(
-    () => (classItem ? deriveClass(classItem, records, settings) : null),
-    [classItem, records, settings]
+    () => (classItem ? deriveClass(classItem, records, settings, canceledDates) : null),
+    [classItem, records, settings, canceledDates]
   );
   const history = useMemo(() => (classItem ? getClassRecords(records, classItem.id) : []), [classItem, records]);
 

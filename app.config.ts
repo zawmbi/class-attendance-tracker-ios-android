@@ -34,6 +34,16 @@ const config: ExpoConfig = {
       }
     ],
     "expo-notifications",
+    [
+      "expo-location",
+      {
+        locationAlwaysAndWhenInUsePermission:
+          "Attendize uses your location in the background to remind you to check in when you arrive at class. You can turn this off anytime.",
+        locationWhenInUsePermission:
+          "Attendize reminds you when you're near class. You can turn this off anytime.",
+        isAndroidBackgroundLocationEnabled: true
+      }
+    ],
     "expo-web-browser",
     "expo-apple-authentication",
     [
@@ -42,18 +52,26 @@ const config: ExpoConfig = {
         iosUrlScheme: getGoogleIosUrlScheme()
       }
     ],
+    "@bacons/apple-targets",
     "./plugins/withFmtConstevalFix"
   ],
   icon: "./assets/icon/attendize-icon-1024.png",
   ios: {
     supportsTablet: true,
     usesAppleSignIn: true,
+    appleTeamId: "ZQUQB39QGN",
     bundleIdentifier: "com.attendancetrackerappsorganization.attendancetrackerapp",
     googleServicesFile: "./GoogleService-Info.plist",
+    entitlements: {
+      "com.apple.security.application-groups": ["group.com.attendancetrackerappsorganization.attendancetrackerapp"]
+    },
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
+      UIBackgroundModes: ["location"],
       NSLocationWhenInUseUsageDescription:
-        "Attendize reminds you when you're near class. You can turn this off anytime."
+        "Attendize reminds you when you're near class. You can turn this off anytime.",
+      NSLocationAlwaysAndWhenInUseUsageDescription:
+        "Attendize uses your location in the background to remind you to check in when you arrive at class. You can turn this off anytime."
     }
   },
   android: {

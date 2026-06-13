@@ -12,6 +12,7 @@ import { ScreenContainer } from "@/components/ScreenContainer";
 import { useAttendanceStore } from "@/store/attendanceStore";
 import { useUserStore } from "@/store/userStore";
 import { useAppPalette } from "@/theme/useAppPalette";
+import { useIsTwoColumn } from "@/theme/responsive";
 import { getOverallWeeklyTrend } from "@/utils/attendance";
 import { deriveClass, riskTone } from "@/utils/attenza";
 import { getGamificationProfile } from "@/utils/gamification";
@@ -49,7 +50,8 @@ const card = (palette: ReturnType<typeof useAppPalette>) =>
 export const AnalyticsScreen = () => {
   const palette = useAppPalette();
   const router = useRouter();
-  const { classes, records, settings } = useAttendanceStore();
+  const twoCol = useIsTwoColumn();
+  const { classes, records, settings, canceledDates } = useAttendanceStore();
   const isPremium = useUserStore((s) => s.isPremium);
   const markForecastViewed = useUserStore((s) => s.markForecastViewed);
   const [tab, setTab] = useState("forecast");
@@ -59,8 +61,9 @@ export const AnalyticsScreen = () => {
     markForecastViewed();
   }, [markForecastViewed]);
   const [attend, setAttend] = useState(85);
+  const [goalPct, setGoalPct] = useState(90);
 
-  const derived = useMemo(() => classes.map((c) => deriveClass(c, records, settings)), [classes, records, settings]);
+  const derived = useMemo(() => classes.map((c) => deriveClass(c, records, settings, canceledDates)), [classes, records, settings, canceledDates]);
   const profile = useMemo(() => getGamificationProfile(classes, records, settings), [classes, records, settings]);
   const trend = useMemo(() => getOverallWeeklyTrend(classes, records, settings).map((t) => t.percentage), [classes, records, settings]);
 
@@ -72,9 +75,26 @@ export const AnalyticsScreen = () => {
   const remainingTotal = derived.reduce((s, c) => s + c.remaining, 0);
   const toneFor = (v: number) => (v >= target ? palette.present : v >= target - 8 ? palette.late : palette.riskDanger);
 
+  // Goal planner (inverse of the what-if): for a chosen finish target, how many
+  // of each class's remaining sessions can still be skipped — the "skip budget".
+  const goalRows = useMemo(
+    () =>
+      derived.map((c) => {
+        const attended = c.present + c.late;
+        // Credits still needed so attended/semTotal lands at >= goal.
+        const mustAttend = Math.max(0, Math.ceil((goalPct / 100) * c.semTotal - attended));
+        const reachable = mustAttend <= c.remaining;
+        const maxSkip = Math.max(0, c.remaining - mustAttend);
+        return { c, mustAttend: Math.min(mustAttend, c.remaining), maxSkip, reachable };
+      }),
+    [derived, goalPct]
+  );
+  const totalSkip = goalRows.reduce((s, r) => s + r.maxSkip, 0);
+  const unreachable = goalRows.filter((r) => !r.reachable).length;
+
   if (!isPremium) {
     return (
-      <ScreenContainer wideMaxWidth={720}>
+      <ScreenContainer wideMaxWidth={1040}>
         <Pressable onPress={() => router.back()} className="mb-2 flex-row items-center gap-1 py-1">
           <Icon name="back" size={21} color={palette.forest} stroke={2.2} />
           <Text className="text-[16px]" style={{ color: palette.forest, fontFamily: "Outfit_700Bold" }}>
@@ -106,7 +126,7 @@ export const AnalyticsScreen = () => {
   }
 
   return (
-    <ScreenContainer wideMaxWidth={720}>
+    <ScreenContainer wideMaxWidth={1040}>
       {/* Header */}
       <View className="mb-2 flex-row items-center justify-between">
         <Pressable onPress={() => router.back()} className="flex-row items-center gap-1 py-1">
@@ -190,8 +210,9 @@ export const AnalyticsScreen = () => {
             </View>
           </View>
 
+          <View style={twoCol ? { flexDirection: "row", alignItems: "flex-start", gap: 16, marginTop: 16 } : undefined}>
           {/* What-if */}
-          <View className="mt-4 rounded-[22px] p-4" style={card(palette)}>
+          <View className="rounded-[22px] p-4" style={[card(palette), twoCol ? { flex: 1 } : { marginTop: 16 }]}>
             <View className="mb-1 flex-row items-center gap-2">
               <Icon name="target" size={19} color={palette.goldDeep} stroke={2} />
               <Text className="text-[15px]" style={{ color: palette.ink, fontFamily: "Outfit_800ExtraBold" }}>
@@ -213,12 +234,68 @@ export const AnalyticsScreen = () => {
             </View>
           </View>
 
+          {/* Goal planner */}
+          <View className="rounded-[22px] p-4" style={[card(palette), twoCol ? { flex: 1 } : { marginTop: 16 }]}>
+            <View className="mb-1 flex-row items-center gap-2">
+              <Icon name="target" size={19} color={palette.goldDeep} stroke={2} />
+              <Text className="text-[15px]" style={{ color: palette.ink, fontFamily: "Outfit_800ExtraBold" }}>
+                Goal planner
+              </Text>
+            </View>
+            <Text className="mb-1 text-[14px] leading-[20px]" style={{ color: palette.ink2, fontFamily: "Outfit_500Medium" }}>
+              To finish every class at{" "}
+              <Text style={{ color: palette.forest, fontFamily: "Outfit_800ExtraBold" }}>{goalPct}%</Text>, you can skip up to{" "}
+              <Text style={{ color: palette.ink, fontFamily: "Outfit_800ExtraBold" }}>{totalSkip}</Text> of your {remainingTotal} remaining{" "}
+              {remainingTotal === 1 ? "session" : "sessions"}.
+            </Text>
+            {unreachable > 0 ? (
+              <Text className="mb-2 text-[12.5px]" style={{ color: palette.riskDanger, fontFamily: "Outfit_700Bold" }}>
+                {unreachable} class{unreachable > 1 ? "es" : ""} can&apos;t reach {goalPct}% this term.
+              </Text>
+            ) : null}
+            <View className="mt-2">
+              <Slider value={goalPct} onChange={setGoalPct} min={50} max={100} tone={palette.goldDeep} />
+              <View className="flex-row justify-between">
+                <Text className="text-[12px]" style={{ color: palette.ink3, fontFamily: "Outfit_600SemiBold" }}>
+                  50%
+                </Text>
+                <Text className="text-[12px]" style={{ color: palette.ink3, fontFamily: "Outfit_600SemiBold" }}>
+                  100%
+                </Text>
+              </View>
+            </View>
+            <View className="mt-3 gap-2 border-t pt-3" style={{ borderTopColor: palette.hairline }}>
+              {goalRows.map(({ c, mustAttend, maxSkip, reachable }) => (
+                <View key={c.classItem.id} className="flex-row items-center gap-2.5">
+                  <View className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: c.classItem.color }} />
+                  <Text numberOfLines={1} className="flex-1 text-[13.5px]" style={{ color: palette.ink, fontFamily: "Outfit_600SemiBold" }}>
+                    {c.classItem.name}
+                  </Text>
+                  {!reachable ? (
+                    <Text className="text-[12.5px]" style={{ color: palette.riskDanger, fontFamily: "Outfit_800ExtraBold" }}>
+                      Out of reach
+                    </Text>
+                  ) : maxSkip > 0 ? (
+                    <Text className="text-[12.5px]" style={{ color: palette.present, fontFamily: "Outfit_800ExtraBold" }}>
+                      Skip up to {maxSkip}
+                    </Text>
+                  ) : (
+                    <Text className="text-[12.5px]" style={{ color: palette.late, fontFamily: "Outfit_800ExtraBold" }}>
+                      Attend all {c.remaining} left
+                    </Text>
+                  )}
+                </View>
+              ))}
+            </View>
+          </View>
+          </View>
+
           {/* By class */}
           <SectionTitle title="By class" trailing="projected" />
-          <View className="gap-2.5">
+          <View className={twoCol ? "flex-row flex-wrap" : "gap-2.5"} style={twoCol ? { gap: 12 } : undefined}>
             {rows.map(({ c, projected, willPass, mustAttend, confidence }) => (
               <Link key={c.classItem.id} href={`/class/${c.classItem.id}`} asChild>
-                <Pressable className="rounded-[18px] p-3.5" style={card(palette)}>
+                <Pressable className="rounded-[18px] p-3.5" style={[card(palette), twoCol ? { width: "48.5%" } : undefined]}>
                   <View className="flex-row items-center gap-3">
                     <View className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: c.classItem.color }} />
                     <View className="flex-1">

@@ -9,6 +9,8 @@ import { FormInput } from "@/components/FormField";
 import { ScreenContainer } from "@/components/ScreenContainer";
 import { useAttendanceStore } from "@/store/attendanceStore";
 import { useUserStore } from "@/store/userStore";
+import { requestNotificationPermissions } from "@/services/notificationService";
+import { requestGeofencePermissions } from "@/services/geofencing";
 import { appConfig } from "@/theme";
 import { useAppPalette } from "@/theme/useAppPalette";
 import { deleteAccountAndWipe } from "@/utils/account";
@@ -117,7 +119,8 @@ const ChipRow = ({ label, options, value, onSelect, render, first }: {
 export const SettingsScreen = () => {
   const palette = useAppPalette();
   const { classes, records, settings, updateSettings, loadSampleData, reset: clearData } = useAttendanceStore();
-  const { themeMode, userName, setThemeMode, setUserName, signOut, resetOnboarding, isDev } = useUserStore();
+  const { themeMode, userName, setThemeMode, setUserName, signOut, resetOnboarding, isDev, isPremium, openUpgradeModal } =
+    useUserStore();
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState("");
 
@@ -232,14 +235,51 @@ export const SettingsScreen = () => {
       </Group>
 
       {/* Reminders */}
-      <Group header="Reminders">
+      <Group header="Reminders" footer="Reminders and nudges repeat weekly with your class schedule.">
         <ChipRow
           first
           label="REMIND BEFORE CLASS"
           options={appConfig.reminderOptions}
           value={settings.reminderMinutesBefore}
-          onSelect={(v) => updateSettings({ reminderMinutesBefore: v })}
+          onSelect={(v) => {
+            updateSettings({ reminderMinutesBefore: v });
+            if (Number(v) > 0) requestNotificationPermissions().catch(() => {});
+          }}
           render={(v) => (v === 0 ? "Off" : `${v} min`)}
+        />
+        <ChipRow
+          label="NUDGE IF NOT LOGGED AFTER CLASS"
+          options={appConfig.missedCheckInOptions}
+          value={settings.missedCheckInDelayMinutes}
+          onSelect={(v) => {
+            updateSettings({ missedCheckInDelayMinutes: v });
+            if (Number(v) > 0) requestNotificationPermissions().catch(() => {});
+          }}
+          render={(v) => (v === 0 ? "Off" : `${v} min`)}
+        />
+        <ToggleRow
+          icon="target"
+          iconBg={palette.present}
+          title="Location check-in reminders"
+          value={settings.locationRemindersEnabled}
+          onChange={(v) => {
+            updateSettings({ locationRemindersEnabled: v });
+            if (v) requestGeofencePermissions().catch(() => {});
+          }}
+        />
+        <ToggleRow
+          icon="checkin"
+          iconBg={palette.forest}
+          title={isPremium ? "Auto check-in on arrival" : "Auto check-in on arrival (Premium)"}
+          value={!!settings.autoCheckInEnabled}
+          onChange={(v) => {
+            if (v && !isPremium) {
+              openUpgradeModal("advanced_reminders");
+              return;
+            }
+            updateSettings({ autoCheckInEnabled: v });
+            if (v) requestGeofencePermissions().catch(() => {});
+          }}
         />
         <ToggleRow icon="bell" iconBg={palette.late} title="Motivation messages" value={settings.motivationMessagesEnabled} onChange={(v) => updateSettings({ motivationMessagesEnabled: v })} />
         <ToggleRow icon="sparkles" iconBg={palette.moss} title="Daily motivation" value={settings.dailyMotivationNotificationsEnabled} onChange={(v) => updateSettings({ dailyMotivationNotificationsEnabled: v })} />
@@ -279,7 +319,42 @@ export const SettingsScreen = () => {
           onSelect={(v) => updateSettings({ defaultCourseLengthWeeks: v })}
           render={(v) => `${v} wk`}
         />
+        <ChipRow
+          label="LATE ARRIVALS COUNT AS"
+          options={appConfig.lateCreditOptions}
+          value={settings.lateCreditWeight}
+          onSelect={(v) => updateSettings({ lateCreditWeight: v })}
+          render={(v) => (Number(v) >= 1 ? "Full credit" : Number(v) <= 0 ? "Absent" : `${Math.round(Number(v) * 100)}%`)}
+        />
         <ToggleRow icon="lock" iconBg={palette.ink2} title="Lock attendance rules" value={settings.attendanceRulesLocked} onChange={(v) => updateSettings({ attendanceRulesLocked: v })} />
+      </Group>
+
+      {/* Term dates */}
+      <Group header="Term dates" footer="Bounds the calendar and projections. Leave blank to keep the term open-ended.">
+        <View className="px-3.5 pt-3">
+          <Text className="mb-1.5 text-[12.5px]" style={{ color: palette.ink3, fontFamily: "Outfit_700Bold" }}>
+            TERM START
+          </Text>
+          <FormInput
+            value={settings.termStartDate ?? ""}
+            onChangeText={(v) => updateSettings({ termStartDate: v.trim() || undefined })}
+            placeholder="2026-01-13"
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+        </View>
+        <View className="px-3.5 pb-3.5 pt-3">
+          <Text className="mb-1.5 text-[12.5px]" style={{ color: palette.ink3, fontFamily: "Outfit_700Bold" }}>
+            TERM END
+          </Text>
+          <FormInput
+            value={settings.termEndDate ?? ""}
+            onChangeText={(v) => updateSettings({ termEndDate: v.trim() || undefined })}
+            placeholder="2026-05-01"
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+        </View>
       </Group>
 
       {/* General */}

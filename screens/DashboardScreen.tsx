@@ -43,6 +43,7 @@ const HeroStat = ({ icon, value, label }: { icon: "flame" | "bolt"; value: numbe
 export const DashboardScreen = () => {
   const palette = useAppPalette();
   const { classes, records, settings } = useAttendanceStore();
+  const canceledDates = useAttendanceStore((state) => state.canceledDates);
   const loadSampleData = useAttendanceStore((state) => state.loadSampleData);
   const userName = useUserStore((state) => state.userName);
   const onboarded = useUserStore((state) => state.onboarded);
@@ -73,10 +74,11 @@ export const DashboardScreen = () => {
   }, [records]);
   const xpToNext = Math.max(0, profile.xpForNextRank - profile.xpIntoRank);
 
-  const todays = useMemo(() => classes.filter((c) => isClassToday(c.schedule)), [classes]);
+  const todayCanceled = canceledDates.includes(today);
+  const todays = useMemo(() => (todayCanceled ? [] : classes.filter((c) => isClassToday(c.schedule))), [classes, todayCanceled]);
   const loggedToday = todays.filter((c) => records.some((r) => r.classId === c.id && r.date === today)).length;
 
-  const derived = useMemo(() => classes.map((c) => deriveClass(c, records, settings)), [classes, records, settings]);
+  const derived = useMemo(() => classes.map((c) => deriveClass(c, records, settings, canceledDates)), [classes, records, settings, canceledDates]);
   const atRisk = derived.filter((d) => d.risk === "danger").sort((a, b) => a.buffer - b.buffer)[0];
 
   const unlockedBadges = profile.achievements.filter((b) => b.unlocked);
@@ -122,6 +124,28 @@ export const DashboardScreen = () => {
         </Pressable>
       </Link>
     </View>
+  );
+
+  const coursesLink = (
+    <Link href={"/(tabs)/courses" as Href} asChild>
+      <Pressable
+        className="mb-5 flex-row items-center gap-3 rounded-[18px] px-4 py-3.5"
+        style={{ backgroundColor: palette.card, borderWidth: 1, borderColor: palette.border }}
+      >
+        <View className="h-9 w-9 items-center justify-center rounded-[11px]" style={{ backgroundColor: palette.forestSoft }}>
+          <Icon name="book" size={19} color={palette.forest} stroke={2} />
+        </View>
+        <View className="flex-1">
+          <Text className="text-[15px]" style={{ color: palette.ink, fontFamily: "Outfit_700Bold" }}>
+            Manage courses
+          </Text>
+          <Text className="text-[12.5px]" style={{ color: palette.ink3, fontFamily: "Outfit_500Medium" }}>
+            Edit schedule, attendance rules, color & priority
+          </Text>
+        </View>
+        <Icon name="chevron" size={18} color={palette.ink3} stroke={2} />
+      </Pressable>
+    </Link>
   );
 
   const welcomeBlock = (
@@ -308,9 +332,9 @@ export const DashboardScreen = () => {
         </View>
       ) : (
         <View className="items-center rounded-[22px] px-5 py-7" style={{ backgroundColor: palette.card, borderWidth: 1, borderColor: palette.border }}>
-          <Icon name="inbox" size={28} color={palette.ink3} />
+          <Icon name={todayCanceled ? "close" : "inbox"} size={28} color={palette.ink3} />
           <Text className="mt-2 text-center text-[14px]" style={{ color: palette.ink2, fontFamily: "Outfit_500Medium" }}>
-            Nothing scheduled today. Enjoy the breather.
+            {todayCanceled ? "Holiday — no classes today. Nothing counts against you." : "Nothing scheduled today. Enjoy the breather."}
           </Text>
         </View>
       )}
@@ -376,6 +400,7 @@ export const DashboardScreen = () => {
             </>
           ) : (
             <>
+              {coursesLink}
               <View className="mb-5">{heroBlock}</View>
               {atRiskBlock ? <View className="mb-5">{atRiskBlock}</View> : null}
               <View className="mb-5">{todayBlock}</View>

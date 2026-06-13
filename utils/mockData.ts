@@ -9,6 +9,7 @@ export const defaultSettings: AttendanceSettings = {
   riskThresholds: appConfig.riskThresholdDefaults,
   lateCreditWeight: appConfig.lateCreditWeight,
   locationRemindersEnabled: false,
+  autoCheckInEnabled: false,
   incentiveSystemEnabled: true,
   motivationMessagesEnabled: true,
   dailyMotivationNotificationsEnabled: false,

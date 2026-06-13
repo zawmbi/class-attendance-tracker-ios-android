@@ -1,5 +1,5 @@
 import { PropsWithChildren, useEffect, useState } from "react";
-import { Modal, Pressable, View } from "react-native";
+import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, useWindowDimensions, View } from "react-native";
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -7,7 +7,6 @@ import Animated, {
   useSharedValue,
   withTiming
 } from "react-native-reanimated";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useAppPalette } from "@/theme/useAppPalette";
 
@@ -16,34 +15,31 @@ interface SheetProps extends PropsWithChildren {
   onClose: () => void;
 }
 
-// Bottom sheet — radius sheet, rises with ease-out, dim backdrop, grab handle.
+// Centered popup — a card that scales + fades in over a dim backdrop. Content
+// scrolls if it's taller than the screen, and the card lifts above the keyboard.
 export const Sheet = ({ open, onClose, children }: SheetProps) => {
   const palette = useAppPalette();
-  const insets = useSafeAreaInsets();
   const reduceMotion = useReducedMotion();
+  const { height } = useWindowDimensions();
   const [mounted, setMounted] = useState(open);
   const progress = useSharedValue(0);
 
   useEffect(() => {
     if (open) {
       setMounted(true);
-      progress.value = reduceMotion ? 1 : withTiming(1, { duration: 240, easing: Easing.bezier(0.22, 1, 0.36, 1) });
+      progress.value = reduceMotion ? 1 : withTiming(1, { duration: 200, easing: Easing.bezier(0.22, 1, 0.36, 1) });
     } else if (mounted) {
-      progress.value = reduceMotion
-        ? 0
-        : withTiming(0, { duration: 200, easing: Easing.bezier(0.22, 1, 0.36, 1) }, (finished) => {
-            if (finished) {
-              // toggled back on the JS thread to unmount once hidden
-            }
-          });
-      // unmount slightly after the exit animation
-      const timer = setTimeout(() => setMounted(false), reduceMotion ? 0 : 220);
+      progress.value = reduceMotion ? 0 : withTiming(0, { duration: 170, easing: Easing.bezier(0.22, 1, 0.36, 1) });
+      const timer = setTimeout(() => setMounted(false), reduceMotion ? 0 : 190);
       return () => clearTimeout(timer);
     }
   }, [open, reduceMotion, progress, mounted]);
 
   const backdropStyle = useAnimatedStyle(() => ({ opacity: progress.value }));
-  const sheetStyle = useAnimatedStyle(() => ({ transform: [{ translateY: (1 - progress.value) * 480 }] }));
+  const cardStyle = useAnimatedStyle(() => ({
+    opacity: progress.value,
+    transform: [{ scale: 0.93 + 0.07 * progress.value }]
+  }));
 
   if (!mounted) {
     return null;
@@ -51,32 +47,44 @@ export const Sheet = ({ open, onClose, children }: SheetProps) => {
 
   return (
     <Modal transparent visible animationType="none" onRequestClose={onClose} statusBarTranslucent>
-      <View style={{ flex: 1, justifyContent: "flex-end" }}>
-        <Animated.View style={[{ position: "absolute", inset: 0, backgroundColor: "rgba(20,30,25,0.4)" }, backdropStyle]}>
-          <Pressable style={{ flex: 1 }} onPress={onClose} accessibilityLabel="Dismiss" />
-        </Animated.View>
+      <Animated.View style={[{ position: "absolute", inset: 0, backgroundColor: "rgba(20,30,25,0.45)" }, backdropStyle]}>
+        <Pressable style={{ flex: 1 }} onPress={onClose} accessibilityLabel="Dismiss" />
+      </Animated.View>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        pointerEvents="box-none"
+        style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 20 }}
+      >
         <Animated.View
           style={[
             {
+              width: "100%",
+              maxWidth: 460,
+              maxHeight: height * 0.86,
               backgroundColor: palette.card,
-              borderTopLeftRadius: 34,
-              borderTopRightRadius: 34,
-              paddingHorizontal: 20,
-              paddingTop: 14,
-              paddingBottom: Math.max(insets.bottom, 16) + 20,
+              borderRadius: 28,
+              overflow: "hidden",
+              borderWidth: 1,
+              borderColor: palette.hairline,
               shadowColor: palette.forestDeep,
-              shadowOpacity: 0.28,
-              shadowRadius: 32,
-              shadowOffset: { width: 0, height: -8 },
+              shadowOpacity: 0.3,
+              shadowRadius: 40,
+              shadowOffset: { width: 0, height: 16 },
               elevation: 24
             },
-            sheetStyle
+            cardStyle
           ]}
         >
-          <View style={{ width: 38, height: 5, borderRadius: 100, backgroundColor: palette.hairline, alignSelf: "center", marginBottom: 14 }} />
-          {children}
+          <ScrollView
+            contentContainerStyle={{ padding: 22 }}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            bounces={false}
+          >
+            {children}
+          </ScrollView>
         </Animated.View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 };

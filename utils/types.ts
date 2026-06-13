@@ -46,6 +46,15 @@ export interface ClassModel {
   requiredAttendance: number;
   excusedAllowance: number;
   hoursPerWeek: number;
+  /**
+   * How much credit a "late" check-in earns toward attendance, 0–1.
+   * 1 = counts as present, 0.5 = half credit, 0 = counts as absent.
+   * When omitted, falls back to settings.lateCreditWeight (the global default).
+   */
+  lateCreditWeight?: number;
+  /** Optional geocoordinates for location-based check-in reminders (geofence). */
+  latitude?: number;
+  longitude?: number;
   color: string;
   priority: PriorityLevel;
   notes: string;
@@ -86,12 +95,18 @@ export interface AttendanceSettings {
   missedCheckInDelayMinutes: number;
   defaultTermType: AcademicTermType;
   defaultCourseLengthWeeks: number;
+  /** First day of the term (ISO yyyy-mm-dd). Bounds the calendar and projections. */
+  termStartDate?: string;
+  /** Last day of the term (ISO yyyy-mm-dd). */
+  termEndDate?: string;
   riskThresholds: {
     warning: number;
     critical: number;
   };
   lateCreditWeight: number;
   locationRemindersEnabled: boolean;
+  /** Premium: auto-log "present" when you arrive at a class's location (geofence). */
+  autoCheckInEnabled?: boolean;
   incentiveSystemEnabled: boolean;
   motivationMessagesEnabled: boolean;
   dailyMotivationNotificationsEnabled: boolean;

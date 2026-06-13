@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Laurel — Design System · Attendance Tracker</title>
+<link rel="stylesheet" href="tokens.css" />
+<style>
+  html, body { background: var(--paper); }
+  ::selection { background: var(--gold-soft); }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 28px; }
+  a { color: inherit; }
+  .ds-kicker { font-size: 12px; font-weight: 800; letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold-deep); }
+  .ds-h2 { font-family: var(--font-display); font-weight: 600; font-size: clamp(28px, 4vw, 42px); letter-spacing: -0.01em; color: var(--ink); margin: 8px 0 0; }
+  .ds-lead { font-size: 18px; line-height: 1.55; color: var(--ink-2); max-width: 60ch; }
+  .card { background: var(--card); border: 0.5px solid var(--hairline); border-radius: var(--r-card); box-shadow: var(--e2); }
+  .mono-note { font-family: var(--font-ui); font-size: 12.5px; color: var(--ink-3); letter-spacing: 0.01em; }
+  .scrollnav { position: sticky; top: 0; z-index: 40; }
+  .scrollnav a { text-decoration: none; font-size: 13.5px; font-weight: 600; color: var(--ink-2); padding: 8px 13px; border-radius: var(--r-full); white-space: nowrap; transition: background var(--d-fast), color var(--d-fast); }
+  .scrollnav a:hover { background: var(--forest-soft); color: var(--forest); }
+  section { scroll-margin-top: 84px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script type="text/babel" src="icons.jsx"></script>
+<script type="text/babel" src="laurel-components.jsx"></script>
+<script type="text/babel" src="ds-app.jsx"></script>
+<script type="text/babel">
+  ReactDOM.createRoot(document.getElementById('root')).render(<DSApp />);
+</script>
+</body>
+</html>

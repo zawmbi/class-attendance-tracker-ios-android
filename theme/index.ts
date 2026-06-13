@@ -110,6 +110,8 @@ export const appConfig = {
   academicTermOptions: ["semester", "trimester", "quarter", "custom"] as const,
   courseLengthOptions: [4, 6, 8, 10, 12, 14, 16] as const,
   lateCreditWeight: 0.5,
+  // Credit a "late" check-in earns toward attendance: full → none (counts as absent).
+  lateCreditOptions: [1, 0.75, 0.5, 0.25, 0] as const,
   heatmapWeeks: 8,
   analyticsWeeks: 6,
   projectionWindowSessions: 8,

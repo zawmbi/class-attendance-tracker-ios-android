@@ -1,6 +1,7 @@
 import { PropsWithChildren, useMemo, useState } from "react";
 import { router } from "expo-router";
 import { Alert, Pressable, Text, TextInput, TextInputProps, View } from "react-native";
+import * as Location from "expo-location";
 
 import { Icon } from "@/components/Icon";
 import { Segmented } from "@/components/attenza/Segmented";
@@ -16,6 +17,15 @@ import { draftToClassPayload, parseSyllabusText } from "@/utils/syllabus";
 import { AcademicTermType, AttendanceType, PriorityLevel, SyllabusImportDraft, Weekday } from "@/utils/types";
 
 const WEEKDAYS: Weekday[] = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+
+// Short chip label for a late-credit weight (1 = present, 0 = absent).
+const lateChipLabel = (weight: number) => (weight >= 1 ? "Full" : weight <= 0 ? "Absent" : `${Math.round(weight * 100)}%`);
+const latePolicySentence = (weight: number) =>
+  weight >= 1
+    ? "A late check-in counts the same as being present."
+    : weight <= 0
+      ? "A late check-in counts as a full absence."
+      : `A late check-in counts as ${Math.round(weight * 100)}% of a present session (a ${100 - Math.round(weight * 100)}% penalty).`;
 
 const Group = ({ header, footer, children }: PropsWithChildren<{ header?: string; footer?: string }>) => {
   const palette = useAppPalette();
@@ -79,8 +89,12 @@ export const EditClassScreen = ({ classId }: EditClassScreenProps) => {
   const [courseLengthWeeks, setCourseLengthWeeks] = useState(existing?.courseLengthWeeks ?? settings.defaultCourseLengthWeeks);
   const [requiredAttendance, setRequiredAttendance] = useState(existing?.requiredAttendance ?? 80);
   const [excusedAllowance, setExcusedAllowance] = useState(existing?.excusedAllowance ?? 2);
+  const [lateCreditWeight, setLateCreditWeight] = useState(existing?.lateCreditWeight ?? settings.lateCreditWeight);
   const [priority, setPriority] = useState<PriorityLevel>(existing?.priority ?? "medium");
   const [color, setColor] = useState(existing?.color ?? appConfig.classColorOptions[0]);
+  const [latitude, setLatitude] = useState<number | undefined>(existing?.latitude);
+  const [longitude, setLongitude] = useState<number | undefined>(existing?.longitude);
+  const [capturingLocation, setCapturingLocation] = useState(false);
   const [syllabusText, setSyllabusText] = useState("");
   const [drafts, setDrafts] = useState<SyllabusImportDraft[]>([]);
 
@@ -135,6 +149,26 @@ export const EditClassScreen = ({ classId }: EditClassScreenProps) => {
     router.replace("/(tabs)/dashboard");
   };
 
+  const captureLocation = async () => {
+    setCapturingLocation(true);
+    try {
+      const permission = await Location.requestForegroundPermissionsAsync();
+      if (!permission.granted) {
+        Alert.alert("Location needed", "Allow location access to pin this class to a place.");
+        return;
+      }
+      // Highest accuracy → precise GPS coordinates when the user grants iOS
+      // "Precise" location (they can keep it approximate if they prefer).
+      const position = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Highest });
+      setLatitude(position.coords.latitude);
+      setLongitude(position.coords.longitude);
+    } catch {
+      Alert.alert("Couldn't get location", "Please try again in a moment.");
+    } finally {
+      setCapturingLocation(false);
+    }
+  };
+
   const handleSave = () => {
     if (!canSave) {
       Alert.alert("Missing info", "Add a class name and at least one schedule day.");
@@ -161,6 +195,9 @@ export const EditClassScreen = ({ classId }: EditClassScreenProps) => {
       courseLengthWeeks,
       requiredAttendance,
       excusedAllowance,
+      lateCreditWeight,
+      latitude,
+      longitude,
       hoursPerWeek: existing?.hoursPerWeek ?? 3,
       color,
       priority,
@@ -349,6 +386,32 @@ export const EditClassScreen = ({ classId }: EditClassScreenProps) => {
         )}
       </Group>
 
+      {/* Late arrivals */}
+      <Group header="Late arrivals" footer={latePolicySentence(lateCreditWeight)}>
+        <View className="px-3.5 pt-3 pb-3.5">
+          <Text className="mb-2 text-[12px]" style={{ color: palette.ink3, fontFamily: "Outfit_700Bold" }}>
+            A LATE CHECK-IN COUNTS AS
+          </Text>
+          <View className="flex-row gap-2">
+            {appConfig.lateCreditOptions.map((weight) => {
+              const on = lateCreditWeight === weight;
+              return (
+                <Pressable
+                  key={weight}
+                  onPress={() => setLateCreditWeight(weight)}
+                  className="flex-1 items-center rounded-[11px] py-2.5"
+                  style={{ backgroundColor: on ? palette.forest : palette.paper2, borderWidth: on ? 0 : 1, borderColor: palette.hairline }}
+                >
+                  <Text className="text-[13px]" style={{ color: on ? "#fff" : palette.ink2, fontFamily: "Outfit_700Bold" }}>
+                    {lateChipLabel(weight)}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
+      </Group>
+
       <Group header="Excused absences" footer="Absences that don't count against you (illness, approved leave).">
         <View className="px-3.5 py-3.5">
           <Stepper label="Allowed this term" value={excusedAllowance} onChange={setExcusedAllowance} min={0} max={15} />
@@ -405,6 +468,40 @@ export const EditClassScreen = ({ classId }: EditClassScreenProps) => {
             />
           ))}
         </View>
+      </Group>
+
+      {/* Location reminder */}
+      <Group header="Location reminder" footer="Pin this class to a place to get a check-in nudge when you arrive. Turn on Location reminders in Settings to activate it.">
+        {latitude != null && longitude != null ? (
+          <View className="flex-row items-center gap-3 px-3.5 py-3">
+            <View className="h-8 w-8 items-center justify-center rounded-[9px]" style={{ backgroundColor: palette.forestSoft }}>
+              <Icon name="target" size={18} color={palette.forest} stroke={2} />
+            </View>
+            <View className="flex-1">
+              <Text className="text-[15px]" style={{ color: palette.ink, fontFamily: "Outfit_700Bold" }}>
+                Location pinned
+              </Text>
+              <Text className="text-[12.5px]" style={{ color: palette.ink3, fontFamily: "Outfit_500Medium" }}>
+                {latitude.toFixed(5)}, {longitude.toFixed(5)}
+              </Text>
+            </View>
+            <Pressable onPress={() => { setLatitude(undefined); setLongitude(undefined); }} hitSlop={8}>
+              <Text className="text-[14px]" style={{ color: palette.absent, fontFamily: "Outfit_700Bold" }}>
+                Clear
+              </Text>
+            </Pressable>
+          </View>
+        ) : (
+          <Pressable onPress={captureLocation} disabled={capturingLocation} className="flex-row items-center gap-3 px-3.5 py-3">
+            <View className="h-8 w-8 items-center justify-center rounded-[9px]" style={{ backgroundColor: palette.forestSoft }}>
+              <Icon name="target" size={18} color={palette.forest} stroke={2} />
+            </View>
+            <Text className="flex-1 text-[15.5px]" style={{ color: palette.ink, fontFamily: "Outfit_600SemiBold" }}>
+              {capturingLocation ? "Getting location…" : "Use my current location"}
+            </Text>
+            <Icon name="chevron" size={17} color={palette.ink3} stroke={2} />
+          </Pressable>
+        )}
       </Group>
 
       {/* Notes */}

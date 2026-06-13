@@ -1,0 +1,176 @@
+/* ============================================================
+   LAUREL — design tokens for the Attendance Tracker rehaul
+   Evergreen + honey-gold academic system. Light primary, dark for hero.
+   Built to map 1:1 to NativeWind theme tokens (see handoff doc).
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Outfit:wght@400;500;600;700;800&display=swap');
+
+:root {
+  /* ---- Brand & surface (LIGHT) ---- */
+  --paper:        oklch(0.985 0.008 95);   /* app background, warm cream */
+  --paper-2:      oklch(0.965 0.013 92);   /* grouped / sunken bg */
+  --card:         oklch(1 0 0);            /* raised card */
+  --card-2:       oklch(0.992 0.006 95);   /* nested fill */
+  --hairline:     oklch(0.42 0.02 150 / 0.12);
+
+  --ink:          oklch(0.26 0.022 152);   /* primary text, warm green-black */
+  --ink-2:        oklch(0.45 0.018 150);   /* secondary */
+  --ink-3:        oklch(0.60 0.014 150);   /* tertiary / captions */
+
+  --forest:       oklch(0.40 0.046 168);   /* BRAND — deep muted spruce */
+  --forest-deep:  oklch(0.30 0.038 170);
+  --forest-soft:  oklch(0.93 0.021 165);   /* tinted fill */
+  --moss:         oklch(0.56 0.05 165);    /* muted sage-green */
+
+  --gold:         oklch(0.80 0.128 79);    /* ACCENT — laurel honey-gold */
+  --gold-deep:    oklch(0.69 0.13 71);
+  --gold-soft:    oklch(0.94 0.045 84);
+
+  /* ---- Status ---- */
+  --present:      oklch(0.52 0.062 165);   /* muted green */
+  --present-soft: oklch(0.92 0.028 163);
+  --late:         oklch(0.76 0.125 70);    /* amber */
+  --late-soft:    oklch(0.94 0.05 80);
+  --absent:       oklch(0.585 0.145 33);   /* clay / terracotta */
+  --absent-soft:  oklch(0.93 0.04 38);
+  --excused:      oklch(0.60 0.05 250);    /* slate-blue */
+  --excused-soft: oklch(0.93 0.025 250);
+
+  --risk-safe:    var(--present);
+  --risk-watch:   var(--late);
+  --risk-danger:  oklch(0.56 0.16 30);
+
+  /* ---- Type ---- */
+  --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
+  --font-ui: 'Outfit', -apple-system, system-ui, sans-serif;
+
+  /* iOS-aligned UI scale */
+  --t-hero:    56px;  /* Fraunces, gamification numerals */
+  --t-large:   34px;  /* large title */
+  --t-title1:  28px;
+  --t-title2:  22px;
+  --t-title3:  20px;
+  --t-headline:17px;  /* semibold */
+  --t-body:    17px;
+  --t-callout: 16px;
+  --t-subhead: 15px;
+  --t-foot:    13px;
+  --t-caption: 12px;
+
+  /* ---- Spacing (4pt grid) ---- */
+  --s1: 4px;  --s2: 8px;  --s3: 12px; --s4: 16px;
+  --s5: 20px; --s6: 24px; --s7: 32px; --s8: 40px;
+  --s9: 48px; --s10: 64px;
+
+  /* ---- Radii ---- */
+  --r-chip: 9px;
+  --r-btn: 14px;
+  --r-field: 16px;
+  --r-card: 22px;
+  --r-card-lg: 28px;
+  --r-sheet: 34px;
+  --r-full: 9999px;
+
+  /* ---- Elevation (soft, warm-tinted) ---- */
+  --e1: 0 1px 2px oklch(0.34 0.04 150 / 0.06), 0 1px 3px oklch(0.34 0.04 150 / 0.05);
+  --e2: 0 2px 4px oklch(0.34 0.04 150 / 0.05), 0 4px 10px oklch(0.34 0.04 150 / 0.07);
+  --e3: 0 6px 14px oklch(0.34 0.04 150 / 0.08), 0 12px 28px oklch(0.34 0.04 150 / 0.09);
+  --e4: 0 10px 24px oklch(0.34 0.04 150 / 0.10), 0 24px 56px oklch(0.34 0.04 150 / 0.13);
+  --e-gold: 0 8px 26px oklch(0.69 0.13 71 / 0.30);
+  --e-forest: 0 10px 30px oklch(0.34 0.062 157 / 0.32);
+
+  /* ---- Motion ---- */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --d-fast: 160ms;
+  --d-base: 240ms;
+  --d-slow: 420ms;
+}
+
+/* ---- DARK (hero screens) ---- */
+.dark, [data-theme="dark"] {
+  --paper:        oklch(0.19 0.014 158);   /* warm espresso-green black */
+  --paper-2:      oklch(0.165 0.013 158);
+  --card:         oklch(0.235 0.017 158);
+  --card-2:       oklch(0.275 0.018 158);
+  --hairline:     oklch(0.9 0.01 150 / 0.10);
+
+  --ink:          oklch(0.95 0.012 92);
+  --ink-2:        oklch(0.78 0.014 120);
+  --ink-3:        oklch(0.62 0.014 140);
+
+  --forest:       oklch(0.68 0.066 168);
+  --forest-deep:  oklch(0.52 0.055 170);
+  --forest-soft:  oklch(0.30 0.035 168);
+  --moss:         oklch(0.70 0.066 165);
+
+  --gold:         oklch(0.83 0.13 80);
+  --gold-deep:    oklch(0.74 0.13 74);
+  --gold-soft:    oklch(0.33 0.06 78);
+
+  --present:      oklch(0.68 0.078 165);
+  --present-soft: oklch(0.30 0.04 163);
+  --late:         oklch(0.80 0.12 74);
+  --late-soft:    oklch(0.34 0.06 76);
+  --absent:       oklch(0.66 0.15 35);
+  --absent-soft:  oklch(0.33 0.07 36);
+  --excused:      oklch(0.70 0.07 250);
+  --excused-soft: oklch(0.32 0.04 250);
+  --risk-danger:  oklch(0.66 0.17 32);
+
+  --e1: 0 1px 2px rgba(0,0,0,0.4);
+  --e2: 0 2px 6px rgba(0,0,0,0.45), 0 4px 12px rgba(0,0,0,0.35);
+  --e3: 0 6px 16px rgba(0,0,0,0.5), 0 12px 30px rgba(0,0,0,0.4);
+  --e4: 0 12px 30px rgba(0,0,0,0.55), 0 26px 60px rgba(0,0,0,0.5);
+  --e-gold: 0 8px 30px oklch(0.74 0.13 74 / 0.40);
+  --e-forest: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: var(--font-ui);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Form controls don't inherit font-family by default — force the UI font (Outfit) on all of them */
+button, input, textarea, select { font-family: inherit; }
+
+/* ---- Warm film grain overlay (depth, not flatness) ---- */
+.grain::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.5;
+  mix-blend-mode: soft-light;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.6'/%3E%3C/svg%3E");
+  z-index: 1;
+}
+
+/* ---- Glass surface (tab bar, sheets, pills) ---- */
+.glass {
+  background: oklch(1 0 0 / 0.62);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 0.5px solid oklch(1 0 0 / 0.6);
+  box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.7), var(--e3);
+}
+.dark .glass, [data-theme="dark"] .glass {
+  background: oklch(0.26 0.02 158 / 0.66);
+  border: 0.5px solid oklch(1 0 0 / 0.12);
+  box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.10), var(--e3);
+}
+
+/* utility */
+.font-display { font-family: var(--font-display); }
+.tnum { font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+}

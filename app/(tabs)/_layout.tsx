@@ -1,7 +1,7 @@
 import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { Redirect, Tabs, useRouter } from "expo-router";
-import { useMemo } from "react";
-import { Pressable, Text, View } from "react-native";
+import { useEffect, useMemo } from "react";
+import { AppState, Pressable, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Defs, LinearGradient, Path, Rect, Stop } from "react-native-svg";
 
@@ -9,6 +9,9 @@ import { Icon, IconName } from "@/components/Icon";
 import { AchievementCelebration } from "@/components/AchievementCelebration";
 import { useAttendanceStore } from "@/store/attendanceStore";
 import { useUserStore } from "@/store/userStore";
+import { syncScheduledReminders } from "@/services/notificationService";
+import { syncGeofences } from "@/services/geofencing";
+import { syncTodayWidget } from "@/services/widget";
 import { useAppPalette } from "@/theme/useAppPalette";
 import { useIsWide } from "@/theme/responsive";
 import { getGamificationProfile } from "@/utils/gamification";
@@ -34,6 +37,7 @@ type SideItem =
 
 const SIDE_ITEMS: SideItem[] = [
   { kind: "tab", route: "dashboard", icon: "today", label: "Today" },
+  { kind: "tab", route: "courses", icon: "book", label: "Courses" },
   { kind: "tab", route: "insights", icon: "insights", label: "Insights" },
   { kind: "tab", route: "analytics", icon: "chart", label: "Forecast", tone: "gold" },
   { kind: "tab", route: "calendar", icon: "calendar", label: "Calendar" },
@@ -250,6 +254,37 @@ export default function TabsLayout() {
   const isAuthenticated = useUserStore((state) => state.isAuthenticated);
   const wide = useIsWide();
 
+  // Keep weekly class reminders + post-class nudges in sync with the schedule
+  // and reminder settings. Idempotent: cancels and re-creates on each change.
+  const classes = useAttendanceStore((state) => state.classes);
+  const records = useAttendanceStore((state) => state.records);
+  const settings = useAttendanceStore((state) => state.settings);
+  const reminderMinutesBefore = settings.reminderMinutesBefore;
+  const missedCheckInDelayMinutes = settings.missedCheckInDelayMinutes;
+  const locationRemindersEnabled = settings.locationRemindersEnabled;
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    syncScheduledReminders(classes, settings).catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, classes, reminderMinutesBefore, missedCheckInDelayMinutes]);
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    syncGeofences(classes, settings).catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, classes, locationRemindersEnabled]);
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    syncTodayWidget(classes, records);
+  }, [isAuthenticated, classes, records]);
+  // The geofence task can write auto-check-in records to storage while the app
+  // is backgrounded; re-hydrate on foreground so they show up immediately.
+  useEffect(() => {
+    const sub = AppState.addEventListener("change", (next) => {
+      if (next === "active") useAttendanceStore.persist.rehydrate();
+    });
+    return () => sub.remove();
+  }, []);
+
   if (!isAuthenticated) {
     return <Redirect href="/auth" />;
   }
@@ -268,6 +303,7 @@ export default function TabsLayout() {
         <Tabs.Screen name="check-in" options={{ title: "Check-In" }} />
         <Tabs.Screen name="insights" options={{ title: "Insights" }} />
         <Tabs.Screen name="analytics" options={{ title: "Analytics", href: null }} />
+        <Tabs.Screen name="courses" options={{ title: "Courses", href: null }} />
         <Tabs.Screen name="settings" options={{ title: "Settings", href: null }} />
       </Tabs>
       <AchievementCelebration />
