@@ -24,6 +24,10 @@ const PRIVACY_URL = "https://lindascomputing.xyz/class-attendance-tracker-ios-an
 const MANAGE_URL =
   Platform.OS === "ios" ? "https://apps.apple.com/account/subscriptions" : "https://play.google.com/store/account/subscriptions";
 
+const periodSuffix = (p: PremiumPlan["period"]) => (p === "year" ? "yr" : p === "6month" ? "6mo" : "mo");
+const billedLabel = (p: PremiumPlan["period"]) =>
+  p === "year" ? "yearly" : p === "6month" ? "every 6 months" : "monthly";
+
 export const PremiumScreen = () => {
   const router = useRouter();
   const isPremium = useUserStore((s) => s.isPremium);
@@ -198,11 +202,11 @@ export const PremiumScreen = () => {
                           ) : null}
                         </View>
                         <Text className="text-[13px]" style={{ color: d.ink3, fontFamily: "Outfit_500Medium" }}>
-                          Billed {plan.period === "year" ? "yearly" : "monthly"}, auto-renewing
+                          Billed {billedLabel(plan.period)}, auto-renewing
                         </Text>
                       </View>
                       <Text className="text-[16px]" style={{ color: "#fff", fontFamily: "Outfit_800ExtraBold" }}>
-                        {plan.priceLabel ? `${plan.priceLabel}/${plan.period === "year" ? "yr" : "mo"}` : "—"}
+                        {plan.priceLabel ? `${plan.priceLabel}/${periodSuffix(plan.period)}` : "—"}
                       </Text>
                     </Pressable>
                   );
@@ -220,7 +224,7 @@ export const PremiumScreen = () => {
                   <ActivityIndicator color="#3a2a06" />
                 ) : (
                   <Text style={{ color: "#3a2a06", fontFamily: "Outfit_800ExtraBold", fontSize: 17 }}>
-                    {selected?.period === "year" ? "Subscribe yearly" : "Subscribe monthly"}
+                    {selected ? `Subscribe ${billedLabel(selected.period)}` : "Subscribe"}
                   </Text>
                 )}
               </Pressable>

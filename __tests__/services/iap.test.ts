@@ -19,6 +19,7 @@ import {
   isPremiumSku,
   PREMIUM_ANNUAL_ID,
   PREMIUM_MONTHLY_ID,
+  PREMIUM_SEMIANNUAL_ID,
   PREMIUM_SKUS,
   purchasePlan,
   restore
@@ -27,11 +28,12 @@ import {
 const mocked = RNIap as jest.Mocked<typeof RNIap>;
 
 describe("product identity", () => {
-  it("exposes the two premium SKUs", () => {
-    expect(PREMIUM_SKUS).toEqual([PREMIUM_MONTHLY_ID, PREMIUM_ANNUAL_ID]);
+  it("exposes the three premium SKUs (monthly, 6-month, annual)", () => {
+    expect(PREMIUM_SKUS).toEqual([PREMIUM_MONTHLY_ID, PREMIUM_SEMIANNUAL_ID, PREMIUM_ANNUAL_ID]);
   });
   it("isPremiumSku recognizes only our products", () => {
     expect(isPremiumSku(PREMIUM_MONTHLY_ID)).toBe(true);
+    expect(isPremiumSku(PREMIUM_SEMIANNUAL_ID)).toBe(true);
     expect(isPremiumSku(PREMIUM_ANNUAL_ID)).toBe(true);
     expect(isPremiumSku("com.someone.else")).toBe(false);
     expect(isPremiumSku(null)).toBe(false);
@@ -49,16 +51,18 @@ describe("connect", () => {
 });
 
 describe("fetchPlans", () => {
-  it("maps store subscriptions to platform-neutral plans (monthly first)", async () => {
+  it("maps store subscriptions to platform-neutral plans, sorted by duration", async () => {
     mocked.getSubscriptions.mockResolvedValueOnce([
       { productId: PREMIUM_ANNUAL_ID, localizedPrice: "$19.99" },
-      { productId: PREMIUM_MONTHLY_ID, localizedPrice: "$2.99" }
+      { productId: PREMIUM_MONTHLY_ID, localizedPrice: "$2.99" },
+      { productId: PREMIUM_SEMIANNUAL_ID, localizedPrice: "$11.99" }
     ] as never);
 
     const plans = await fetchPlans();
-    expect(plans.map((p) => p.title)).toEqual(["Monthly", "Annual"]);
+    expect(plans.map((p) => p.title)).toEqual(["Monthly", "6-Month", "Annual"]);
     expect(plans[0]).toMatchObject({ sku: PREMIUM_MONTHLY_ID, period: "month", priceLabel: "$2.99" });
-    expect(plans[1]).toMatchObject({ sku: PREMIUM_ANNUAL_ID, period: "year", priceLabel: "$19.99" });
+    expect(plans[1]).toMatchObject({ sku: PREMIUM_SEMIANNUAL_ID, period: "6month", priceLabel: "$11.99" });
+    expect(plans[2]).toMatchObject({ sku: PREMIUM_ANNUAL_ID, period: "year", priceLabel: "$19.99" });
   });
 });
 

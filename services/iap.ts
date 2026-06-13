@@ -15,23 +15,29 @@ try {
 export const iapAvailable = () => nativeIap !== null && Platform.OS !== "web";
 
 // Auto-renewable subscription product IDs. These MUST exactly match the
-// products you create in App Store Connect (one subscription group with two
+// products you create in App Store Connect (one subscription group with three
 // durations) and in the Google Play Console. Keep them in sync if you rename.
 export const PREMIUM_MONTHLY_ID = "com.attendancetrackerappsorganization.attendancetrackerapp.premium.monthly";
+export const PREMIUM_SEMIANNUAL_ID = "com.attendancetrackerappsorganization.attendancetrackerapp.premium.semiannual";
 export const PREMIUM_ANNUAL_ID = "com.attendancetrackerappsorganization.attendancetrackerapp.premium.annual";
-export const PREMIUM_SKUS = [PREMIUM_MONTHLY_ID, PREMIUM_ANNUAL_ID];
+export const PREMIUM_SKUS = [PREMIUM_MONTHLY_ID, PREMIUM_SEMIANNUAL_ID, PREMIUM_ANNUAL_ID];
 
 export const isPremiumSku = (sku?: string | null): boolean => !!sku && PREMIUM_SKUS.includes(sku);
+
+export type PremiumPeriod = "month" | "6month" | "year";
 
 // A platform-neutral view of a subscription product for the paywall UI.
 export interface PremiumPlan {
   sku: string;
-  title: string; // "Monthly" | "Annual"
+  title: string; // "Monthly" | "6-Month" | "Annual"
   priceLabel: string; // localized, e.g. "$2.99"
-  period: "month" | "year";
+  period: PremiumPeriod;
   // The raw library object — needed to pass the Android offer token at purchase.
   raw: unknown;
 }
+
+// Layout order: shortest to longest duration.
+const PERIOD_ORDER: Record<PremiumPeriod, number> = { month: 0, "6month": 1, year: 2 };
 
 const androidFormattedPrice = (sub: any): string | undefined => {
   const phases = sub?.subscriptionOfferDetails?.[0]?.pricingPhases?.pricingPhaseList;
@@ -43,15 +49,19 @@ const androidFormattedPrice = (sub: any): string | undefined => {
   return undefined;
 };
 
+const planMeta = (sku: string): { title: string; period: PremiumPeriod } => {
+  if (sku === PREMIUM_ANNUAL_ID) return { title: "Annual", period: "year" };
+  if (sku === PREMIUM_SEMIANNUAL_ID) return { title: "6-Month", period: "6month" };
+  return { title: "Monthly", period: "month" };
+};
+
 const toPlan = (sub: any): PremiumPlan => {
   const sku: string = sub.productId;
-  const isAnnual = sku === PREMIUM_ANNUAL_ID;
   const priceLabel = Platform.OS === "ios" ? sub.localizedPrice : androidFormattedPrice(sub);
   return {
     sku,
-    title: isAnnual ? "Annual" : "Monthly",
+    ...planMeta(sku),
     priceLabel: priceLabel ?? "",
-    period: isAnnual ? "year" : "month",
     raw: sub
   };
 };
@@ -84,8 +94,8 @@ export const disconnect = (): void => {
 export const fetchPlans = async (): Promise<PremiumPlan[]> => {
   if (!nativeIap) return [];
   const subs = await nativeIap.getSubscriptions({ skus: PREMIUM_SKUS });
-  // Monthly first, Annual second, for a stable paywall layout.
-  return subs.map(toPlan).sort((a, b) => (a.period === "month" ? -1 : 1) - (b.period === "month" ? -1 : 1));
+  // Shortest to longest duration, for a stable paywall layout.
+  return subs.map(toPlan).sort((a, b) => PERIOD_ORDER[a.period] - PERIOD_ORDER[b.period]);
 };
 
 // Kicks off the native purchase sheet. The granted entitlement is delivered

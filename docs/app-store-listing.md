@@ -61,7 +61,7 @@ PRIVATE BY DESIGN
 Your classes and attendance stay on your device. No ads, no tracking, no selling your data. Delete your account and data anytime.
 
 ATTENDIZE PREMIUM (OPTIONAL)
-Core tracking is free. Premium unlocks end-of-term forecasting and what-if projections, behavioral insights, syllabus scanning, advanced reminders, and premium themes via an auto-renewable subscription (Monthly or Annual). Payment is charged to your Apple ID at confirmation of purchase and renews automatically unless canceled at least 24 hours before the period ends; manage or cancel anytime in your account settings. Terms: https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
+Core tracking is free. Premium unlocks end-of-term forecasting and what-if projections, behavioral insights, syllabus scanning, advanced reminders, and premium themes via an auto-renewable subscription (Monthly, 6-Month, or Annual). Payment is charged to your Apple ID at confirmation of purchase and renews automatically unless canceled at least 24 hours before the period ends; manage or cancel anytime in your account settings. Terms: https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
 
 Works great on iPhone and iPad.
 
@@ -89,7 +89,7 @@ sample data. No real account needed.
 
 **In-App Purchases:** Premium features (forecasting, analytics/insights,
 syllabus scanning, advanced reminders, themes) are unlocked by an auto-renewable
-subscription — Monthly or Annual — via Apple In-App Purchase on the "Attendize
+subscription — Monthly, 6-Month, or Annual — via Apple In-App Purchase on the "Attendize
 Premium" screen. To test: use a Sandbox Apple ID, open any "Premium" prompt →
 Attendize Premium → Subscribe, then verify the gated screens unlock. "Restore
 Purchases" re-grants the entitlement. See docs/app-review-2.1b-response.md for

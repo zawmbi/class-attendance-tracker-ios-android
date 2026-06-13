@@ -40,8 +40,8 @@ Purchase** (`react-native-iap`). Everything below reflects that.
 >
 > **6. How do users purchase "Premium"?**
 > Tapping any "Premium" / "Unlock with Premium" prompt opens the Premium screen,
-> which offers two auto-renewable subscriptions — Monthly and Annual — purchased
-> through Apple In-App Purchase. Price, billing period, auto-renew terms, and
+> which offers three auto-renewable subscriptions — Monthly, 6-Month, and Annual
+> — purchased through Apple In-App Purchase. Price, billing period, auto-renew terms, and
 > links to Terms of Use and Privacy Policy are shown on that screen, along with
 > a Restore Purchases option.
 
@@ -51,19 +51,29 @@ Purchase** (`react-native-iap`). Everything below reflects that.
 
 The product IDs are defined in `services/iap.ts` and must match exactly:
 
-| Plan    | Product ID                                                                  | Type                 |
-| ------- | --------------------------------------------------------------------------- | -------------------- |
-| Monthly | `com.attendancetrackerappsorganization.attendancetrackerapp.premium.monthly` | Auto-renewable sub.  |
-| Annual  | `com.attendancetrackerappsorganization.attendancetrackerapp.premium.annual`  | Auto-renewable sub.  |
+| Plan    | Product ID                                                                     | Duration | Type                |
+| ------- | ------------------------------------------------------------------------------ | -------- | ------------------- |
+| Monthly | `com.attendancetrackerappsorganization.attendancetrackerapp.premium.monthly`    | 1 Month  | Auto-renewable sub. |
+| 6-Month | `com.attendancetrackerappsorganization.attendancetrackerapp.premium.semiannual` | 6 Months | Auto-renewable sub. |
+| Annual  | `com.attendancetrackerappsorganization.attendancetrackerapp.premium.annual`     | 1 Year   | Auto-renewable sub. |
 
-Both belong in **one subscription group** (e.g. "Attendize Premium") so the user
-can switch between Monthly and Annual.
+All three belong in **one subscription group** (e.g. "Attendize Premium") so the
+user can switch between Monthly, 6-Month, and Annual.
+
+### Localized copy (App Store Connect limits: Display Name ≤30, Description ≤45)
+
+| Field        | Monthly                                      | 6-Month                                  | Annual                                   |
+| ------------ | -------------------------------------------- | ---------------------------------------- | ---------------------------------------- |
+| Display Name | `Premium (Monthly)`                          | `Premium (6-Month)`                      | `Premium (Annual)`                       |
+| Description  | `Unlock forecasts, insights & syllabus scan` | `Full Premium for the whole term`        | `All Premium features — best value`      |
+
+Subscription Group display name: `Attendize Premium`
 
 ### App Store Connect checklist
 1. Agreements, Tax, and Banking → sign the **Paid Applications agreement** (IAPs
    won't load until this is active).
 2. Features → In-App Purchases → create a **Subscription Group**.
-3. Add the two subscriptions above with the exact product IDs, a price, a
+3. Add the three subscriptions above with the exact product IDs, a price, a
    localized display name, and a description; submit them **with** the app
    version (attach them to the 1.0 build).
 4. Provide a **Privacy Policy URL** and **Terms of Use (EULA)** — the app links
@@ -81,7 +91,7 @@ Monetize → Subscriptions, and add a base plan (monthly / yearly) to each.
 - Use a **Sandbox Apple ID** (App Store Connect → Users and Access → Sandbox).
 - Install via **TestFlight** or the review build (IAP does **not** work in Expo
   Go or the iOS Simulator's App Store).
-- Open the app → any "Premium" prompt → **Attendize Premium** → pick Monthly or
+- Open the app → any "Premium" prompt → **Attendize Premium** → pick Monthly, 6-Month, or
   Annual → **Subscribe**. The sandbox sheet completes the purchase for free and
   unlocks Forecast/Analytics, Insights, and syllabus scanning immediately.
 - **Restore Purchases** re-grants the entitlement on a fresh install.
