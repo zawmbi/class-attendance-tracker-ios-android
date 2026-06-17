@@ -50,14 +50,17 @@ export const AchievementsScreen = () => {
   const currentRankIndex = profile.rank.index;
 
   return (
-    <ScreenContainer wideMaxWidth={1040}>
-      {/* Back + header */}
-      <Pressable onPress={() => router.back()} className="mb-2 flex-row items-center gap-1 py-1" accessibilityLabel="Back">
-        <Icon name="back" size={21} color={palette.forest} stroke={2.2} />
-        <Text className="text-[16px]" style={{ color: palette.forest, fontFamily: "Outfit_700Bold" }}>
-          Back
-        </Text>
-      </Pressable>
+    <ScreenContainer
+      wideMaxWidth={1040}
+      header={
+        <Pressable onPress={() => router.back()} className="flex-row items-center gap-1 py-1" accessibilityLabel="Back">
+          <Icon name="back" size={21} color={palette.forest} stroke={2.2} />
+          <Text className="text-[16px]" style={{ color: palette.forest, fontFamily: "Outfit_700Bold" }}>
+            Back
+          </Text>
+        </Pressable>
+      }
+    >
       <View className="mb-4">
         <Text className="text-[13px] tracking-[1.5px]" style={{ color: palette.goldDeep, fontFamily: "Outfit_800ExtraBold" }}>
           RANK & ACHIEVEMENTS

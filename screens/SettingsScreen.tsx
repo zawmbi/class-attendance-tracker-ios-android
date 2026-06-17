@@ -1,5 +1,5 @@
 import { PropsWithChildren, ReactNode, useMemo, useState } from "react";
-import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
+import { Alert, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 
 import { Icon, IconName } from "@/components/Icon";
@@ -8,11 +8,12 @@ import { Sheet } from "@/components/attenza/Sheet";
 import { Toggle } from "@/components/attenza/Toggle";
 import { FormInput } from "@/components/FormField";
 import { ScreenContainer } from "@/components/ScreenContainer";
-import { exportAttendanceCsv, exportAttendancePdf } from "@/services/exportService";
 import { restoreFromCloud, syncNow } from "@/services/syncService";
 import { formatSyncedAt } from "@/utils/sync";
 import { useAttendanceStore } from "@/store/attendanceStore";
 import { useUserStore } from "@/store/userStore";
+import { requestNotificationPermissions } from "@/services/notificationService";
+import { requestGeofencePermissions } from "@/services/geofencing";
 import { appConfig } from "@/theme";
 import { useAppPalette } from "@/theme/useAppPalette";
 import { deleteAccountAndWipe } from "@/utils/account";
@@ -131,38 +132,13 @@ export const SettingsScreen = () => {
     resetOnboarding,
     isDev,
     isPremium,
+    setPremium,
+    openUpgradeModal,
     cloudLastSyncedAt,
     setCloudLastSyncedAt
   } = useUserStore();
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState("");
-  const [exporting, setExporting] = useState<"csv" | "pdf" | null>(null);
-
-  const handleExportCsv = async () => {
-    try {
-      setExporting("csv");
-      await exportAttendanceCsv(classes, records);
-    } catch (error) {
-      Alert.alert("Export failed", error instanceof Error ? error.message : "Couldn't export your data.");
-    } finally {
-      setExporting(null);
-    }
-  };
-
-  const handleExportPdf = async () => {
-    if (!isPremium) {
-      router.push("/premium");
-      return;
-    }
-    try {
-      setExporting("pdf");
-      await exportAttendancePdf(classes, records, settings);
-    } catch (error) {
-      Alert.alert("Export failed", error instanceof Error ? error.message : "Couldn't build the report.");
-    } finally {
-      setExporting(null);
-    }
-  };
 
   const [syncing, setSyncing] = useState<"sync" | "restore" | null>(null);
 
@@ -193,7 +169,7 @@ export const SettingsScreen = () => {
     }
     Alert.alert(
       "Restore from cloud?",
-      "This replaces the classes and records on this device with your most recent cloud backup.",
+      "This replaces the courses and records on this device with your most recent cloud backup.",
       [
         { text: "Cancel", style: "cancel" },
         {
@@ -236,7 +212,7 @@ export const SettingsScreen = () => {
   const handleLoadSample = () => {
     Alert.alert(
       "Load sample data?",
-      "This replaces your current classes and records with the demo set so you can explore a populated app.",
+      "This replaces your current courses and records with the demo set so you can explore a populated app.",
       [
         { text: "Cancel", style: "cancel" },
         { text: "Load demo", onPress: () => loadSampleData() }
@@ -247,7 +223,7 @@ export const SettingsScreen = () => {
   const handleClearData = () => {
     Alert.alert(
       "Start fresh?",
-      "This removes all your classes and records and restarts the get-started flow — as if it were a brand-new account. This can't be undone.",
+      "This removes all your courses and records and restarts the get-started flow — as if it were a brand-new account. This can't be undone.",
       [
         { text: "Cancel", style: "cancel" },
         {
@@ -267,7 +243,7 @@ export const SettingsScreen = () => {
   const confirmDeleteAccount = () => {
     Alert.alert(
       "Delete account?",
-      "This permanently deletes your account and erases all your classes, records, and progress on this device. This can't be undone.",
+      "This permanently deletes your account and erases all your courses, records, and progress on this device. This can't be undone.",
       [
         { text: "Cancel", style: "cancel" },
         {
@@ -317,7 +293,7 @@ export const SettingsScreen = () => {
       </Pressable>
 
       {/* Premium */}
-      <Group header="Subscription" footer={isPremium ? "Manage or cancel anytime in your App Store account settings." : undefined}>
+      <Group header="Subscription" footer={isPremium ? `Manage or cancel anytime in your ${Platform.OS === "ios" ? "App Store" : "Google Play"} account settings.` : undefined}>
         <Row
           icon="crown"
           iconBg={palette.goldDeep}
@@ -344,14 +320,51 @@ export const SettingsScreen = () => {
       </Group>
 
       {/* Reminders */}
-      <Group header="Reminders">
+      <Group header="Reminders" footer="Reminders and nudges repeat weekly with your class schedule.">
         <ChipRow
           first
           label="REMIND BEFORE CLASS"
           options={appConfig.reminderOptions}
           value={settings.reminderMinutesBefore}
-          onSelect={(v) => updateSettings({ reminderMinutesBefore: v })}
+          onSelect={(v) => {
+            updateSettings({ reminderMinutesBefore: v });
+            if (Number(v) > 0) requestNotificationPermissions().catch(() => {});
+          }}
           render={(v) => (v === 0 ? "Off" : `${v} min`)}
+        />
+        <ChipRow
+          label="NUDGE IF NOT LOGGED AFTER CLASS"
+          options={appConfig.missedCheckInOptions}
+          value={settings.missedCheckInDelayMinutes}
+          onSelect={(v) => {
+            updateSettings({ missedCheckInDelayMinutes: v });
+            if (Number(v) > 0) requestNotificationPermissions().catch(() => {});
+          }}
+          render={(v) => (v === 0 ? "Off" : `${v} min`)}
+        />
+        <ToggleRow
+          icon="target"
+          iconBg={palette.present}
+          title="Location check-in reminders"
+          value={settings.locationRemindersEnabled}
+          onChange={(v) => {
+            updateSettings({ locationRemindersEnabled: v });
+            if (v) requestGeofencePermissions().catch(() => {});
+          }}
+        />
+        <ToggleRow
+          icon="checkin"
+          iconBg={palette.forest}
+          title={isPremium ? "Auto check-in on arrival" : "Auto check-in on arrival (Premium)"}
+          value={!!settings.autoCheckInEnabled}
+          onChange={(v) => {
+            if (v && !isPremium) {
+              openUpgradeModal("advanced_reminders");
+              return;
+            }
+            updateSettings({ autoCheckInEnabled: v });
+            if (v) requestGeofencePermissions().catch(() => {});
+          }}
         />
         <ToggleRow icon="bell" iconBg={palette.late} title="Motivation messages" value={settings.motivationMessagesEnabled} onChange={(v) => updateSettings({ motivationMessagesEnabled: v })} />
         <ToggleRow icon="sparkles" iconBg={palette.moss} title="Daily motivation" value={settings.dailyMotivationNotificationsEnabled} onChange={(v) => updateSettings({ dailyMotivationNotificationsEnabled: v })} />
@@ -366,7 +379,7 @@ export const SettingsScreen = () => {
       </Group>
 
       {/* Defaults */}
-      <Group header="New class defaults" footer="Applied to classes you add from now on.">
+      <Group header="New course defaults" footer="Applied to courses you add from now on.">
         <View className="px-3.5 pt-3">
           <Text className="mb-2 text-[12.5px]" style={{ color: palette.ink3, fontFamily: "Outfit_700Bold" }}>
             DEFAULT TERM
@@ -391,25 +404,42 @@ export const SettingsScreen = () => {
           onSelect={(v) => updateSettings({ defaultCourseLengthWeeks: v })}
           render={(v) => `${v} wk`}
         />
+        <ChipRow
+          label="LATE ARRIVALS COUNT AS"
+          options={appConfig.lateCreditOptions}
+          value={settings.lateCreditWeight}
+          onSelect={(v) => updateSettings({ lateCreditWeight: v })}
+          render={(v) => (Number(v) >= 1 ? "Full credit" : Number(v) <= 0 ? "Absent" : `${Math.round(Number(v) * 100)}%`)}
+        />
         <ToggleRow icon="lock" iconBg={palette.ink2} title="Lock attendance rules" value={settings.attendanceRulesLocked} onChange={(v) => updateSettings({ attendanceRulesLocked: v })} />
       </Group>
 
-      {/* Data */}
-      <Group header="Data" footer="Export your attendance to share or back up. PDF reports are a Premium feature.">
-        <Row
-          icon="inbox"
-          iconBg={palette.moss}
-          title={exporting === "csv" ? "Exporting…" : "Export attendance (CSV)"}
-          onPress={exporting ? undefined : handleExportCsv}
-          first
-        />
-        <Row
-          icon="book"
-          iconBg={palette.goldDeep}
-          title={exporting === "pdf" ? "Building report…" : "Export PDF report"}
-          detail={isPremium ? undefined : "Premium"}
-          onPress={exporting ? undefined : handleExportPdf}
-        />
+      {/* Term dates */}
+      <Group header="Term dates" footer="Bounds the calendar and projections. Leave blank to keep the term open-ended.">
+        <View className="px-3.5 pt-3">
+          <Text className="mb-1.5 text-[12.5px]" style={{ color: palette.ink3, fontFamily: "Outfit_700Bold" }}>
+            TERM START
+          </Text>
+          <FormInput
+            value={settings.termStartDate ?? ""}
+            onChangeText={(v) => updateSettings({ termStartDate: v.trim() || undefined })}
+            placeholder="2026-01-13"
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+        </View>
+        <View className="px-3.5 pb-3.5 pt-3">
+          <Text className="mb-1.5 text-[12.5px]" style={{ color: palette.ink3, fontFamily: "Outfit_700Bold" }}>
+            TERM END
+          </Text>
+          <FormInput
+            value={settings.termEndDate ?? ""}
+            onChangeText={(v) => updateSettings({ termEndDate: v.trim() || undefined })}
+            placeholder="2026-05-01"
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+        </View>
       </Group>
 
       {/* Cloud backup (Premium) */}
@@ -442,7 +472,8 @@ export const SettingsScreen = () => {
 
       {isDev ? (
         <Group header="Demo & data (dev)" footer="Only visible on the dev login. Switch between the demo set and a clean start to test both new-user and populated states.">
-          <Row icon="sparkles" iconBg={palette.goldDeep} title="Load sample data" onPress={handleLoadSample} first />
+          <ToggleRow icon="crown" iconBg={palette.goldDeep} title="Premium (dev)" value={isPremium} onChange={(v) => setPremium(v)} first />
+          <Row icon="sparkles" iconBg={palette.goldDeep} title="Load sample data" onPress={handleLoadSample} />
           <Row icon="trash" iconBg={palette.absent} title="Clear all data & start fresh" danger onPress={handleClearData} />
         </Group>
       ) : null}
@@ -481,10 +512,10 @@ export const SettingsScreen = () => {
   );
 };
 
-const ToggleRow = ({ icon, iconBg, title, value, onChange }: { icon: IconName; iconBg: string; title: string; value: boolean; onChange: (v: boolean) => void }) => {
+const ToggleRow = ({ icon, iconBg, title, value, onChange, first }: { icon: IconName; iconBg: string; title: string; value: boolean; onChange: (v: boolean) => void; first?: boolean }) => {
   const palette = useAppPalette();
   return (
-    <View className="flex-row items-center gap-3 px-3.5 py-3" style={{ borderTopWidth: StyleSheet.hairlineWidth * 4, borderTopColor: palette.hairline }}>
+    <View className="flex-row items-center gap-3 px-3.5 py-3" style={{ borderTopWidth: first ? 0 : StyleSheet.hairlineWidth * 4, borderTopColor: palette.hairline }}>
       <View className="h-8 w-8 items-center justify-center rounded-[9px]" style={{ backgroundColor: iconBg }}>
         <Icon name={icon} size={18} color="#fff" stroke={2} />
       </View>

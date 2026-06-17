@@ -1,4 +1,6 @@
 import "@/global.css";
+// Side-effect import: registers the background geofencing task at startup.
+import "@/services/geofencing";
 
 import { Stack } from "expo-router";
 import { useFonts } from "expo-font";

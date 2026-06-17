@@ -9,7 +9,7 @@ import { UpgradeTrigger } from "@/utils/types";
 const copyByReason: Record<UpgradeTrigger, { title: string; body: string }> = {
   analytics: {
     title: "Premium predictive insights",
-    body: "See future attendance scenarios, class-by-class priority suggestions, and behavioral patterns before they become stressful."
+    body: "See future attendance scenarios, course-by-course priority suggestions, and behavioral patterns before they become stressful."
   },
   risk_alert: {
     title: "Stay ahead of attendance risk",
@@ -28,8 +28,8 @@ const copyByReason: Record<UpgradeTrigger, { title: string; body: string }> = {
     body: "Premium adds leave-time reminders, persistent follow-ups, and adaptive timing around your routines."
   },
   syllabus_import: {
-    title: "Scan syllabi into classes",
-    body: "Paste one syllabus or several at once and Premium will pull out class details, schedule timing, and attendance policy defaults for you."
+    title: "Scan syllabi into courses",
+    body: "Paste one syllabus or several at once and Premium will pull out course details, schedule timing, and attendance policy defaults for you."
   }
 };
 
@@ -67,7 +67,7 @@ export const UpgradeModal = () => {
             </View>
             <View className="mt-6 gap-3">
               <Pressable className="rounded-full px-4 py-4" style={{ backgroundColor: palette.primary }} onPress={seePlans}>
-                <Text className="text-center" style={{ color: palette.background }}>See plans</Text>
+                <Text className="text-center" style={{ color: palette.background }}>Try free for 2 weeks</Text>
               </Pressable>
               <Pressable
                 className="rounded-full px-4 py-4"

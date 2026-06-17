@@ -1,5 +1,5 @@
-import { Redirect } from "expo-router";
+import { InsightsScreen } from "@/screens/InsightsScreen";
 
 export default function InsightsRoute() {
-  return <Redirect href="/(tabs)/analytics" />;
+  return <InsightsScreen />;
 }

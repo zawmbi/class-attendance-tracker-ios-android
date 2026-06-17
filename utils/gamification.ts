@@ -237,7 +237,7 @@ const ACHIEVEMENTS: AchievementDefinition[] = [
   {
     id: "unstoppable",
     title: "Unstoppable",
-    description: "Hit a 10-class streak in a single class.",
+    description: "Hit a 10-class streak in a single course.",
     glyph: "⚡",
     tier: "gold",
     xp: 140,
@@ -247,7 +247,7 @@ const ACHIEVEMENTS: AchievementDefinition[] = [
   {
     id: "flawless",
     title: "Flawless",
-    description: "Keep a class at 100% over 3+ sessions.",
+    description: "Keep a course at 100% over 3+ sessions.",
     glyph: "💎",
     tier: "gold",
     xp: 120,
@@ -257,7 +257,7 @@ const ACHIEVEMENTS: AchievementDefinition[] = [
   {
     id: "all_clear",
     title: "All Clear",
-    description: "Have every class sitting in the safe zone.",
+    description: "Have every course sitting in the safe zone.",
     glyph: "🛡️",
     tier: "silver",
     xp: 80,
@@ -308,7 +308,7 @@ const ACHIEVEMENTS: AchievementDefinition[] = [
   {
     id: "full_schedule",
     title: "Full Schedule",
-    description: "Track 5 or more classes at once.",
+    description: "Track 5 or more courses at once.",
     glyph: "🏫",
     tier: "bronze",
     xp: 40,
@@ -317,14 +317,62 @@ const ACHIEVEMENTS: AchievementDefinition[] = [
   },
   {
     id: "deans_list",
-    title: "Dean's List",
+    title: "Luminary",
     description: "Earn 1,720 XP and climb the ranks.",
     glyph: "🎓",
     tier: "gold",
     xp: 200,
     target: 1720,
     value: (_, xp) => xp
-  }
+  },
+
+  // ----- Momentum: longer streaks reward sustained success -----
+  { id: "iron_will", title: "Iron Will", description: "Reach a 15-class attendance streak.", glyph: "🏔️", tier: "gold", xp: 170, target: 15, value: (s) => Math.max(s.bestStreak, s.longestEverStreak) },
+  { id: "relentless", title: "Relentless", description: "Reach a 20-class attendance streak.", glyph: "🌟", tier: "gold", xp: 220, target: 20, value: (s) => Math.max(s.bestStreak, s.longestEverStreak) },
+  { id: "juggernaut", title: "Juggernaut", description: "Reach a 30-class attendance streak.", glyph: "🚀", tier: "gold", xp: 300, target: 30, value: (s) => Math.max(s.bestStreak, s.longestEverStreak) },
+  { id: "unbroken", title: "Unbroken", description: "Reach a 50-class attendance streak.", glyph: "♾️", tier: "gold", xp: 420, target: 50, value: (s) => Math.max(s.bestStreak, s.longestEverStreak) },
+
+  // ----- Dedication: total check-ins -----
+  { id: "half_century", title: "Half Century", description: "Log 50 total check-ins.", glyph: "🪙", tier: "silver", xp: 110, target: 50, value: (s) => s.totalRecords },
+  { id: "centurion", title: "Centurion", description: "Log 100 total check-ins.", glyph: "💯", tier: "gold", xp: 200, target: 100, value: (s) => s.totalRecords },
+  { id: "double_century", title: "Double Century", description: "Log 200 total check-ins.", glyph: "🏛️", tier: "gold", xp: 320, target: 200, value: (s) => s.totalRecords },
+  { id: "year_long", title: "Year-Long", description: "Log 365 total check-ins.", glyph: "🎆", tier: "gold", xp: 500, target: 365, value: (s) => s.totalRecords },
+
+  // ----- Showing up: present sessions -----
+  { id: "reliably_there", title: "Reliably There", description: "Be present for 25 sessions.", glyph: "✅", tier: "silver", xp: 90, target: 25, value: (s) => s.presentCount },
+  { id: "ever_present", title: "Ever-Present", description: "Be present for 75 sessions.", glyph: "🟢", tier: "gold", xp: 180, target: 75, value: (s) => s.presentCount },
+  { id: "pillar", title: "Pillar", description: "Be present for 150 sessions.", glyph: "🗿", tier: "gold", xp: 300, target: 150, value: (s) => s.presentCount },
+
+  // ----- Habit: distinct check-in days -----
+  { id: "consistency_king", title: "Consistency King", description: "Check in across 21 different days.", glyph: "🦅", tier: "silver", xp: 110, target: 21, value: (s) => s.checkInDays },
+  { id: "month_strong", title: "Month Strong", description: "Check in across 30 different days.", glyph: "📆", tier: "silver", xp: 140, target: 30, value: (s) => s.checkInDays },
+  { id: "semester_habit", title: "Semester Habit", description: "Check in across 60 different days.", glyph: "🔁", tier: "gold", xp: 240, target: 60, value: (s) => s.checkInDays },
+  { id: "hundred_days", title: "Hundred Days", description: "Check in across 100 different days.", glyph: "💪", tier: "gold", xp: 360, target: 100, value: (s) => s.checkInDays },
+
+  // ----- Mastery: perfect classes -----
+  { id: "double_diamond", title: "Double Diamond", description: "Keep 2 courses at 100% over 3+ sessions.", glyph: "💠", tier: "gold", xp: 200, target: 2, value: (s) => s.perfectClasses },
+  { id: "triple_crown", title: "Triple Crown", description: "Keep 3 courses perfect at once.", glyph: "👑", tier: "gold", xp: 280, target: 3, value: (s) => s.perfectClasses },
+  { id: "perfect_slate", title: "Perfect Slate", description: "Keep 5 courses perfect at once.", glyph: "🧊", tier: "gold", xp: 380, target: 5, value: (s) => s.perfectClasses },
+
+  // ----- Punctuality -----
+  { id: "clockwork", title: "Clockwork", description: "Stay on time for 95% of 25+ sessions.", glyph: "⏱️", tier: "gold", xp: 170, target: 1, value: (s) => (s.presentCount + s.lateCount + s.absentCount >= 25 && s.onTimeRate >= 0.95 ? 1 : 0) },
+  { id: "dawn_patrol", title: "Dawn Patrol", description: "Stay on time for 90% of 40+ sessions.", glyph: "🌅", tier: "gold", xp: 200, target: 1, value: (s) => (s.presentCount + s.lateCount + s.absentCount >= 40 && s.onTimeRate >= 0.9 ? 1 : 0) },
+
+  // ----- Course load -----
+  { id: "triple_threat", title: "Triple Threat", description: "Track 3 courses at once.", glyph: "🎒", tier: "bronze", xp: 30, target: 3, value: (s) => s.classCount },
+  { id: "full_load", title: "Full Load", description: "Track 8 courses at once.", glyph: "📦", tier: "silver", xp: 90, target: 8, value: (s) => s.classCount },
+  { id: "mountain_mover", title: "Mountain Mover", description: "Track 10 courses at once.", glyph: "🧗", tier: "gold", xp: 160, target: 10, value: (s) => s.classCount },
+
+  // ----- Whole-term standing -----
+  { id: "green_board", title: "Green Across the Board", description: "Hold 4+ courses all in the safe zone.", glyph: "🟩", tier: "gold", xp: 180, target: 1, value: (s) => (s.classCount >= 4 && s.safeClasses === s.classCount ? 1 : 0) },
+  { id: "spotless_record", title: "Spotless Record", description: "Reach 50 check-ins with zero absences.", glyph: "🚫", tier: "gold", xp: 260, target: 1, value: (s) => (s.totalRecords >= 50 && s.absentCount === 0 ? 1 : 0) },
+  { id: "resilient", title: "Resilient", description: "Recover from a miss and build a 5-class streak.", glyph: "🛟", tier: "silver", xp: 120, target: 1, value: (s) => (s.hasComeback && Math.max(s.bestStreak, s.longestEverStreak) >= 5 ? 1 : 0) },
+
+  // ----- Rank / XP milestones -----
+  { id: "rising_star", title: "Rising Star", description: "Earn 500 XP.", glyph: "⭐", tier: "silver", xp: 120, target: 500, value: (_, xp) => xp },
+  { id: "scholar", title: "Scholar", description: "Earn 1,000 XP.", glyph: "📖", tier: "gold", xp: 180, target: 1000, value: (_, xp) => xp },
+  { id: "honor_roll_badge", title: "Trailblazer", description: "Earn 1,120 XP.", glyph: "🏅", tier: "gold", xp: 220, target: 1120, value: (_, xp) => xp },
+  { id: "valedictorian", title: "Legend", description: "Earn 2,600 XP and reach the summit.", glyph: "🎖️", tier: "gold", xp: 320, target: 2600, value: (_, xp) => xp }
 ];
 
 export const getRankForXp = (xp: number): AcademicRank => {

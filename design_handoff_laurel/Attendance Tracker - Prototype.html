@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Laurel — Attendance Tracker · Prototype</title>
+<link rel="stylesheet" href="tokens.css" />
+<style>
+  html, body { height: 100%; background: #e9e7df; }
+  [data-theme], .dark { }
+  body { --ds-bg: #e6e4db; }
+  .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+  .hide-scroll::-webkit-scrollbar { display: none; }
+  #root { height: 100vh; }
+  @keyframes float-up { 0%{ opacity:0; transform:translateY(6px) scale(0.8);} 18%{ opacity:1; transform:translateY(0) scale(1.1);} 100%{ opacity:0; transform:translateY(-34px) scale(1);} }
+  @keyframes toast-in { from{ opacity:0; transform:transl(-50%) translateY(12px);} to{ opacity:1; } }
+  @keyframes burst-0 { from{ transform:translate(-50%,-50%) scale(0.4); opacity:1;} to{ transform:translate(calc(-50% + var(--x)), calc(-50% + var(--y))) scale(1) rotate(140deg); opacity:0;} }
+  @keyframes burst-1 { from{ transform:translate(-50%,-50%) scale(0.5); opacity:1;} to{ transform:translate(calc(-50% + var(--x)), calc(-50% + var(--y))) scale(0.9) rotate(-120deg); opacity:0;} }
+  @keyframes burst-2 { from{ transform:translate(-50%,-50%) scale(0.6); opacity:1;} to{ transform:translate(calc(-50% + var(--x)), calc(-50% + var(--y))) scale(1.2) rotate(90deg); opacity:0;} }
+  @keyframes burst-3 { from{ transform:translate(-50%,-50%) scale(0.5); opacity:1;} to{ transform:translate(calc(-50% + var(--x)), calc(-50% + var(--y))) scale(0.8) rotate(-60deg); opacity:0;} }
+  @keyframes pop-in { from{ opacity:0; transform:scale(0.85);} to{ opacity:1; transform:scale(1);} }
+  .tab-anim { animation: tabfade 300ms var(--ease-out); }
+  @keyframes tabfade { from{ opacity:0; transform: translateY(8px);} to{ opacity:1; transform:none;} }
+  button, .pressable { -webkit-tap-highlight-color: transparent; transition: transform 120ms var(--ease-out), filter 120ms var(--ease-out); }
+  button:active { transform: scale(0.95); }
+  .pressable { cursor: pointer; }
+  .pressable:active { transform: scale(0.98); filter: brightness(0.985); }
+  @media (prefers-reduced-motion: reduce){ button:active, .pressable:active { transform: none; } }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script type="text/babel" src="icons.jsx"></script>
+<script type="text/babel" src="laurel-components.jsx"></script>
+<script type="text/babel" src="proto-ui.jsx"></script>
+<script type="text/babel" src="proto-data.jsx"></script>
+<script type="text/babel" src="proto-screens-a.jsx"></script>
+<script type="text/babel" src="proto-screens-b.jsx"></script>
+<script type="text/babel" src="proto-screens-c.jsx"></script>
+<script type="text/babel" src="proto-premium-analytics.jsx"></script>
+<script type="text/babel" src="proto-ipad.jsx"></script>
+<script type="text/babel" src="proto-app.jsx"></script>
+<script type="text/babel">
+  ReactDOM.createRoot(document.getElementById('root')).render(<LaurelApp />);
+</script>
+</body>
+</html>

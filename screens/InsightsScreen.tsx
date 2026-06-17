@@ -4,14 +4,13 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import Svg, { Defs, LinearGradient, RadialGradient, Rect, Stop } from "react-native-svg";
 
 import { Icon } from "@/components/Icon";
-import { Meter } from "@/components/attenza/Meter";
 import { Sparkline } from "@/components/attenza/Sparkline";
 import { ScreenContainer } from "@/components/ScreenContainer";
 import { useAttendanceStore } from "@/store/attendanceStore";
 import { useUserStore } from "@/store/userStore";
 import { useAppPalette } from "@/theme/useAppPalette";
 import { getOverallWeeklyTrend } from "@/utils/attendance";
-import { deriveClass, riskTone } from "@/utils/attenza";
+import { deriveClass, RISK_META, riskTone } from "@/utils/attenza";
 
 const HEAT_WEEKS = 12;
 const WEEKDAYS = ["M", "T", "W", "T", "F"];
@@ -49,13 +48,22 @@ const buildHeatmap = (records: { date: string; status: string }[]) => {
   return weeks;
 };
 
+// Color tile with the class initial — the shared "compact card" leading mark.
+const ColorTile = ({ name, color, size = 44 }: { name: string; color: string; size?: number }) => (
+  <View style={{ width: size, height: size, borderRadius: size * 0.3, backgroundColor: color, alignItems: "center", justifyContent: "center" }}>
+    <Text style={{ color: "#fff", fontFamily: "Outfit_800ExtraBold", fontSize: size * 0.43 }}>
+      {name.trim().charAt(0).toUpperCase() || "?"}
+    </Text>
+  </View>
+);
+
 export const InsightsScreen = () => {
   const palette = useAppPalette();
   const router = useRouter();
-  const { classes, records, settings } = useAttendanceStore();
+  const { classes, records, settings, canceledDates } = useAttendanceStore();
   const isPremium = useUserStore((s) => s.isPremium);
 
-  const derived = useMemo(() => classes.map((c) => deriveClass(c, records, settings)), [classes, records, settings]);
+  const derived = useMemo(() => classes.map((c) => deriveClass(c, records, settings, canceledDates)), [classes, records, settings, canceledDates]);
   const sorted = useMemo(() => derived.slice().sort((a, b) => a.buffer - b.buffer), [derived]);
   const worst = sorted[0];
   const overall = derived.length ? Math.round(derived.reduce((s, c) => s + c.pct, 0) / derived.length) : 100;
@@ -190,8 +198,9 @@ export const InsightsScreen = () => {
               className="mb-5 flex-row items-center gap-3 overflow-hidden rounded-[22px] p-4"
               style={{ backgroundColor: palette.card, borderWidth: 1, borderColor: palette.hairline, borderLeftWidth: 4, borderLeftColor: riskTone(worst.risk, palette) }}
             >
+              <ColorTile name={worst.classItem.name} color={worst.classItem.color} />
               <View className="flex-1">
-                <Text className="text-[16px]" style={{ color: palette.ink, fontFamily: "Outfit_700Bold" }}>
+                <Text numberOfLines={1} className="text-[16px]" style={{ color: palette.ink, fontFamily: "Outfit_700Bold" }}>
                   {worst.classItem.name}
                 </Text>
                 <Text className="mt-0.5 text-[13.5px]" style={{ color: palette.ink2, fontFamily: "Outfit_600SemiBold" }}>
@@ -249,25 +258,28 @@ export const InsightsScreen = () => {
         </View>
       </View>
 
-      {/* By class */}
+      {/* By course */}
       <Text className="mb-2 text-[22px]" style={{ color: palette.ink, fontFamily: "Outfit_700Bold" }}>
-        By class
+        By course
       </Text>
       <View className="gap-2.5">
         {sorted.map((c) => (
           <Link key={c.classItem.id} href={`/class/${c.classItem.id}`} asChild>
             <Pressable
-              className="flex-row items-center gap-3 rounded-[18px] p-3.5"
+              className="flex-row items-center gap-3 rounded-[18px] p-3"
               style={{ backgroundColor: palette.card, borderWidth: 1, borderColor: palette.hairline }}
             >
-              <View className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: c.classItem.color }} />
-              <View className="flex-1">
-                <Text numberOfLines={1} className="mb-1.5 text-[14.5px]" style={{ color: palette.ink, fontFamily: "Outfit_700Bold" }}>
+              <ColorTile name={c.classItem.name} color={c.classItem.color} />
+              <View className="flex-1 pr-1">
+                <Text numberOfLines={1} className="text-[16px]" style={{ color: palette.ink, fontFamily: "Outfit_700Bold" }}>
                   {c.classItem.name}
                 </Text>
-                <Meter value={c.pct / 100} tone={riskTone(c.risk, palette)} height={7} />
+                <Text numberOfLines={1} className="mt-0.5 text-[12.5px]" style={{ color: palette.ink3, fontFamily: "Outfit_500Medium" }}>
+                  {RISK_META[c.risk].label}
+                  {c.buffer > 0 ? ` · ${c.buffer} buffer left` : ""}
+                </Text>
               </View>
-              <Text style={{ fontFamily: "Outfit_800ExtraBold", fontSize: 15, color: palette.ink, fontVariant: ["tabular-nums"] }}>
+              <Text style={{ fontFamily: "Fraunces_600SemiBold", fontSize: 19, color: riskTone(c.risk, palette), fontVariant: ["tabular-nums"] }}>
                 {c.pct}%
               </Text>
             </Pressable>

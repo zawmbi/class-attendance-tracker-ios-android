@@ -1,5 +1,5 @@
 import type { IconName } from "@/components/Icon";
-import { getAttendanceSummary } from "@/utils/attendance";
+import { countScheduledSessions, getAttendanceSummary, getRemainingSessions } from "@/utils/attendance";
 import type { GamificationProfile } from "@/utils/gamification";
 import { AttendanceRecord, AttendanceSettings, ClassModel } from "@/utils/types";
 
@@ -52,30 +52,49 @@ export const RISK_META: Record<AttenzaRisk, { label: string }> = {
 export const deriveClass = (
   classItem: ClassModel,
   records: AttendanceRecord[],
-  settings: AttendanceSettings
+  settings: AttendanceSettings,
+  canceledDates: string[] = []
 ): AttenzaClass => {
-  const summary = getAttendanceSummary(classItem, records, settings);
+  const summary = getAttendanceSummary(classItem, records, settings, canceledDates);
   const present = summary.presentCount;
   const late = summary.lateCount;
   const absent = summary.absentCount;
   const excused = summary.excusedCount;
   const held = summary.total;
 
+  // Prefer the real term window + holidays when configured; otherwise estimate
+  // from course length × meetings/week (legacy behaviour).
   const sessionsPerWeek = Math.max(1, classItem.schedule.length);
-  const semTotal = Math.max(held, classItem.courseLengthWeeks * sessionsPerWeek);
+  let semTotal: number;
+  let remaining: number;
+  if (settings.termStartDate && settings.termEndDate) {
+    const termTotal = countScheduledSessions(
+      classItem,
+      new Date(`${settings.termStartDate}T00:00:00`),
+      new Date(`${settings.termEndDate}T00:00:00`),
+      canceledDates
+    );
+    semTotal = Math.max(held, termTotal);
+    remaining = getRemainingSessions(classItem, settings, canceledDates) ?? Math.max(0, semTotal - held);
+  } else {
+    semTotal = Math.max(held, classItem.courseLengthWeeks * sessionsPerWeek);
+    remaining = Math.max(0, semTotal - held);
+  }
   const target = classItem.requiredAttendance;
 
   const pct = held > 0 ? Math.round(((present + late) / held) * 100) : 100;
 
   const base = Math.floor(semTotal * (1 - target / 100));
   const allowed = base + classItem.excusedAllowance;
-  const buffer = Math.max(0, allowed - absent);
-  const remaining = Math.max(0, semTotal - held);
+  // Absences you can still afford, but never more than the sessions that remain.
+  const buffer = Math.min(Math.max(0, allowed - absent), remaining);
 
   let risk: AttenzaRisk = "safe";
-  if (buffer <= 0 || pct < target) {
+  if (pct < target) {
     risk = "danger";
-  } else if (buffer <= 1) {
+  } else if (remaining > 0 && buffer <= 0) {
+    risk = "danger";
+  } else if (remaining > 0 && buffer <= 1) {
     risk = "watch";
   }
 

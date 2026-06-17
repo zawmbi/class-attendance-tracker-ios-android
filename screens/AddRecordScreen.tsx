@@ -20,7 +20,7 @@ export const AddRecordScreen = ({ classId }: { classId: string }) => {
   if (!classItem) {
     return (
       <ScreenContainer wideMaxWidth={720}>
-        <Text style={{ color: palette.primary }}>Class not found.</Text>
+        <Text style={{ color: palette.primary }}>Course not found.</Text>
       </ScreenContainer>
     );
   }
@@ -43,18 +43,21 @@ export const AddRecordScreen = ({ classId }: { classId: string }) => {
   };
 
   return (
-    <ScreenContainer wideMaxWidth={720}>
-      <Link href={`/class/${classId}`} asChild>
-        <Pressable
-          className="mb-5 self-start rounded-full px-4 py-2.5"
-          style={{ backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.border }}
-        >
-          <Text className="text-sm" style={{ color: palette.muted }}>
-            ‹ Back
-          </Text>
-        </Pressable>
-      </Link>
-
+    <ScreenContainer
+      wideMaxWidth={720}
+      header={
+        <Link href={`/class/${classId}`} asChild>
+          <Pressable
+            className="self-start rounded-full px-4 py-2.5"
+            style={{ backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.border }}
+          >
+            <Text className="text-sm" style={{ color: palette.muted }}>
+              ‹ Back
+            </Text>
+          </Pressable>
+        </Link>
+      }
+    >
       <SectionHeader title="Add Attendance" subtitle={`Record a session for ${classItem.name}.`} />
 
       <FormField label="Date" helper="Use YYYY-MM-DD">

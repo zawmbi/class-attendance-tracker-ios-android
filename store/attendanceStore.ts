@@ -15,10 +15,14 @@ interface AttendanceState {
   classes: ClassModel[];
   records: AttendanceRecord[];
   settings: AttendanceSettings;
+  /** No-class days (campus holidays / breaks), ISO yyyy-mm-dd. */
+  canceledDates: string[];
   addClass: (classItem: ClassModel) => void;
   updateClass: (classId: string, patch: Partial<ClassModel>) => void;
   deleteClass: (classId: string) => void;
   markAttendance: (classId: string, status: AttendanceStatus, notes?: string) => void;
+  setAttendanceForDate: (classId: string, date: string, status: AttendanceStatus, notes?: string) => void;
+  toggleCanceledDate: (date: string) => void;
   clearAttendanceForDate: (classId: string, date: string) => void;
   addRecord: (record: AttendanceRecord) => void;
   updateRecord: (recordId: string, patch: Partial<AttendanceRecord>) => void;
@@ -41,6 +45,7 @@ export const useAttendanceStore = create<AttendanceState>()(
       classes: [],
       records: [],
       settings: defaultSettings,
+      canceledDates: [],
       addClass: (classItem) =>
         set((state) => ({
           classes: [classItem, ...state.classes]
@@ -68,6 +73,27 @@ export const useAttendanceStore = create<AttendanceState>()(
               (record) => !(record.classId === classId && record.date === new Date().toISOString().slice(0, 10))
             )
           ]
+        })),
+      // Like markAttendance, but for any date — replaces an existing record for
+      // that class+date so editing a day on the calendar is idempotent.
+      setAttendanceForDate: (classId, date, status, notes = "") =>
+        set((state) => ({
+          records: [
+            {
+              id: `record-${Date.now()}`,
+              classId,
+              status,
+              notes,
+              date
+            },
+            ...state.records.filter((record) => !(record.classId === classId && record.date === date))
+          ]
+        })),
+      toggleCanceledDate: (date) =>
+        set((state) => ({
+          canceledDates: state.canceledDates.includes(date)
+            ? state.canceledDates.filter((value) => value !== date)
+            : [...state.canceledDates, date]
         })),
       clearAttendanceForDate: (classId, date) =>
         set((state) => ({
@@ -125,10 +151,12 @@ export const useAttendanceStore = create<AttendanceState>()(
           )
         })),
       // Populates the demo classes/records (offered during onboarding / guest mode).
-      loadSampleData: () => set({ classes: seedClasses, records: seedRecords, settings: defaultSettings }),
-      replaceAll: (classes, records, settings) => set({ classes, records, settings }),
+      loadSampleData: () => set({ classes: seedClasses, records: seedRecords, settings: defaultSettings, canceledDates: [] }),
+      // Full data replacement (cloud restore / import). Clears stale cancellations
+      // since they reference the previous schedule.
+      replaceAll: (classes, records, settings) => set({ classes, records, settings, canceledDates: [] }),
       // Clears all class/attendance data (account deletion / start fresh).
-      reset: () => set({ classes: [], records: [], settings: defaultSettings })
+      reset: () => set({ classes: [], records: [], settings: defaultSettings, canceledDates: [] })
     }),
     {
       name: "attendance-tracker-storage",

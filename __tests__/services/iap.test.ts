@@ -1,17 +1,16 @@
 // Mock the native module so the wrapper can be exercised in Node.
-jest.mock("react-native-iap", () => ({
+jest.mock("expo-iap", () => ({
   initConnection: jest.fn().mockResolvedValue(true),
   endConnection: jest.fn(),
-  flushFailedPurchasesCachedAsPendingAndroid: jest.fn().mockResolvedValue(undefined),
-  getSubscriptions: jest.fn(),
-  requestSubscription: jest.fn().mockResolvedValue(undefined),
+  fetchProducts: jest.fn(),
   getAvailablePurchases: jest.fn(),
+  requestPurchase: jest.fn().mockResolvedValue(undefined),
   finishTransaction: jest.fn().mockResolvedValue(undefined),
   purchaseUpdatedListener: jest.fn(() => ({ remove: jest.fn() })),
   purchaseErrorListener: jest.fn(() => ({ remove: jest.fn() }))
 }));
 
-import * as RNIap from "react-native-iap";
+import * as ExpoIap from "expo-iap";
 import {
   connect,
   fetchPlans,
@@ -25,7 +24,7 @@ import {
   restore
 } from "@/services/iap";
 
-const mocked = RNIap as jest.Mocked<typeof RNIap>;
+const mocked = ExpoIap as jest.Mocked<typeof ExpoIap>;
 
 describe("product identity", () => {
   it("exposes the three premium SKUs (monthly, 6-month, annual)", () => {
@@ -38,7 +37,7 @@ describe("product identity", () => {
     expect(isPremiumSku("com.someone.else")).toBe(false);
     expect(isPremiumSku(null)).toBe(false);
   });
-  it("iapAvailable is true when the native module loads", () => {
+  it("iapAvailable is true on a native platform", () => {
     expect(iapAvailable()).toBe(true);
   });
 });
@@ -52,10 +51,10 @@ describe("connect", () => {
 
 describe("fetchPlans", () => {
   it("maps store subscriptions to platform-neutral plans, sorted by duration", async () => {
-    mocked.getSubscriptions.mockResolvedValueOnce([
-      { productId: PREMIUM_ANNUAL_ID, localizedPrice: "$19.99" },
-      { productId: PREMIUM_MONTHLY_ID, localizedPrice: "$2.99" },
-      { productId: PREMIUM_SEMIANNUAL_ID, localizedPrice: "$11.99" }
+    mocked.fetchProducts.mockResolvedValueOnce([
+      { id: PREMIUM_ANNUAL_ID, displayPrice: "$19.99" },
+      { id: PREMIUM_MONTHLY_ID, displayPrice: "$2.99" },
+      { id: PREMIUM_SEMIANNUAL_ID, displayPrice: "$11.99" }
     ] as never);
 
     const plans = await fetchPlans();
@@ -68,8 +67,17 @@ describe("fetchPlans", () => {
 
 describe("purchasePlan", () => {
   it("requests the subscription by SKU (iOS path)", async () => {
-    await purchasePlan({ sku: PREMIUM_MONTHLY_ID, title: "Monthly", priceLabel: "$2.99", period: "month", raw: {} });
-    expect(mocked.requestSubscription).toHaveBeenCalledWith({ sku: PREMIUM_MONTHLY_ID });
+    await purchasePlan({
+      sku: PREMIUM_MONTHLY_ID,
+      title: "Monthly",
+      priceLabel: "$2.99",
+      period: "month",
+      raw: { id: PREMIUM_MONTHLY_ID } as never
+    });
+    expect(mocked.requestPurchase).toHaveBeenCalledWith({
+      type: "subs",
+      request: { ios: { sku: PREMIUM_MONTHLY_ID } }
+    });
   });
 });
 

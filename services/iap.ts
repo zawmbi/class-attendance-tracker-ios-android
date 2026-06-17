@@ -1,18 +1,22 @@
 import { Platform } from "react-native";
 
-// `react-native-iap` is a native module: it does not exist in Expo Go or on
-// web. We require it lazily so the JS bundle still loads everywhere; every
-// helper below degrades gracefully (no-op / empty) when it's unavailable.
-type RNIap = typeof import("react-native-iap");
-let nativeIap: RNIap | null = null;
-try {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  nativeIap = require("react-native-iap");
-} catch {
-  nativeIap = null;
-}
+// `expo-iap` is an Expo native module: it works in dev/production builds on iOS
+// and Android, but not on web. Every helper below degrades gracefully (no-op /
+// empty) when it isn't usable so the JS bundle still loads everywhere.
+import {
+  endConnection,
+  fetchProducts,
+  finishTransaction,
+  getAvailablePurchases,
+  initConnection,
+  purchaseErrorListener,
+  purchaseUpdatedListener,
+  requestPurchase,
+  type Product,
+  type Purchase
+} from "expo-iap";
 
-export const iapAvailable = () => nativeIap !== null && Platform.OS !== "web";
+export const iapAvailable = () => Platform.OS !== "web";
 
 // Auto-renewable subscription product IDs. These MUST exactly match the
 // products you create in App Store Connect (one subscription group with three
@@ -32,22 +36,12 @@ export interface PremiumPlan {
   title: string; // "Monthly" | "6-Month" | "Annual"
   priceLabel: string; // localized, e.g. "$2.99"
   period: PremiumPeriod;
-  // The raw library object — needed to pass the Android offer token at purchase.
-  raw: unknown;
+  // The raw expo-iap product — needed to pass the Android offer token at purchase.
+  raw: Product;
 }
 
 // Layout order: shortest to longest duration.
 const PERIOD_ORDER: Record<PremiumPeriod, number> = { month: 0, "6month": 1, year: 2 };
-
-const androidFormattedPrice = (sub: any): string | undefined => {
-  const phases = sub?.subscriptionOfferDetails?.[0]?.pricingPhases?.pricingPhaseList;
-  if (Array.isArray(phases) && phases.length) {
-    // The last pricing phase is the ongoing recurring price; earlier phases may
-    // be a free trial or intro offer.
-    return phases[phases.length - 1]?.formattedPrice;
-  }
-  return undefined;
-};
 
 const planMeta = (sku: string): { title: string; period: PremiumPeriod } => {
   if (sku === PREMIUM_ANNUAL_ID) return { title: "Annual", period: "year" };
@@ -55,73 +49,73 @@ const planMeta = (sku: string): { title: string; period: PremiumPeriod } => {
   return { title: "Monthly", period: "month" };
 };
 
-const toPlan = (sub: any): PremiumPlan => {
-  const sku: string = sub.productId;
-  const priceLabel = Platform.OS === "ios" ? sub.localizedPrice : androidFormattedPrice(sub);
-  return {
-    sku,
-    ...planMeta(sku),
-    priceLabel: priceLabel ?? "",
-    raw: sub
-  };
-};
+const androidOfferToken = (product: Product): string | undefined =>
+  (product as any)?.subscriptionOfferDetailsAndroid?.[0]?.offerToken ?? undefined;
+
+const toPlan = (product: Product): PremiumPlan => ({
+  sku: product.id,
+  ...planMeta(product.id),
+  // `displayPrice` is the store's localized, currency-correct price string.
+  priceLabel: product.displayPrice ?? "",
+  raw: product
+});
 
 // Opens the billing connection. Safe to call once on app start. Returns false
-// when IAP isn't available (Expo Go / web) so callers can show a fallback.
+// when IAP isn't usable (web) so callers can show a fallback.
 export const connect = async (): Promise<boolean> => {
-  if (!nativeIap) return false;
-  await nativeIap.initConnection();
-  if (Platform.OS === "android" && nativeIap.flushFailedPurchasesCachedAsPendingAndroid) {
-    // Required by Play Billing: clears stale failed purchases before we start.
-    try {
-      await nativeIap.flushFailedPurchasesCachedAsPendingAndroid();
-    } catch {
-      // non-fatal
-    }
-  }
+  if (!iapAvailable()) return false;
+  await initConnection();
   return true;
 };
 
 export const disconnect = (): void => {
-  if (!nativeIap) return;
+  if (!iapAvailable()) return;
   try {
-    nativeIap.endConnection();
+    void endConnection();
   } catch {
     // non-fatal
   }
 };
 
 export const fetchPlans = async (): Promise<PremiumPlan[]> => {
-  if (!nativeIap) return [];
-  const subs = await nativeIap.getSubscriptions({ skus: PREMIUM_SKUS });
+  if (!iapAvailable()) return [];
+  const products = await fetchProducts({ skus: PREMIUM_SKUS, type: "subs" });
   // Shortest to longest duration, for a stable paywall layout.
-  return subs.map(toPlan).sort((a, b) => PERIOD_ORDER[a.period] - PERIOD_ORDER[b.period]);
+  return (products ?? [])
+    .filter((p): p is Product => !!p && isPremiumSku(p.id))
+    .map(toPlan)
+    .sort((a, b) => PERIOD_ORDER[a.period] - PERIOD_ORDER[b.period]);
 };
 
 // Kicks off the native purchase sheet. The granted entitlement is delivered
 // asynchronously via the purchase listener (see setupPurchaseListeners).
 export const purchasePlan = async (plan: PremiumPlan): Promise<void> => {
-  if (!nativeIap) {
+  if (!iapAvailable()) {
     throw new Error("In-app purchases aren't available on this device.");
   }
   const sku = plan.sku;
   if (Platform.OS === "android") {
-    const offerToken = (plan.raw as any)?.subscriptionOfferDetails?.[0]?.offerToken;
-    await nativeIap.requestSubscription({
-      sku,
-      ...(offerToken ? { subscriptionOffers: [{ sku, offerToken }] } : {})
+    const offerToken = androidOfferToken(plan.raw);
+    await requestPurchase({
+      type: "subs",
+      request: {
+        android: {
+          skus: [sku],
+          ...(offerToken ? { subscriptionOffers: [{ sku, offerToken }] } : {})
+        }
+      }
     });
     return;
   }
-  await nativeIap.requestSubscription({ sku });
+  await requestPurchase({ type: "subs", request: { ios: { sku } } });
 };
 
 // Finalizes a purchase so the store stops re-delivering it. Must be called for
 // every purchase event once the entitlement has been recorded.
-export const completePurchase = async (purchase: unknown): Promise<void> => {
-  if (!nativeIap) return;
+export const completePurchase = async (purchase: Purchase): Promise<void> => {
+  if (!iapAvailable()) return;
   try {
-    await nativeIap.finishTransaction({ purchase: purchase as any, isConsumable: false });
+    await finishTransaction({ purchase, isConsumable: false });
   } catch {
     // non-fatal — the listener will fire again on next launch if this fails.
   }
@@ -132,21 +126,21 @@ export const completePurchase = async (purchase: unknown): Promise<void> => {
 // a simple on-device entitlement; add server validation if you ever need to be
 // strict about expiry.
 export const restore = async (): Promise<boolean> => {
-  if (!nativeIap) return false;
-  const purchases = await nativeIap.getAvailablePurchases();
-  return purchases.some((p: any) => isPremiumSku(p.productId));
+  if (!iapAvailable()) return false;
+  const purchases = await getAvailablePurchases();
+  return (purchases ?? []).some((p) => isPremiumSku(p?.productId));
 };
 
 export interface PurchaseListeners {
-  onPurchase: (purchase: unknown) => void;
+  onPurchase: (purchase: Purchase) => void;
   onError: (error: unknown) => void;
 }
 
 // Registers listeners for purchase success/failure. Returns a cleanup function.
 export const setupPurchaseListeners = (handlers: PurchaseListeners): (() => void) => {
-  if (!nativeIap) return () => {};
-  const updateSub = nativeIap.purchaseUpdatedListener(handlers.onPurchase as any);
-  const errorSub = nativeIap.purchaseErrorListener(handlers.onError as any);
+  if (!iapAvailable()) return () => {};
+  const updateSub = purchaseUpdatedListener(handlers.onPurchase);
+  const errorSub = purchaseErrorListener(handlers.onError as (error: unknown) => void);
   return () => {
     updateSub.remove();
     errorSub.remove();
