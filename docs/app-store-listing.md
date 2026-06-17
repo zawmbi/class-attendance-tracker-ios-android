@@ -60,6 +60,9 @@ Earn ranks and badges as you build consistency. A guided get-started checklist h
 PRIVATE BY DESIGN
 Your classes and attendance stay on your device. No ads, no tracking, no selling your data. Delete your account and data anytime.
 
+ATTENDIZE PREMIUM (OPTIONAL)
+Core tracking is free. Premium unlocks end-of-term forecasting and what-if projections, behavioral insights, syllabus scanning, advanced reminders, and premium themes via an auto-renewable subscription (Monthly, 6-Month, or Annual). Payment is charged to your Apple ID at confirmation of purchase and renews automatically unless canceled at least 24 hours before the period ends; manage or cancel anytime in your account settings. Terms: https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
+
 Works great on iPhone and iPad.
 
 ---
@@ -80,9 +83,17 @@ First release of Attendize:
 - **Password:** `devtestpassword`
 
 **Notes:** On the login screen, enter the username/password above to sign in.
-This loads sample classes and gives full access to every feature (it's a local
-demo login, so it works offline). Alternatively, "Skip for now — explore the
-demo" enters as a guest with the same sample data. No real account needed.
+This loads sample classes (it's a local demo login, so it works offline).
+Alternatively, "Skip for now — explore the demo" enters as a guest with the same
+sample data. No real account needed.
+
+**In-App Purchases:** Premium features (forecasting, analytics/insights,
+syllabus scanning, advanced reminders, themes) are unlocked by an auto-renewable
+subscription — Monthly, 6-Month, or Annual — via Apple In-App Purchase on the "Attendize
+Premium" screen. To test: use a Sandbox Apple ID, open any "Premium" prompt →
+Attendize Premium → Subscribe, then verify the gated screens unlock. "Restore
+Purchases" re-grants the entitlement. See docs/app-review-2.1b-response.md for
+the full business-model write-up and product IDs.
 
 ## Support URL (required)
 https://lindascomputing.xyz/class-attendance-tracker-ios-android/

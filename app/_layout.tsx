@@ -20,6 +20,8 @@ import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import { ActivityIndicator, Text, TextInput, View } from "react-native";
 
+import { IapProvider } from "@/components/IapProvider";
+import { UpgradeModal } from "@/components/UpgradeModal";
 import { useUserStore } from "@/store/userStore";
 import { getPalette } from "@/theme";
 
@@ -73,7 +75,7 @@ export default function RootLayout() {
   }
 
   return (
-    <>
+    <IapProvider>
       <StatusBar style={themeMode === "dark" ? "light" : "dark"} />
       <Stack
         screenOptions={{
@@ -86,7 +88,7 @@ export default function RootLayout() {
         <Stack.Screen name="index" />
         <Stack.Screen name="auth" />
         <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="premium" />
+        <Stack.Screen name="premium" options={{ presentation: "modal" }} />
         <Stack.Screen name="achievements" />
         <Stack.Screen name="dashboard/customize" />
         <Stack.Screen name="class/new" />
@@ -94,6 +96,7 @@ export default function RootLayout() {
         <Stack.Screen name="class/[id]/record" />
         <Stack.Screen name="class/[id]" />
       </Stack>
-    </>
+      <UpgradeModal />
+    </IapProvider>
   );
 }

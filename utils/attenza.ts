@@ -1,6 +1,6 @@
-import { IconName } from "@/components/Icon";
+import type { IconName } from "@/components/Icon";
 import { countScheduledSessions, getAttendanceSummary, getRemainingSessions } from "@/utils/attendance";
-import { GamificationProfile } from "@/utils/gamification";
+import type { GamificationProfile } from "@/utils/gamification";
 import { AttendanceRecord, AttendanceSettings, ClassModel } from "@/utils/types";
 
 // Map each achievement onto a bespoke icon-family glyph so badges render as a
