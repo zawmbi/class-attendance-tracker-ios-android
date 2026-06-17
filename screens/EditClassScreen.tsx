@@ -145,7 +145,7 @@ export const EditClassScreen = ({ classId }: EditClassScreenProps) => {
         })
       );
     });
-    Alert.alert("Classes imported", `${drafts.length} classes were created from your syllabus text.`);
+    Alert.alert("Courses imported", `${drafts.length} courses were created from your syllabus text.`);
     router.replace("/(tabs)/dashboard");
   };
 
@@ -154,7 +154,7 @@ export const EditClassScreen = ({ classId }: EditClassScreenProps) => {
     try {
       const permission = await Location.requestForegroundPermissionsAsync();
       if (!permission.granted) {
-        Alert.alert("Location needed", "Allow location access to pin this class to a place.");
+        Alert.alert("Location needed", "Allow location access to pin this course to a place.");
         return;
       }
       // Highest accuracy → precise GPS coordinates when the user grants iOS
@@ -171,7 +171,7 @@ export const EditClassScreen = ({ classId }: EditClassScreenProps) => {
 
   const handleSave = () => {
     if (!canSave) {
-      Alert.alert("Missing info", "Add a class name and at least one schedule day.");
+      Alert.alert("Missing info", "Add a course name and at least one schedule day.");
       return;
     }
     const normalizedStart = parseTimeInput(startTime);
@@ -214,7 +214,7 @@ export const EditClassScreen = ({ classId }: EditClassScreenProps) => {
 
   const handleDelete = () => {
     if (!existing) return;
-    Alert.alert("Delete class?", "This removes the class and its attendance history from the app.", [
+    Alert.alert("Delete course?", "This removes the course and its attendance history from the app.", [
       { text: "Cancel", style: "cancel" },
       {
         text: "Delete",
@@ -228,22 +228,25 @@ export const EditClassScreen = ({ classId }: EditClassScreenProps) => {
   };
 
   return (
-    <ScreenContainer wideMaxWidth={720}>
-      {/* Cancel / Save header */}
-      <View className="mb-2 flex-row items-center justify-between">
-        <Pressable onPress={() => router.back()}>
-          <Text className="text-[16px]" style={{ color: palette.ink2, fontFamily: "Outfit_600SemiBold" }}>
-            Cancel
-          </Text>
-        </Pressable>
-        <Pressable onPress={handleSave} disabled={!canSave}>
-          <Text className="text-[16px]" style={{ color: canSave ? palette.forest : palette.ink3, fontFamily: "Outfit_800ExtraBold" }}>
-            Save
-          </Text>
-        </Pressable>
-      </View>
+    <ScreenContainer
+      wideMaxWidth={720}
+      header={
+        <View className="flex-row items-center justify-between">
+          <Pressable onPress={() => router.back()}>
+            <Text className="text-[16px]" style={{ color: palette.ink2, fontFamily: "Outfit_600SemiBold" }}>
+              Cancel
+            </Text>
+          </Pressable>
+          <Pressable onPress={handleSave} disabled={!canSave}>
+            <Text className="text-[16px]" style={{ color: canSave ? palette.forest : palette.ink3, fontFamily: "Outfit_800ExtraBold" }}>
+              Save
+            </Text>
+          </Pressable>
+        </View>
+      }
+    >
       <Text className="mb-4 text-[32px]" style={{ color: palette.ink, fontFamily: "Outfit_800ExtraBold" }}>
-        {existing ? "Edit Class" : "New Class"}
+        {existing ? "Edit Course" : "New Course"}
       </Text>
 
       {/* Syllabus scan (premium) */}
@@ -286,7 +289,7 @@ export const EditClassScreen = ({ classId }: EditClassScreenProps) => {
                   {draft.requiredAttendance}% required · {draft.excusedAllowance} excused · ~{draft.estimatedSessions} sessions
                 </Text>
                 <Text className="mt-1.5 text-[12.5px]" style={{ color: palette.forest, fontFamily: "Outfit_800ExtraBold" }}>
-                  {existing ? "Apply to this class" : "Fill editor with this one"}
+                  {existing ? "Apply to this course" : "Fill editor with this one"}
                 </Text>
               </Pressable>
             ))}
@@ -306,7 +309,7 @@ export const EditClassScreen = ({ classId }: EditClassScreenProps) => {
 
       {/* Details */}
       <Group header="Details">
-        <Field first label="Class name" value={name} onChangeText={setName} placeholder="e.g. Organic Chemistry" />
+        <Field first label="Course name" value={name} onChangeText={setName} placeholder="e.g. Organic Chemistry" />
         <Field label="Course code / section" value={sectionLabel} onChangeText={setSectionLabel} placeholder="e.g. CHEM 210" />
         <Field label="Professor" value={professor} onChangeText={setProfessor} placeholder="Dr. Rivera" />
         <Field label="TA / section" value={ta} onChangeText={setTa} placeholder="Jamie Chen" />
@@ -471,7 +474,7 @@ export const EditClassScreen = ({ classId }: EditClassScreenProps) => {
       </Group>
 
       {/* Location reminder */}
-      <Group header="Location reminder" footer="Pin this class to a place to get a check-in nudge when you arrive. Turn on Location reminders in Settings to activate it.">
+      <Group header="Location reminder" footer="Pin this course to a place to get a check-in nudge when you arrive. Turn on Location reminders in Settings to activate it.">
         {latitude != null && longitude != null ? (
           <View className="flex-row items-center gap-3 px-3.5 py-3">
             <View className="h-8 w-8 items-center justify-center rounded-[9px]" style={{ backgroundColor: palette.forestSoft }}>

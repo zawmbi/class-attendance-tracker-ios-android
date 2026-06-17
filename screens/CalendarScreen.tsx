@@ -240,7 +240,7 @@ export const CalendarScreen = () => {
                   No classes
                 </Text>
                 <Text className="mt-0.5 text-[14px]" style={{ color: palette.ink3, fontFamily: "Outfit_500Medium" }}>
-                  {classes.length === 0 ? "Add a class to fill your week." : `Enjoy your free ${selected}.`}
+                  {classes.length === 0 ? "Add a course to fill your week." : `Enjoy your free ${selected}.`}
                 </Text>
                 {classes.length === 0 ? (
                   <Link href="/class/new" asChild>
@@ -249,7 +249,7 @@ export const CalendarScreen = () => {
                       style={{ backgroundColor: palette.forestSoft, borderWidth: 1, borderColor: palette.hairline }}
                     >
                       <Icon name="plus" size={17} color={palette.forest} stroke={2.4} />
-                      <Text style={{ color: palette.forest, fontFamily: "Outfit_700Bold", fontSize: 13.5 }}>Add a class</Text>
+                      <Text style={{ color: palette.forest, fontFamily: "Outfit_700Bold", fontSize: 13.5 }}>Add a course</Text>
                     </Pressable>
                   </Link>
                 ) : null}

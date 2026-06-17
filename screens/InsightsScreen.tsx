@@ -258,9 +258,9 @@ export const InsightsScreen = () => {
         </View>
       </View>
 
-      {/* By class */}
+      {/* By course */}
       <Text className="mb-2 text-[22px]" style={{ color: palette.ink, fontFamily: "Outfit_700Bold" }}>
-        By class
+        By course
       </Text>
       <View className="gap-2.5">
         {sorted.map((c) => (

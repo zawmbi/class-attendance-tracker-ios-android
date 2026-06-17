@@ -8,12 +8,12 @@ import { useAppPalette } from "@/theme/useAppPalette";
 import { DashboardWidget } from "@/utils/types";
 
 const labels: Record<DashboardWidget, { title: string; description: string }> = {
-  actions: { title: "Quick actions", description: "Check In and Add Class buttons." },
+  actions: { title: "Quick actions", description: "Check In and Add Course buttons." },
   momentum: { title: "Momentum", description: "Your rank, XP, and current streak." },
   trophies: { title: "Trophy Case", description: "Next badge progress and your level." },
   motivation: { title: "Motivation", description: "Supportive message block." },
   today: { title: "Today", description: "Classes scheduled for today." },
-  more_classes: { title: "More Classes", description: "Your condensed class grid." }
+  more_classes: { title: "More Courses", description: "Your condensed course grid." }
 };
 
 export const DashboardCustomizeScreen = () => {
@@ -21,12 +21,15 @@ export const DashboardCustomizeScreen = () => {
   const { dashboardWidgetOrder, moveDashboardWidget } = useUserStore();
 
   return (
-    <ScreenContainer>
-      <Link href="/(tabs)/dashboard" asChild>
-        <Pressable className="mb-5 self-start rounded-full px-4 py-2.5" style={{ backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.border }}>
-          <Text style={{ color: palette.primary }}>‹ Back</Text>
-        </Pressable>
-      </Link>
+    <ScreenContainer
+      header={
+        <Link href="/(tabs)/dashboard" asChild>
+          <Pressable className="self-start rounded-full px-4 py-2.5" style={{ backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.border }}>
+            <Text style={{ color: palette.primary }}>‹ Back</Text>
+          </Pressable>
+        </Link>
+      }
+    >
       <SectionHeader
         title="Customize Dashboard"
         subtitle="Move sections up or down to decide what you see first."

@@ -98,7 +98,7 @@ export const DashboardScreen = () => {
   }, [hasClasses, hasAnyRecord, viewedForecast, onboarded, completeOnboarding]);
 
   const getStartedSteps: ChecklistStep[] = [
-    { key: "add", label: "Add a class", hint: "Set up your schedule", done: hasClasses, href: "/class/new" },
+    { key: "add", label: "Add a course", hint: "Set up your schedule", done: hasClasses, href: "/class/new" },
     { key: "checkin", label: "Check in", hint: "Log today's attendance", done: hasAnyRecord, href: "/(tabs)/check-in" },
     { key: "forecast", label: "See your forecast", hint: "Project your end-of-term %", done: viewedForecast, href: "/(tabs)/analytics" }
   ];
@@ -111,7 +111,7 @@ export const DashboardScreen = () => {
           style={{ backgroundColor: palette.forestSoft, borderWidth: 1, borderColor: palette.hairline }}
         >
           <Icon name="plus" size={20} color={palette.forest} stroke={2.4} />
-          <Text style={{ color: palette.forest, fontFamily: "Outfit_800ExtraBold", fontSize: 15 }}>Add class</Text>
+          <Text style={{ color: palette.forest, fontFamily: "Outfit_800ExtraBold", fontSize: 15 }}>Add course</Text>
         </Pressable>
       </Link>
       <Link href={"/(tabs)/check-in" as Href} asChild>
@@ -161,7 +161,7 @@ export const DashboardScreen = () => {
           Welcome to Attendize
         </Text>
         <Text className="mt-2 text-[15px] leading-[21px]" style={{ color: palette.onGradient, opacity: 0.85, fontFamily: "Outfit_500Medium" }}>
-          Add your first class to start tracking attendance, protect your streak, and forecast your term.
+          Add your first course to start tracking attendance, protect your streak, and forecast your term.
         </Text>
       </View>
 
@@ -172,7 +172,7 @@ export const DashboardScreen = () => {
         >
           <Icon name="plus" size={20} color={palette.onGradient} stroke={2.4} />
           <Text className="text-[16px]" style={{ color: palette.onGradient, fontFamily: "Outfit_800ExtraBold" }}>
-            Add your first class
+            Add your first course
           </Text>
         </Pressable>
       </Link>

@@ -170,7 +170,7 @@ const QuickEditSheet = ({ classItem, onClose }: { classItem: ClassModel; onClose
           style={{ backgroundColor: palette.paper2, borderWidth: 1, borderColor: palette.hairline }}
         >
           <Text className="text-[15px]" style={{ color: palette.ink, fontFamily: "Outfit_700Bold" }}>
-            Open class
+            Open course
           </Text>
         </Pressable>
         <Pressable onPress={() => go(`/class/edit/${classItem.id}`)} className="flex-1 items-center rounded-[16px] py-3.5" style={{ backgroundColor: palette.forest }}>
@@ -213,7 +213,7 @@ export const CoursesScreen = () => {
             No courses yet
           </Text>
           <Text className="mt-1 text-center text-[13.5px] leading-[19px]" style={{ color: palette.ink3, fontFamily: "Outfit_500Medium" }}>
-            Add your classes to manage their schedule, attendance rules, color and priority here.
+            Add your courses to manage their schedule, attendance rules, color and priority here.
           </Text>
         </View>
       ) : (

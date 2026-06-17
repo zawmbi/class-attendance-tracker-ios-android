@@ -6,15 +6,36 @@ import Svg, { Defs, RadialGradient, Rect, Stop } from "react-native-svg";
 
 import { Icon, IconName } from "@/components/Icon";
 import { useIap } from "@/components/IapProvider";
-import { PremiumPlan } from "@/services/iap";
+import { PREMIUM_ANNUAL_ID, PREMIUM_MONTHLY_ID, PREMIUM_SEMIANNUAL_ID, PremiumPeriod, PremiumPlan } from "@/services/iap";
 import { useUserStore } from "@/store/userStore";
 import { darkPalette as d } from "@/theme";
 
+// Everything Premium unlocks — applies to every plan below.
 const FEATURES: { icon: IconName; title: string; sub: string }[] = [
-  { icon: "chart", title: "Forecast & grade-aware projections", sub: "See exactly how each class will finish" },
-  { icon: "grid", title: "Behavioral insights & patterns", sub: "Weekday, time-of-day, and consistency analytics" },
-  { icon: "sparkles", title: "Syllabus scanning", sub: "Auto-fill classes from pasted syllabus text" },
-  { icon: "flame", title: "Advanced reminders & themes", sub: "Leave-time nudges and premium theme customization" }
+  { icon: "chart", title: "End-of-term forecasting", sub: "Grade-aware projections show exactly how each course will finish." },
+  { icon: "target", title: "What-if simulator & goal planner", sub: "See how many sessions you can miss and still hit your target." },
+  { icon: "grid", title: "Deep insights & patterns", sub: "Weekday, time-of-day, punctuality and streak analytics." },
+  { icon: "sparkles", title: "Syllabus scanning", sub: "Auto-fill a course's schedule and attendance policy from pasted text." },
+  { icon: "bell", title: "Advanced reminders", sub: "Leave-time nudges and smarter, configurable attendance alerts." },
+  { icon: "flame", title: "Premium themes", sub: "Unlock the full set of app themes and accent colors." },
+  { icon: "inbox", title: "Cloud backup & sync", sub: "Back up your data and keep it in sync across all your devices." }
+];
+
+// The three duration tiers. Prices here are the marketing fallback shown when
+// the store's localized price isn't available (e.g. dev / Expo Go); in
+// production the live App Store / Play price label overrides `price`.
+const TIERS: {
+  period: PremiumPeriod;
+  sku: string;
+  title: string;
+  price: string;
+  perMonth: string;
+  billed: string;
+  badge: string | null;
+}[] = [
+  { period: "month", sku: PREMIUM_MONTHLY_ID, title: "Monthly", price: "$3.99", perMonth: "$3.99 / mo", billed: "Billed monthly", badge: null },
+  { period: "6month", sku: PREMIUM_SEMIANNUAL_ID, title: "6 Months", price: "$17.99", perMonth: "$3.00 / mo", billed: "Billed every 6 months", badge: "SAVE 25%" },
+  { period: "year", sku: PREMIUM_ANNUAL_ID, title: "12 Months", price: "$29.99", perMonth: "$2.50 / mo", billed: "Billed yearly", badge: "BEST VALUE · SAVE 37%" }
 ];
 
 // Apple's standard EULA (use your own Terms of Use URL if you have one).
@@ -24,25 +45,25 @@ const PRIVACY_URL = "https://lindascomputing.xyz/class-attendance-tracker-ios-an
 const MANAGE_URL =
   Platform.OS === "ios" ? "https://apps.apple.com/account/subscriptions" : "https://play.google.com/store/account/subscriptions";
 
-const periodSuffix = (p: PremiumPlan["period"]) => (p === "year" ? "yr" : p === "6month" ? "6mo" : "mo");
-const billedLabel = (p: PremiumPlan["period"]) =>
-  p === "year" ? "yearly" : p === "6month" ? "every 6 months" : "monthly";
+const billedLabel = (p: PremiumPeriod) => (p === "year" ? "yearly" : p === "6month" ? "every 6 months" : "monthly");
 
 export const PremiumScreen = () => {
   const router = useRouter();
   const isPremium = useUserStore((s) => s.isPremium);
-  const { plans, loadingPlans, available, purchasing, restoring, purchase, restore } = useIap();
-  const [selectedSku, setSelectedSku] = useState<string | null>(null);
+  const { plans, available, purchasing, restoring, purchase, restore } = useIap();
+  const [selectedPeriod, setSelectedPeriod] = useState<PremiumPeriod>("year");
 
-  const selected =
-    plans.find((p) => p.sku === selectedSku) ?? plans.find((p) => p.period === "year") ?? plans[0] ?? null;
+  // The store plan that matches the selected tier (needed to actually purchase).
+  const planFor = (period: PremiumPeriod): PremiumPlan | undefined => plans.find((p) => p.period === period);
+  const selectedPlan = planFor(selectedPeriod);
+  const canPurchase = available && !!selectedPlan;
 
   const handlePurchase = async () => {
-    if (!selected) {
+    if (!selectedPlan) {
       return;
     }
     try {
-      await purchase(selected);
+      await purchase(selectedPlan);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Something went wrong. Please try again.";
       Alert.alert("Purchase incomplete", message);
@@ -101,17 +122,20 @@ export const PremiumScreen = () => {
               ATTENDIZE PREMIUM
             </Text>
             <Text className="mt-1.5 text-center text-[32px] leading-[36px]" style={{ color: "#fff", fontFamily: "Fraunces_600SemiBold" }}>
-              {isPremium ? "You're all set" : "Never miss the mark"}
+              {isPremium ? "You're all set" : "Finish every course on track"}
             </Text>
             <Text className="mt-2.5 text-center text-[15.5px]" style={{ color: d.ink2, fontFamily: "Outfit_500Medium" }}>
               {isPremium
                 ? "Your Premium subscription is active. Thanks for the support!"
-                : "Unlock forecasting, deep insights, and smart reminders to finish every class on track."}
+                : "Start with 2 weeks free. Cancel anytime — you keep Premium for the full two weeks even if you cancel right away."}
             </Text>
           </View>
 
           {/* Features */}
-          <View className="mt-6 gap-2.5">
+          <Text className="mb-2.5 mt-7 text-[12px] tracking-[1.5px]" style={{ color: d.gold, fontFamily: "Outfit_800ExtraBold" }}>
+            EVERYTHING IN PREMIUM
+          </Text>
+          <View className="gap-2.5">
             {FEATURES.map((f) => (
               <View
                 key={f.title}
@@ -125,7 +149,7 @@ export const PremiumScreen = () => {
                   <Text className="text-[15.5px]" style={{ color: "#fff", fontFamily: "Outfit_700Bold" }}>
                     {f.title}
                   </Text>
-                  <Text className="text-[13px]" style={{ color: d.ink3, fontFamily: "Outfit_500Medium" }}>
+                  <Text className="text-[13px] leading-[18px]" style={{ color: d.ink3, fontFamily: "Outfit_500Medium" }}>
                     {f.sub}
                   </Text>
                 </View>
@@ -150,31 +174,21 @@ export const PremiumScreen = () => {
                 <Text style={{ color: "#3a2a06", fontFamily: "Outfit_800ExtraBold", fontSize: 17 }}>Done</Text>
               </Pressable>
             </>
-          ) : loadingPlans ? (
-            <View className="mt-8 items-center">
-              <ActivityIndicator color={d.gold} />
-            </View>
-          ) : !available || plans.length === 0 ? (
-            <View className="mt-7 rounded-[22px] p-4" style={{ backgroundColor: "rgba(255,255,255,0.06)", borderWidth: 0.5, borderColor: "rgba(255,255,255,0.1)" }}>
-              <Text className="text-center text-[14px] leading-6" style={{ color: d.ink2, fontFamily: "Outfit_600SemiBold" }}>
-                Subscriptions aren't available here. Open the app from TestFlight or the App Store to subscribe.
-              </Text>
-              <Pressable onPress={handleRestore} className="mt-4 items-center py-2" disabled={restoring}>
-                <Text className="text-[14px]" style={{ color: d.gold, fontFamily: "Outfit_700Bold" }}>
-                  {restoring ? "Restoring…" : "Restore purchases"}
-                </Text>
-              </Pressable>
-            </View>
           ) : (
             <>
-              {/* Plan picker */}
-              <View className="mt-6 gap-2.5">
-                {plans.map((plan) => {
-                  const active = selected?.sku === plan.sku;
+              {/* Pick a plan — all three tiers unlock everything above */}
+              <Text className="mb-2.5 mt-7 text-[12px] tracking-[1.5px]" style={{ color: d.gold, fontFamily: "Outfit_800ExtraBold" }}>
+                CHOOSE YOUR PLAN
+              </Text>
+              <View className="gap-2.5">
+                {TIERS.map((tier) => {
+                  const active = selectedPeriod === tier.period;
+                  // Prefer the live, localized store price when we have it.
+                  const priceLabel = planFor(tier.period)?.priceLabel || tier.price;
                   return (
                     <Pressable
-                      key={plan.sku}
-                      onPress={() => setSelectedSku(plan.sku)}
+                      key={tier.sku}
+                      onPress={() => setSelectedPeriod(tier.period)}
                       className="flex-row items-center gap-3 rounded-[22px] p-4"
                       style={{
                         backgroundColor: active ? "rgba(224,165,61,0.14)" : "rgba(255,255,255,0.06)",
@@ -189,45 +203,63 @@ export const PremiumScreen = () => {
                         {active ? <View className="h-3 w-3 rounded-full" style={{ backgroundColor: d.gold }} /> : null}
                       </View>
                       <View className="flex-1">
-                        <View className="flex-row items-center gap-2">
+                        <View className="flex-row flex-wrap items-center gap-2">
                           <Text className="text-[16px]" style={{ color: "#fff", fontFamily: "Outfit_800ExtraBold" }}>
-                            {plan.title}
+                            {tier.title}
                           </Text>
-                          {plan.period === "year" ? (
+                          {tier.badge ? (
                             <View className="rounded-full px-2 py-0.5" style={{ backgroundColor: d.gold }}>
                               <Text className="text-[10px] tracking-[0.5px]" style={{ color: "#3a2a06", fontFamily: "Outfit_800ExtraBold" }}>
-                                BEST VALUE
+                                {tier.badge}
                               </Text>
                             </View>
                           ) : null}
                         </View>
                         <Text className="text-[13px]" style={{ color: d.ink3, fontFamily: "Outfit_500Medium" }}>
-                          Billed {billedLabel(plan.period)}, auto-renewing
+                          {tier.billed} · {tier.perMonth}
                         </Text>
                       </View>
                       <Text className="text-[16px]" style={{ color: "#fff", fontFamily: "Outfit_800ExtraBold" }}>
-                        {plan.priceLabel ? `${plan.priceLabel}/${periodSuffix(plan.period)}` : "—"}
+                        {priceLabel}
                       </Text>
                     </Pressable>
                   );
                 })}
               </View>
 
-              {/* Subscribe */}
+              {/* Free-trial reassurance */}
+              <View
+                className="mt-4 flex-row items-start gap-2.5 rounded-[18px] p-3.5"
+                style={{ backgroundColor: "rgba(224,165,61,0.12)", borderWidth: 0.5, borderColor: "rgba(224,165,61,0.35)" }}
+              >
+                <Icon name="sparkles" size={18} color={d.gold} stroke={2} />
+                <Text className="flex-1 text-[13px] leading-[18px]" style={{ color: d.ink2, fontFamily: "Outfit_600SemiBold" }}>
+                  2 weeks free, then {planFor(selectedPeriod)?.priceLabel || TIERS.find((t) => t.period === selectedPeriod)?.price}{" "}
+                  billed {billedLabel(selectedPeriod)}. Cancel anytime in the first two weeks and you keep Premium for all 14 days at no charge.
+                </Text>
+              </View>
+
+              {/* Start trial / Subscribe */}
               <Pressable
                 onPress={handlePurchase}
-                disabled={!selected || purchasing !== null}
-                className="mt-6 items-center rounded-[22px] py-4"
-                style={{ backgroundColor: d.gold, opacity: purchasing !== null ? 0.7 : 1, shadowColor: d.goldDeep, shadowOpacity: 0.4, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: 5 }}
+                disabled={!canPurchase || purchasing !== null}
+                className="mt-5 items-center rounded-[22px] py-4"
+                style={{ backgroundColor: d.gold, opacity: !canPurchase || purchasing !== null ? 0.6 : 1, shadowColor: d.goldDeep, shadowOpacity: 0.4, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: 5 }}
               >
                 {purchasing !== null ? (
                   <ActivityIndicator color="#3a2a06" />
                 ) : (
                   <Text style={{ color: "#3a2a06", fontFamily: "Outfit_800ExtraBold", fontSize: 17 }}>
-                    {selected ? `Subscribe ${billedLabel(selected.period)}` : "Subscribe"}
+                    Start 2-week free trial
                   </Text>
                 )}
               </Pressable>
+
+              {!canPurchase ? (
+                <Text className="mt-3 text-center text-[12.5px] leading-[18px]" style={{ color: d.ink3, fontFamily: "Outfit_500Medium" }}>
+                  Subscriptions aren't available here. Open the app from TestFlight or the App Store to start your free trial.
+                </Text>
+              ) : null}
 
               <Pressable onPress={handleRestore} className="mt-3 items-center py-2" disabled={restoring}>
                 <Text className="text-[14px]" style={{ color: d.gold, fontFamily: "Outfit_700Bold" }}>
@@ -237,10 +269,10 @@ export const PremiumScreen = () => {
 
               {/* Auto-renewable subscription disclosure (required by Apple). */}
               <Text className="mt-5 text-center text-[11.5px] leading-[17px]" style={{ color: d.ink3, fontFamily: "Outfit_500Medium" }}>
-                Payment is charged to your {Platform.OS === "ios" ? "Apple ID" : "Google"} account at confirmation of
-                purchase. The subscription renews automatically unless it's canceled at least 24 hours before the end of
-                the current period. Your account is charged for renewal within 24 hours before the period ends. Manage or
-                cancel anytime in your account settings.
+                After the 2-week free trial, payment is charged to your {Platform.OS === "ios" ? "Apple ID" : "Google"} account
+                and the subscription renews automatically unless it's canceled at least 24 hours before the end of the current
+                period. Your account is charged for renewal within 24 hours before the period ends. Manage or cancel anytime in
+                your account settings.
               </Text>
               <View className="mt-3 flex-row items-center justify-center gap-4">
                 <Pressable onPress={() => Linking.openURL(TERMS_URL)}>

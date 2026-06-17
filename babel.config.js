@@ -4,7 +4,8 @@ module.exports = function (api) {
   return {
     presets: [["babel-preset-expo", { jsxImportSource: "nativewind" }]],
     plugins: [
-      "react-native-reanimated/plugin",
+      // Reanimated 4 moved its Babel transform into react-native-worklets.
+      "react-native-worklets/plugin",
     ],
   };
 };

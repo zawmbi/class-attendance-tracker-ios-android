@@ -39,7 +39,7 @@ export const ClassDetailScreen = ({ classId }: { classId: string }) => {
     return (
       <ScreenContainer wideMaxWidth={720}>
         <Text className="text-[22px]" style={{ color: palette.ink, fontFamily: "Outfit_700Bold" }}>
-          Class not found
+          Course not found
         </Text>
       </ScreenContainer>
     );
@@ -56,7 +56,7 @@ export const ClassDetailScreen = ({ classId }: { classId: string }) => {
 
   const confirmDelete = () => {
     Alert.alert(
-      "Delete class?",
+      "Delete course?",
       `This permanently removes "${classItem.name}" and all of its attendance history. This can't be undone.`,
       [
         { text: "Cancel", style: "cancel" },
@@ -73,30 +73,32 @@ export const ClassDetailScreen = ({ classId }: { classId: string }) => {
   };
 
   return (
-    <ScreenContainer wideMaxWidth={880}>
-      {/* Back + edit */}
-      <View className="mb-2 flex-row items-center justify-between">
-        <Pressable
-          onPress={() => router.back()}
-          className="flex-row items-center gap-1 py-1"
-          accessibilityLabel="Back"
-        >
-          <Icon name="back" size={21} color={palette.forest} stroke={2.2} />
-          <Text className="text-[16px]" style={{ color: palette.forest, fontFamily: "Outfit_700Bold" }}>
-            Today
-          </Text>
-        </Pressable>
-        <Link href={`/class/edit/${classItem.id}`} asChild>
+    <ScreenContainer
+      wideMaxWidth={880}
+      header={
+        <View className="flex-row items-center justify-between">
           <Pressable
-            accessibilityLabel="Edit class"
-            className="h-10 w-10 items-center justify-center rounded-full"
-            style={{ backgroundColor: palette.card, borderWidth: 1, borderColor: palette.hairline }}
+            onPress={() => router.back()}
+            className="flex-row items-center gap-1 py-1"
+            accessibilityLabel="Back"
           >
-            <Icon name="edit" size={20} color={palette.ink2} />
+            <Icon name="back" size={21} color={palette.forest} stroke={2.2} />
+            <Text className="text-[16px]" style={{ color: palette.forest, fontFamily: "Outfit_700Bold" }}>
+              Today
+            </Text>
           </Pressable>
-        </Link>
-      </View>
-
+          <Link href={`/class/edit/${classItem.id}`} asChild>
+            <Pressable
+              accessibilityLabel="Edit course"
+              className="h-10 w-10 items-center justify-center rounded-full"
+              style={{ backgroundColor: palette.card, borderWidth: 1, borderColor: palette.hairline }}
+            >
+              <Icon name="edit" size={20} color={palette.ink2} />
+            </Pressable>
+          </Link>
+        </View>
+      }
+    >
       {/* Header */}
       <View className="mb-4">
         <View className="mb-1 flex-row items-center gap-2">
@@ -247,7 +249,7 @@ export const ClassDetailScreen = ({ classId }: { classId: string }) => {
         style={{ borderWidth: 1, borderColor: `${palette.absent}55` }}
       >
         <Icon name="trash" size={18} color={palette.absent} stroke={2} />
-        <Text style={{ color: palette.absent, fontFamily: "Outfit_700Bold", fontSize: 14.5 }}>Delete class</Text>
+        <Text style={{ color: palette.absent, fontFamily: "Outfit_700Bold", fontSize: 14.5 }}>Delete course</Text>
       </Pressable>
 
       {/* Edit sheet */}

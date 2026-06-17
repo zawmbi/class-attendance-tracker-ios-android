@@ -27,10 +27,10 @@ const config: ExpoConfig = {
     [
       "expo-splash-screen",
       {
-        image: "./assets/icon/attendize-icon-1024.png",
+        image: "./assets/icon/attendize-glass-1024.png",
         imageWidth: 180,
         backgroundColor: "#0F2820",
-        dark: { image: "./assets/icon/attendize-icon-1024.png", backgroundColor: "#0F2820" }
+        dark: { image: "./assets/icon/attendize-glass-1024.png", backgroundColor: "#0F2820" }
       }
     ],
     "expo-notifications",
@@ -58,8 +58,11 @@ const config: ExpoConfig = {
     "react-native-iap",
     "./plugins/withFmtConstevalFix"
   ],
-  icon: "./assets/icon/attendize-icon-1024.png",
+  // Flat PNG for Android + fallback slots. iOS uses the Icon Composer
+  // "liquid glass" .icon below (must be a string path to the .icon folder).
+  icon: "./assets/icon/attendize-glass-1024.png",
   ios: {
+    icon: "./assets/attendize-glass.icon",
     supportsTablet: true,
     usesAppleSignIn: true,
     appleTeamId: "ZQUQB39QGN",
@@ -82,7 +85,7 @@ const config: ExpoConfig = {
     googleServicesFile: "./google-services.json",
     adaptiveIcon: {
       backgroundColor: "#0F2820",
-      foregroundImage: "./assets/icon/attendize-icon-1024.png"
+      foregroundImage: "./assets/icon/attendize-glass-1024.png"
     }
   },
   extra: {

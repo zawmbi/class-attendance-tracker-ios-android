@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C /Users/linda/Coding/class-attendance-tracker-ios-android rm services/exportService.ts)",
+      "Bash(node -e \"const p=require\\('./package.json'\\); console.log\\('expo', p.dependencies.expo\\); console.log\\('apple-targets', p.dependencies['@bacons/apple-targets']||p.devDependencies?.['@bacons/apple-targets']\\)\")",
+      "Bash(npm -v)",
+      "Bash(npm view *)",
+      "Bash(npm install *)",
+      "Bash(npx expo *)",
+      "Bash(node -e \"for\\(const m of ['react-native','react','react-native-reanimated','react-native-worklets','expo','typescript']\\){try{console.log\\(m, require\\(m+'/package.json'\\).version\\)}catch\\(e\\){console.log\\(m,'\\(not resolvable directly\\)'\\)}}\")",
+      "Bash(node -e \"let d='';process.stdin.on\\('data',c=>d+=c\\).on\\('end',\\(\\)=>console.log\\(JSON.parse\\(d\\).version\\)\\)\")",
+      "Bash(npx expo-doctor *)",
+      "Bash(node -e \"const p=require\\('react-native-reanimated/package.json'\\); console.log\\('version',p.version\\); console.log\\('peerDeps', JSON.stringify\\(p.peerDependencies||{},null,1\\)\\); console.log\\('deps.worklets', \\(p.dependencies||{}\\)['react-native-worklets']\\)\")",
+      "Bash(echo \"=== EXIT: $? ===\")",
+      "Bash(npx jest *)",
+      "Bash(node -e \"console.log\\(require\\('babel-preset-expo/package.json'\\).version\\)\")",
+      "Bash(node -e \"const p=require\\('expo/package.json'\\); console.log\\('expo deps babel-preset-expo:', \\(p.dependencies||{}\\)['babel-preset-expo']\\)\")",
+      "Bash(node -e \"console.log\\('jest-expo', require\\('jest-expo/package.json'\\).version\\)\")",
+      "Bash(node -e \"try{console.log\\(require.resolve\\('babel-preset-expo'\\)\\)}catch\\(e\\){console.log\\('UNRESOLVABLE:', e.message.split\\('\\\\n'\\)[0]\\)}\")"
+    ]
+  }
+}

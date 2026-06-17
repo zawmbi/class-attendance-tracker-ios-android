@@ -1,5 +1,5 @@
 import { PropsWithChildren, ReactNode, useMemo, useState } from "react";
-import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
+import { Alert, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 
 import { Icon, IconName } from "@/components/Icon";
@@ -8,7 +8,6 @@ import { Sheet } from "@/components/attenza/Sheet";
 import { Toggle } from "@/components/attenza/Toggle";
 import { FormInput } from "@/components/FormField";
 import { ScreenContainer } from "@/components/ScreenContainer";
-import { exportAttendanceCsv, exportAttendancePdf } from "@/services/exportService";
 import { restoreFromCloud, syncNow } from "@/services/syncService";
 import { formatSyncedAt } from "@/utils/sync";
 import { useAttendanceStore } from "@/store/attendanceStore";
@@ -139,33 +138,6 @@ export const SettingsScreen = () => {
   } = useUserStore();
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState("");
-  const [exporting, setExporting] = useState<"csv" | "pdf" | null>(null);
-
-  const handleExportCsv = async () => {
-    try {
-      setExporting("csv");
-      await exportAttendanceCsv(classes, records);
-    } catch (error) {
-      Alert.alert("Export failed", error instanceof Error ? error.message : "Couldn't export your data.");
-    } finally {
-      setExporting(null);
-    }
-  };
-
-  const handleExportPdf = async () => {
-    if (!isPremium) {
-      router.push("/premium");
-      return;
-    }
-    try {
-      setExporting("pdf");
-      await exportAttendancePdf(classes, records, settings);
-    } catch (error) {
-      Alert.alert("Export failed", error instanceof Error ? error.message : "Couldn't build the report.");
-    } finally {
-      setExporting(null);
-    }
-  };
 
   const [syncing, setSyncing] = useState<"sync" | "restore" | null>(null);
 
@@ -196,7 +168,7 @@ export const SettingsScreen = () => {
     }
     Alert.alert(
       "Restore from cloud?",
-      "This replaces the classes and records on this device with your most recent cloud backup.",
+      "This replaces the courses and records on this device with your most recent cloud backup.",
       [
         { text: "Cancel", style: "cancel" },
         {
@@ -239,7 +211,7 @@ export const SettingsScreen = () => {
   const handleLoadSample = () => {
     Alert.alert(
       "Load sample data?",
-      "This replaces your current classes and records with the demo set so you can explore a populated app.",
+      "This replaces your current courses and records with the demo set so you can explore a populated app.",
       [
         { text: "Cancel", style: "cancel" },
         { text: "Load demo", onPress: () => loadSampleData() }
@@ -250,7 +222,7 @@ export const SettingsScreen = () => {
   const handleClearData = () => {
     Alert.alert(
       "Start fresh?",
-      "This removes all your classes and records and restarts the get-started flow — as if it were a brand-new account. This can't be undone.",
+      "This removes all your courses and records and restarts the get-started flow — as if it were a brand-new account. This can't be undone.",
       [
         { text: "Cancel", style: "cancel" },
         {
@@ -270,7 +242,7 @@ export const SettingsScreen = () => {
   const confirmDeleteAccount = () => {
     Alert.alert(
       "Delete account?",
-      "This permanently deletes your account and erases all your classes, records, and progress on this device. This can't be undone.",
+      "This permanently deletes your account and erases all your courses, records, and progress on this device. This can't be undone.",
       [
         { text: "Cancel", style: "cancel" },
         {
@@ -320,7 +292,7 @@ export const SettingsScreen = () => {
       </Pressable>
 
       {/* Premium */}
-      <Group header="Subscription" footer={isPremium ? "Manage or cancel anytime in your App Store account settings." : undefined}>
+      <Group header="Subscription" footer={isPremium ? `Manage or cancel anytime in your ${Platform.OS === "ios" ? "App Store" : "Google Play"} account settings.` : undefined}>
         <Row
           icon="crown"
           iconBg={palette.goldDeep}
@@ -406,7 +378,7 @@ export const SettingsScreen = () => {
       </Group>
 
       {/* Defaults */}
-      <Group header="New class defaults" footer="Applied to classes you add from now on.">
+      <Group header="New course defaults" footer="Applied to courses you add from now on.">
         <View className="px-3.5 pt-3">
           <Text className="mb-2 text-[12.5px]" style={{ color: palette.ink3, fontFamily: "Outfit_700Bold" }}>
             DEFAULT TERM
@@ -467,24 +439,6 @@ export const SettingsScreen = () => {
             autoCorrect={false}
           />
         </View>
-      </Group>
-
-      {/* Data */}
-      <Group header="Data" footer="Export your attendance to share or back up. PDF reports are a Premium feature.">
-        <Row
-          icon="inbox"
-          iconBg={palette.moss}
-          title={exporting === "csv" ? "Exporting…" : "Export attendance (CSV)"}
-          onPress={exporting ? undefined : handleExportCsv}
-          first
-        />
-        <Row
-          icon="book"
-          iconBg={palette.goldDeep}
-          title={exporting === "pdf" ? "Building report…" : "Export PDF report"}
-          detail={isPremium ? undefined : "Premium"}
-          onPress={exporting ? undefined : handleExportPdf}
-        />
       </Group>
 
       {/* Cloud backup (Premium) */}

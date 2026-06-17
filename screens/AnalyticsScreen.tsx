@@ -94,13 +94,17 @@ export const AnalyticsScreen = () => {
 
   if (!isPremium) {
     return (
-      <ScreenContainer wideMaxWidth={1040}>
-        <Pressable onPress={() => router.back()} className="mb-2 flex-row items-center gap-1 py-1">
-          <Icon name="back" size={21} color={palette.forest} stroke={2.2} />
-          <Text className="text-[16px]" style={{ color: palette.forest, fontFamily: "Outfit_700Bold" }}>
-            Back
-          </Text>
-        </Pressable>
+      <ScreenContainer
+        wideMaxWidth={1040}
+        header={
+          <Pressable onPress={() => router.back()} className="flex-row items-center gap-1 py-1">
+            <Icon name="back" size={21} color={palette.forest} stroke={2.2} />
+            <Text className="text-[16px]" style={{ color: palette.forest, fontFamily: "Outfit_700Bold" }}>
+              Back
+            </Text>
+          </Pressable>
+        }
+      >
         <View className="mt-16 items-center px-6">
           <View
             className="mb-4 h-[78px] w-[78px] items-center justify-center rounded-[22px]"
@@ -118,7 +122,7 @@ export const AnalyticsScreen = () => {
             End-of-term projections, a what-if simulator, weekday & time-of-day patterns, punctuality and streak records.
           </Text>
           <Pressable onPress={() => router.push("/premium")} className="items-center rounded-[18px] px-7 py-4" style={{ backgroundColor: palette.gold }}>
-            <Text style={{ color: "#3a2a06", fontFamily: "Outfit_800ExtraBold", fontSize: 16 }}>Unlock with Premium</Text>
+            <Text style={{ color: "#3a2a06", fontFamily: "Outfit_800ExtraBold", fontSize: 16 }}>Try free for 2 weeks</Text>
           </Pressable>
         </View>
       </ScreenContainer>
@@ -126,22 +130,25 @@ export const AnalyticsScreen = () => {
   }
 
   return (
-    <ScreenContainer wideMaxWidth={1040}>
-      {/* Header */}
-      <View className="mb-2 flex-row items-center justify-between">
-        <Pressable onPress={() => router.back()} className="flex-row items-center gap-1 py-1">
-          <Icon name="back" size={21} color={palette.forest} stroke={2.2} />
-          <Text className="text-[16px]" style={{ color: palette.forest, fontFamily: "Outfit_700Bold" }}>
-            Back
-          </Text>
-        </Pressable>
-        <View className="flex-row items-center gap-1.5 rounded-full px-3 py-1.5" style={{ backgroundColor: palette.gold }}>
-          <Icon name="crown" size={14} color="#3a2a06" stroke={2.2} />
-          <Text className="text-[11.5px] tracking-[0.5px]" style={{ color: "#3a2a06", fontFamily: "Outfit_800ExtraBold" }}>
-            PREMIUM
-          </Text>
+    <ScreenContainer
+      wideMaxWidth={1040}
+      header={
+        <View className="flex-row items-center justify-between">
+          <Pressable onPress={() => router.back()} className="flex-row items-center gap-1 py-1">
+            <Icon name="back" size={21} color={palette.forest} stroke={2.2} />
+            <Text className="text-[16px]" style={{ color: palette.forest, fontFamily: "Outfit_700Bold" }}>
+              Back
+            </Text>
+          </Pressable>
+          <View className="flex-row items-center gap-1.5 rounded-full px-3 py-1.5" style={{ backgroundColor: palette.gold }}>
+            <Icon name="crown" size={14} color="#3a2a06" stroke={2.2} />
+            <Text className="text-[11.5px] tracking-[0.5px]" style={{ color: "#3a2a06", fontFamily: "Outfit_800ExtraBold" }}>
+              PREMIUM
+            </Text>
+          </View>
         </View>
-      </View>
+      }
+    >
       <View className="mb-3">
         <Text className="text-[13px] tracking-[1.5px]" style={{ color: palette.goldDeep, fontFamily: "Outfit_800ExtraBold" }}>
           DEEP INSIGHTS
@@ -174,7 +181,7 @@ export const AnalyticsScreen = () => {
                   ● target {target}%
                 </Text>
                 <Text className="mt-0.5 text-[12.5px]" style={{ color: palette.ink3, fontFamily: "Outfit_600SemiBold" }}>
-                  {atRisk.length === 0 ? "All classes on track" : `${atRisk.length} class${atRisk.length > 1 ? "es" : ""} at risk`}
+                  {atRisk.length === 0 ? "All courses on track" : `${atRisk.length} course${atRisk.length > 1 ? "s" : ""} at risk`}
                 </Text>
               </View>
             </View>
@@ -205,7 +212,7 @@ export const AnalyticsScreen = () => {
                 Sessions left this term
               </Text>
               <Text className="text-[13.5px]" style={{ color: palette.ink2, fontFamily: "Outfit_600SemiBold" }}>
-                Across all your classes
+                Across all your courses
               </Text>
             </View>
           </View>
@@ -243,14 +250,14 @@ export const AnalyticsScreen = () => {
               </Text>
             </View>
             <Text className="mb-1 text-[14px] leading-[20px]" style={{ color: palette.ink2, fontFamily: "Outfit_500Medium" }}>
-              To finish every class at{" "}
+              To finish every course at{" "}
               <Text style={{ color: palette.forest, fontFamily: "Outfit_800ExtraBold" }}>{goalPct}%</Text>, you can skip up to{" "}
               <Text style={{ color: palette.ink, fontFamily: "Outfit_800ExtraBold" }}>{totalSkip}</Text> of your {remainingTotal} remaining{" "}
               {remainingTotal === 1 ? "session" : "sessions"}.
             </Text>
             {unreachable > 0 ? (
               <Text className="mb-2 text-[12.5px]" style={{ color: palette.riskDanger, fontFamily: "Outfit_700Bold" }}>
-                {unreachable} class{unreachable > 1 ? "es" : ""} can&apos;t reach {goalPct}% this term.
+                {unreachable} course{unreachable > 1 ? "s" : ""} can&apos;t reach {goalPct}% this term.
               </Text>
             ) : null}
             <View className="mt-2">
@@ -291,7 +298,7 @@ export const AnalyticsScreen = () => {
           </View>
 
           {/* By class */}
-          <SectionTitle title="By class" trailing="projected" />
+          <SectionTitle title="By course" trailing="projected" />
           <View className={twoCol ? "flex-row flex-wrap" : "gap-2.5"} style={twoCol ? { gap: 12 } : undefined}>
             {rows.map(({ c, projected, willPass, mustAttend, confidence }) => (
               <Link key={c.classItem.id} href={`/class/${c.classItem.id}`} asChild>
