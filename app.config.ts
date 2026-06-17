@@ -22,6 +22,16 @@ const config: ExpoConfig = {
     typedRoutes: true
   },
   plugins: [
+    [
+      // Build iOS pods as static frameworks. Required so Swift pods pulled in by
+      // Google Sign-In (AppCheckCore) can integrate alongside non-modular pods
+      // (GoogleUtilities, RecaptchaInterop) — otherwise `pod install` fails on a
+      // clean machine (EAS) with "Swift pods cannot be integrated as static libraries".
+      "expo-build-properties",
+      {
+        ios: { useFrameworks: "static" }
+      }
+    ],
     "expo-router",
     "expo-font",
     [
