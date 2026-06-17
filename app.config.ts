@@ -53,9 +53,6 @@ const config: ExpoConfig = {
       }
     ],
     "@bacons/apple-targets",
-    // Adds StoreKit (iOS) + Play Billing permission (Android) for in-app
-    // subscriptions. Requires a dev/production build — not available in Expo Go.
-    "react-native-iap",
     "./plugins/withFmtConstevalFix"
   ],
   // Flat PNG for Android + fallback slots. iOS uses the Icon Composer
