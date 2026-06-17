@@ -132,6 +132,7 @@ export const SettingsScreen = () => {
     resetOnboarding,
     isDev,
     isPremium,
+    setPremium,
     openUpgradeModal,
     cloudLastSyncedAt,
     setCloudLastSyncedAt
@@ -471,7 +472,8 @@ export const SettingsScreen = () => {
 
       {isDev ? (
         <Group header="Demo & data (dev)" footer="Only visible on the dev login. Switch between the demo set and a clean start to test both new-user and populated states.">
-          <Row icon="sparkles" iconBg={palette.goldDeep} title="Load sample data" onPress={handleLoadSample} first />
+          <ToggleRow icon="crown" iconBg={palette.goldDeep} title="Premium (dev)" value={isPremium} onChange={(v) => setPremium(v)} first />
+          <Row icon="sparkles" iconBg={palette.goldDeep} title="Load sample data" onPress={handleLoadSample} />
           <Row icon="trash" iconBg={palette.absent} title="Clear all data & start fresh" danger onPress={handleClearData} />
         </Group>
       ) : null}
@@ -510,10 +512,10 @@ export const SettingsScreen = () => {
   );
 };
 
-const ToggleRow = ({ icon, iconBg, title, value, onChange }: { icon: IconName; iconBg: string; title: string; value: boolean; onChange: (v: boolean) => void }) => {
+const ToggleRow = ({ icon, iconBg, title, value, onChange, first }: { icon: IconName; iconBg: string; title: string; value: boolean; onChange: (v: boolean) => void; first?: boolean }) => {
   const palette = useAppPalette();
   return (
-    <View className="flex-row items-center gap-3 px-3.5 py-3" style={{ borderTopWidth: StyleSheet.hairlineWidth * 4, borderTopColor: palette.hairline }}>
+    <View className="flex-row items-center gap-3 px-3.5 py-3" style={{ borderTopWidth: first ? 0 : StyleSheet.hairlineWidth * 4, borderTopColor: palette.hairline }}>
       <View className="h-8 w-8 items-center justify-center rounded-[9px]" style={{ backgroundColor: iconBg }}>
         <Icon name={icon} size={18} color="#fff" stroke={2} />
       </View>
