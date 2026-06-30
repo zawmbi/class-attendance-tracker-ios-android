@@ -10,7 +10,9 @@ import {
   UserCredential
 } from "firebase/auth";
 
-import { auth } from "./firebase";
+import { deleteDoc, doc } from "firebase/firestore";
+
+import { auth, db } from "./firebase";
 
 export interface AuthResult {
   credential: UserCredential;
@@ -87,12 +89,22 @@ export const authService = {
     await signOut(auth);
   },
 
-  // Permanently deletes the signed-in Firebase user (App Store Guideline
-  // 5.1.1(v) requires in-app account deletion for apps that create accounts).
-  // No-op for guest/demo sessions that never created a Firebase account.
+  // Permanently deletes the signed-in Firebase user and their cloud backup
+  // (App Store Guideline 5.1.1(v) requires in-app account deletion to remove the
+  // user's data, not just the login). No-op for guest/demo sessions that never
+  // created a Firebase account.
   deleteAccount: async (): Promise<void> => {
     const current = auth.currentUser;
     if (current) {
+      // Delete the Firestore backup first, while still authenticated — security
+      // rules only let a user delete their own doc, and removing the auth user
+      // first would revoke that permission and orphan the data. Tolerate the
+      // doc being absent (user never enabled cloud backup).
+      try {
+        await deleteDoc(doc(db, "users", current.uid));
+      } catch {
+        // No cloud backup to remove — proceed with account deletion.
+      }
       await deleteUser(current);
     }
   }

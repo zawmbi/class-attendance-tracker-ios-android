@@ -122,5 +122,12 @@ Capture from the Simulator with ⌘S (saved to your Desktop). Good screens to sh
 - Contact Info → Email Address: Collected, Linked to user, App Functionality. Not used for tracking.
 - Contact Info → Name: Collected, Linked to user, App Functionality. Not used for tracking.
 - Identifiers → User ID: Collected (via sign-in), Linked, App Functionality. Not tracking.
+- User Content → Other User Content: Collected, Linked to user, App Functionality. Not tracking.
+  (This covers the classes/attendance/settings uploaded to Firebase Firestore
+  **only when a signed-in user enables Cloud Backup & Sync**. Local-only users
+  transmit nothing — but Apple's label reflects what the app *can* collect, so
+  declare it.)
+- Purchases → Purchase History: handled by Apple In-App Purchase; you do not
+  collect it yourself, so leave "Not collected" unless you log it.
 - Location → Coarse/Precise: "Not collected" (processed on-device only; you do not transmit it).
 - Everything else: Not collected.
