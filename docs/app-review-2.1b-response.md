@@ -4,7 +4,7 @@ Submission context: Attendize 1.0, Guideline 2.1(b) "Information Needed" — App
 asked us to explain the business model around paid content/subscriptions.
 
 This version adds **real auto-renewable subscriptions via StoreKit/In-App
-Purchase** (`react-native-iap`). Everything below reflects that.
+Purchase** (`expo-iap`). Everything below reflects that.
 
 ---
 
@@ -104,8 +104,8 @@ Monetize → Subscriptions, and add a base plan (monthly / yearly) to each.
 
 ## Implementation notes (for us)
 
-- Library: `react-native-iap@^12.16.4` with its Expo config plugin (added in
-  `app.config.ts`). Requires a dev/EAS build — **not** Expo Go.
+- Library: `expo-iap` (Expo native module, autolinked — no config plugin
+  needed). Requires a dev/EAS build — **not** Expo Go.
 - App-side files: `services/iap.ts` (SDK wrapper + product IDs),
   `components/IapProvider.tsx` (connection, listeners, restore, entitlement
   sync), `screens/PremiumScreen.tsx` (paywall), `store/userStore.ts`
