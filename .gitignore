@@ -31,3 +31,5 @@ android/
 
 expo-env.d.ts
 # @end expo-cli
+# App Store screenshot output (regenerate with appstore-screenshots/capture.sh)
+appstore-screenshots/*/
