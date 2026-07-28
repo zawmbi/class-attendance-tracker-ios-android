@@ -1,5 +1,5 @@
 import { appConfig } from "@/theme";
-import { AttendanceRecord, AttendanceSettings, ClassModel } from "@/utils/types";
+import { AttendanceRecord, AttendanceSettings, AttendanceStatus, ClassModel, Weekday } from "@/utils/types";
 
 export const defaultSettings: AttendanceSettings = {
   reminderMinutesBefore: 15,
@@ -134,35 +134,123 @@ export const seedClasses: ClassModel[] = [
   }
 ];
 
-export const seedRecords: AttendanceRecord[] = [
-  { id: "r-1", classId: "cls-1", date: "2026-02-16", status: "present", notes: "" },
-  { id: "r-2", classId: "cls-1", date: "2026-02-18", status: "late", notes: "Traffic" },
-  { id: "r-3", classId: "cls-1", date: "2026-02-23", status: "excused", notes: "Advising trip" },
-  { id: "r-4", classId: "cls-1", date: "2026-02-25", status: "absent", notes: "Sick" },
-  { id: "r-5", classId: "cls-1", date: "2026-03-02", status: "present", notes: "" },
-  { id: "r-6", classId: "cls-1", date: "2026-03-04", status: "present", notes: "" },
-  { id: "r-7", classId: "cls-1", date: "2026-03-09", status: "present", notes: "" },
-  { id: "r-8", classId: "cls-1", date: "2026-03-11", status: "late", notes: "" },
-  { id: "r-9", classId: "cls-2", date: "2026-02-17", status: "present", notes: "" },
-  { id: "r-10", classId: "cls-2", date: "2026-02-19", status: "present", notes: "" },
-  { id: "r-11", classId: "cls-2", date: "2026-02-24", status: "present", notes: "" },
-  { id: "r-12", classId: "cls-2", date: "2026-02-26", status: "absent", notes: "Overslept" },
-  { id: "r-13", classId: "cls-2", date: "2026-03-03", status: "late", notes: "" },
-  { id: "r-14", classId: "cls-2", date: "2026-03-05", status: "present", notes: "" },
-  { id: "r-15", classId: "cls-2", date: "2026-03-10", status: "present", notes: "" },
-  { id: "r-15b", classId: "cls-5", date: "2026-02-17", status: "present", notes: "" },
-  { id: "r-15c", classId: "cls-5", date: "2026-02-24", status: "late", notes: "" },
-  { id: "r-15d", classId: "cls-5", date: "2026-03-03", status: "present", notes: "" },
-  { id: "r-16", classId: "cls-3", date: "2026-02-20", status: "present", notes: "" },
-  { id: "r-17", classId: "cls-3", date: "2026-02-27", status: "excused", notes: "Department showcase" },
-  { id: "r-18", classId: "cls-3", date: "2026-03-06", status: "late", notes: "" },
-  { id: "r-19", classId: "cls-3", date: "2026-03-13", status: "present", notes: "" },
-  { id: "r-20", classId: "cls-4", date: "2026-02-16", status: "present", notes: "" },
-  { id: "r-21", classId: "cls-4", date: "2026-02-19", status: "excused", notes: "Team travel" },
-  { id: "r-22", classId: "cls-4", date: "2026-02-23", status: "present", notes: "" },
-  { id: "r-23", classId: "cls-4", date: "2026-02-26", status: "absent", notes: "" },
-  { id: "r-24", classId: "cls-4", date: "2026-03-02", status: "present", notes: "" },
-  { id: "r-25", classId: "cls-4", date: "2026-03-05", status: "present", notes: "" },
-  { id: "r-26", classId: "cls-4", date: "2026-03-09", status: "present", notes: "" },
-  { id: "r-27", classId: "cls-4", date: "2026-03-12", status: "present", notes: "" }
-];
+const WEEKDAY_INDEX: Record<Weekday, number> = {
+  Sunday: 0,
+  Monday: 1,
+  Tuesday: 2,
+  Wednesday: 3,
+  Thursday: 4,
+  Friday: 5,
+  Saturday: 6
+};
+
+// Local yyyy-mm-dd key. We build dates at local noon so day-of-week and the key
+// never shift across a timezone boundary (matches countScheduledSessions).
+const toKey = (date: Date) => {
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, "0");
+  const day = `${date.getDate()}`.padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+const addDays = (date: Date, amount: number) => {
+  const next = new Date(date);
+  next.setHours(12, 0, 0, 0);
+  next.setDate(next.getDate() + amount);
+  return next;
+};
+
+// Per-course status pattern, expressed as fractional positions across the
+// term-to-date so it scales with however many sessions have occurred. Absences
+// live in the first ~70% so the most recent sessions read as an intact streak.
+type DemoPattern = { late: number[]; excused: number[]; absent: number[] };
+
+const DEMO_PATTERNS: Record<string, DemoPattern> = {
+  // Showcase course: no absences → the leading run drives the hero streak.
+  "cls-1": { late: [0.25, 0.6], excused: [0.45], absent: [] },
+  "cls-2": { late: [0.4], excused: [0.75], absent: [0.2] },
+  "cls-5": { late: [0.3], excused: [], absent: [] },
+  "cls-3": { late: [0.5], excused: [0.7], absent: [0.35] },
+  // Optional, low-priority course left in the "watch" zone so the Insights
+  // risk/forecast card has a meaningful worst-course to highlight.
+  "cls-4": { late: [0.35], excused: [0.85], absent: [0.2, 0.45, 0.7] }
+};
+
+const nearestIndex = (fraction: number, length: number) =>
+  Math.min(length - 1, Math.max(0, Math.round(fraction * (length - 1))));
+
+// Today's classes that start at/after this hour read as "upcoming" — we leave
+// them unlogged so the Today screen shows a live class you can still check into.
+const PENDING_AFTER_HOUR = 15;
+
+const scheduleForWeekday = (classItem: ClassModel, weekday: number) =>
+  classItem.schedule.find((entry) => WEEKDAY_INDEX[entry.day] === weekday);
+
+/**
+ * Builds a fresh, screenshot-ready demo dataset anchored to `now`: ~9 weeks of
+ * attendance history up to today for a mid-term (16-week) semester, tuned for
+ * high-but-believable percentages, a long streak on the showcase course, one
+ * campus holiday, and a live "Today". Regenerated on each call so it never
+ * goes stale.
+ */
+export const buildDemoData = (now: Date = new Date()) => {
+  const today = new Date(now);
+  today.setHours(12, 0, 0, 0);
+  const todayKey = toKey(today);
+
+  const termStart = addDays(today, -63); // ~9 weeks of history
+  const termEnd = addDays(today, 49); // ~7 weeks remaining of a 16-week term
+
+  // One campus holiday ~3 weeks back (rolled to a Monday) to exercise the
+  // canceled-day treatment on the calendar.
+  const holiday = new Date(addDays(today, -21));
+  while (holiday.getDay() !== WEEKDAY_INDEX.Monday) holiday.setDate(holiday.getDate() - 1);
+  const canceledDates = [toKey(holiday)];
+  const canceledSet = new Set(canceledDates);
+
+  const records: AttendanceRecord[] = [];
+
+  for (const classItem of seedClasses) {
+    const meetingDays = new Set(classItem.schedule.map((entry) => WEEKDAY_INDEX[entry.day]));
+
+    // Every scheduled, non-holiday session date from term start to today.
+    const dates: string[] = [];
+    const cursor = new Date(termStart);
+    while (cursor <= today) {
+      const key = toKey(cursor);
+      if (meetingDays.has(cursor.getDay()) && !canceledSet.has(key)) {
+        const entry = scheduleForWeekday(classItem, cursor.getDay());
+        const pendingToday =
+          key === todayKey && entry != null && Number(entry.startTime.slice(0, 2)) >= PENDING_AFTER_HOUR;
+        if (!pendingToday) dates.push(key);
+      }
+      cursor.setDate(cursor.getDate() + 1);
+    }
+    if (dates.length === 0) continue;
+
+    const pattern = DEMO_PATTERNS[classItem.id] ?? { late: [], excused: [], absent: [] };
+    const statusByIndex = new Map<number, AttendanceStatus>();
+    // Overwrite order sets precedence when fractions collide: late > excused > absent.
+    pattern.absent.forEach((f) => statusByIndex.set(nearestIndex(f, dates.length), "absent"));
+    pattern.excused.forEach((f) => statusByIndex.set(nearestIndex(f, dates.length), "excused"));
+    pattern.late.forEach((f) => statusByIndex.set(nearestIndex(f, dates.length), "late"));
+
+    dates.forEach((date, index) => {
+      records.push({
+        id: `demo-${classItem.id}-${date}`,
+        classId: classItem.id,
+        date,
+        status: statusByIndex.get(index) ?? "present",
+        notes: ""
+      });
+    });
+  }
+
+  const settings: AttendanceSettings = {
+    ...defaultSettings,
+    termStartDate: toKey(termStart),
+    termEndDate: toKey(termEnd)
+  };
+
+  return { classes: seedClasses, records, settings, canceledDates };
+};

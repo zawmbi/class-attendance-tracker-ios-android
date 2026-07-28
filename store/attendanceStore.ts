@@ -2,7 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
-import { defaultSettings, seedClasses, seedRecords } from "@/utils/mockData";
+import { buildDemoData, defaultSettings } from "@/utils/mockData";
 import {
   AttendanceRecord,
   AttendanceSettings,
@@ -150,8 +150,10 @@ export const useAttendanceStore = create<AttendanceState>()(
             classItem.id === classId ? { ...classItem, requiredAttendance } : classItem
           )
         })),
-      // Populates the demo classes/records (offered during onboarding / guest mode).
-      loadSampleData: () => set({ classes: seedClasses, records: seedRecords, settings: defaultSettings, canceledDates: [] }),
+      // Populates a fresh, date-relative demo dataset (onboarding / guest mode /
+      // dev screenshot prep). Regenerated on each call so "Today", streaks, and
+      // the calendar always land on the current date — see buildDemoData.
+      loadSampleData: () => set(buildDemoData()),
       // Full data replacement (cloud restore / import). Clears stale cancellations
       // since they reference the previous schedule.
       replaceAll: (classes, records, settings) => set({ classes, records, settings, canceledDates: [] }),
