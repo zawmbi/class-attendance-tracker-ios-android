@@ -90,7 +90,12 @@ export const MomentumRing = ({
 
       <View style={{ position: "absolute", inset: 0, alignItems: "center", justifyContent: "center" }}>
         <Text
+          numberOfLines={1}
+          adjustsFontSizeToFit
+          minimumFontScale={0.7}
           style={{
+            maxWidth: coreR * 1.5,
+            textAlign: "center",
             fontFamily: "Outfit_700Bold",
             fontSize: size * 0.07,
             letterSpacing: size * 0.07 * 0.08,

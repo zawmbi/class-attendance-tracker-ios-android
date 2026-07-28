@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Link, useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Svg, { Defs, LinearGradient, RadialGradient, Rect, Stop } from "react-native-svg";
@@ -6,6 +6,7 @@ import Svg, { Defs, LinearGradient, RadialGradient, Rect, Stop } from "react-nat
 import { Icon } from "@/components/Icon";
 import { Sparkline } from "@/components/attenza/Sparkline";
 import { ScreenContainer } from "@/components/ScreenContainer";
+import { Segmented } from "@/components/attenza/Segmented";
 import { useAttendanceStore } from "@/store/attendanceStore";
 import { useUserStore } from "@/store/userStore";
 import { useAppPalette } from "@/theme/useAppPalette";
@@ -14,14 +15,19 @@ import { deriveClass, RISK_META, riskTone } from "@/utils/attenza";
 
 const HEAT_WEEKS = 12;
 const WEEKDAYS = ["M", "T", "W", "T", "F"];
+const HEAT_LABEL_W = 34; // left gutter for week-start labels (Weeks / Both modes)
 
 // Monday-anchored Mon–Fri × N-week grid of the dominant status per day.
 // 0 none · 1 absent · 2 late · 3 present
-const buildHeatmap = (records: { date: string; status: string }[]) => {
+type HeatCell = { v: number; day: number };
+type HeatWeek = { label: string; cells: HeatCell[] };
+
+const buildHeatmap = (records: { date: string; status: string }[]): HeatWeek[] => {
   const now = new Date();
   const monday = new Date(now);
+  monday.setHours(12, 0, 0, 0);
   const dow = (now.getDay() + 6) % 7; // 0 = Monday
-  monday.setDate(now.getDate() - dow - (HEAT_WEEKS - 1) * 7);
+  monday.setDate(monday.getDate() - dow - (HEAT_WEEKS - 1) * 7);
 
   const byDate = new Map<string, string[]>();
   records.forEach((r) => {
@@ -30,20 +36,25 @@ const buildHeatmap = (records: { date: string; status: string }[]) => {
     byDate.set(r.date, list);
   });
 
-  const weeks: number[][] = [];
+  const monthDay = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" });
+  const weeks: HeatWeek[] = [];
   for (let w = 0; w < HEAT_WEEKS; w += 1) {
-    const row: number[] = [];
+    const cells: HeatCell[] = [];
+    let weekStart: Date | null = null;
     for (let d = 0; d < 5; d += 1) {
       const day = new Date(monday);
       day.setDate(monday.getDate() + w * 7 + d);
-      const iso = day.toISOString().slice(0, 10);
+      if (d === 0) weekStart = day;
+      // Local yyyy-mm-dd so keys line up with stored record dates (see parseLocalDate).
+      const iso = `${day.getFullYear()}-${`${day.getMonth() + 1}`.padStart(2, "0")}-${`${day.getDate()}`.padStart(2, "0")}`;
       const statuses = byDate.get(iso) ?? [];
-      if (statuses.includes("absent")) row.push(1);
-      else if (statuses.includes("late")) row.push(2);
-      else if (statuses.includes("present")) row.push(3);
-      else row.push(0);
+      let v = 0;
+      if (statuses.includes("absent")) v = 1;
+      else if (statuses.includes("late")) v = 2;
+      else if (statuses.includes("present")) v = 3;
+      cells.push({ v, day: day.getDate() });
     }
-    weeks.push(row);
+    weeks.push({ label: weekStart ? monthDay.format(weekStart) : "", cells });
   }
   return weeks;
 };
@@ -73,6 +84,9 @@ export const InsightsScreen = () => {
   const delta = trendData.length >= 2 ? trendData[trendData.length - 1] - trendData[0] : 0;
 
   const heat = useMemo(() => buildHeatmap(records), [records]);
+  const [heatMode, setHeatMode] = useState("weeks");
+  const showWeekLabels = heatMode === "weeks" || heatMode === "both";
+  const showDates = heatMode === "dates" || heatMode === "both";
   const heatColor = (v: number) =>
     v === 0 ? palette.hairline : v === 1 ? palette.absent : v === 2 ? palette.late : palette.present;
 
@@ -224,24 +238,55 @@ export const InsightsScreen = () => {
           {HEAT_WEEKS} weeks
         </Text>
       </View>
+      <View className="mb-2.5">
+        <Segmented
+          options={[
+            { value: "weeks", label: "Weeks" },
+            { value: "dates", label: "Dates" },
+            { value: "both", label: "Both" }
+          ]}
+          value={heatMode}
+          onChange={setHeatMode}
+        />
+      </View>
       <View className="mb-5 rounded-[22px] p-4" style={{ backgroundColor: palette.card, borderWidth: 1, borderColor: palette.hairline }}>
-        <View className="flex-row justify-between" style={{ gap: 5 }}>
+        {/* Weekday header */}
+        <View className="mb-1.5 flex-row" style={{ gap: 5 }}>
+          {showWeekLabels ? <View style={{ width: HEAT_LABEL_W, marginRight: 5 }} /> : null}
           {WEEKDAYS.map((d, col) => (
-            <View key={col} className="flex-1">
-              <View style={{ gap: 5 }}>
-                {heat.map((week, w) => (
-                  <View
-                    key={w}
-                    style={{ aspectRatio: 1, borderRadius: 5, backgroundColor: heatColor(week[col]), opacity: week[col] === 0 ? 0.5 : 0.92 }}
-                  />
-                ))}
-              </View>
-              <Text className="mt-1.5 text-center text-[11px]" style={{ color: palette.ink3, fontFamily: "Outfit_700Bold" }}>
+            <View key={col} className="flex-1 items-center">
+              <Text className="text-[11px]" style={{ color: palette.ink3, fontFamily: "Outfit_700Bold" }}>
                 {d}
               </Text>
             </View>
           ))}
         </View>
+        {/* One row per week */}
+        {heat.map((week, w) => (
+          <View key={w} className="flex-row items-center" style={{ gap: 5, marginTop: w === 0 ? 0 : 5 }}>
+            {showWeekLabels ? (
+              <Text
+                numberOfLines={1}
+                style={{ width: HEAT_LABEL_W, marginRight: 5, fontSize: 9.5, color: palette.ink3, fontFamily: "Outfit_600SemiBold" }}
+              >
+                {week.label}
+              </Text>
+            ) : null}
+            {week.cells.map((cell, col) => (
+              <View
+                key={col}
+                className="flex-1 items-center justify-center"
+                style={{ aspectRatio: 1, borderRadius: 5, backgroundColor: heatColor(cell.v), opacity: cell.v === 0 ? 0.5 : 0.92 }}
+              >
+                {showDates ? (
+                  <Text style={{ fontSize: 9, fontFamily: "Outfit_700Bold", color: cell.v === 0 ? palette.ink3 : "#fff" }}>
+                    {cell.day}
+                  </Text>
+                ) : null}
+              </View>
+            ))}
+          </View>
+        ))}
         <View className="mt-3.5 flex-row justify-center gap-3.5">
           {([
             ["present", "Present", palette.present],

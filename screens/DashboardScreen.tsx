@@ -17,7 +17,7 @@ import { getAttendanceSummary } from "@/utils/attendance";
 import { XP_PER_STATUS, getGamificationProfile, tierColor } from "@/utils/gamification";
 import { deriveClass, ringPropsFromProfile } from "@/utils/attenza";
 import { BadgeMedallion } from "@/components/attenza/BadgeMedallion";
-import { formatTimeLabel, isClassToday } from "@/utils/date";
+import { formatTimeLabel, isClassToday, parseLocalDate } from "@/utils/date";
 
 const greeting = () => {
   const h = new Date().getHours();
@@ -44,7 +44,6 @@ export const DashboardScreen = () => {
   const palette = useAppPalette();
   const { classes, records, settings } = useAttendanceStore();
   const canceledDates = useAttendanceStore((state) => state.canceledDates);
-  const loadSampleData = useAttendanceStore((state) => state.loadSampleData);
   const userName = useUserStore((state) => state.userName);
   const onboarded = useUserStore((state) => state.onboarded);
   const completeOnboarding = useUserStore((state) => state.completeOnboarding);
@@ -70,7 +69,7 @@ export const DashboardScreen = () => {
     const monday = new Date();
     monday.setHours(0, 0, 0, 0);
     monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7));
-    return records.reduce((sum, r) => (new Date(r.date) >= monday ? sum + XP_PER_STATUS[r.status] : sum), 0);
+    return records.reduce((sum, r) => (parseLocalDate(r.date) >= monday ? sum + XP_PER_STATUS[r.status] : sum), 0);
   }, [records]);
   const xpToNext = Math.max(0, profile.xpForNextRank - profile.xpIntoRank);
 
@@ -176,15 +175,6 @@ export const DashboardScreen = () => {
           </Text>
         </Pressable>
       </Link>
-      <Pressable
-        onPress={loadSampleData}
-        className="mt-3 items-center rounded-[20px] py-3.5"
-        style={{ borderWidth: 1.5, borderColor: palette.border }}
-      >
-        <Text className="text-[14.5px]" style={{ color: palette.ink2, fontFamily: "Outfit_700Bold" }}>
-          Load sample data to explore
-        </Text>
-      </Pressable>
     </View>
   );
 

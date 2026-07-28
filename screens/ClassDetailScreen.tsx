@@ -11,10 +11,7 @@ import { useAttendanceStore } from "@/store/attendanceStore";
 import { useAppPalette } from "@/theme/useAppPalette";
 import { getClassRecords } from "@/utils/attendance";
 import { deriveClass, RISK_META, riskTone } from "@/utils/attenza";
-import { formatTimeLabel } from "@/utils/date";
-
-const shortDate = (iso: string) =>
-  new Intl.DateTimeFormat("en-US", { weekday: "short", month: "short", day: "numeric" }).format(new Date(iso));
+import { formatLongDate, formatTimeLabel } from "@/utils/date";
 
 const EDIT_OPTIONS: { status: AttenzaStatus; icon: IconName; label: string }[] = [
   { status: "present", icon: "present", label: "Present" },
@@ -224,7 +221,7 @@ export const ClassDetailScreen = ({ classId }: { classId: string }) => {
               style={i > 0 ? { borderTopWidth: 1, borderTopColor: palette.hairline } : undefined}
             >
               <Text className="text-[15px]" style={{ color: palette.ink, fontFamily: "Outfit_600SemiBold" }}>
-                {shortDate(record.date)}
+                {formatLongDate(record.date)}
               </Text>
               <View className="flex-row items-center gap-2">
                 <StatusPill status={record.status as AttenzaStatus} size="sm" />
@@ -257,7 +254,7 @@ export const ClassDetailScreen = ({ classId }: { classId: string }) => {
         {editing ? (
           <View>
             <Text className="text-[13px] tracking-[0.5px]" style={{ color: palette.goldDeep, fontFamily: "Outfit_800ExtraBold" }}>
-              {shortDate(editing.date).toUpperCase()}
+              {formatLongDate(editing.date).toUpperCase()}
             </Text>
             <Text className="mb-4 mt-0.5 text-[19px]" style={{ color: palette.ink, fontFamily: "Outfit_800ExtraBold" }}>
               Edit attendance

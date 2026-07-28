@@ -18,7 +18,7 @@ const titleCase = (provider: "google" | "apple") => `${provider[0].toUpperCase()
 const isExpoGo = Constants.appOwnership === "expo";
 
 // Social sign-in is hidden until Google/Apple auth is fully configured for
-// release. Email + guest ("Skip for now") remain available.
+// release. Email sign-in remains available.
 const SOCIAL_AUTH_ENABLED = false;
 
 const getGoogleSignin = () => {
@@ -53,15 +53,6 @@ export const AuthScreen = () => {
   const completeSignIn = (provider: "email" | "google" | "apple", userName: string, userEmail: string) => {
     signIn(provider, userName, userEmail);
     router.replace("/(tabs)/dashboard");
-  };
-
-  // Lets you explore the whole app (with sample classes + records) without
-  // creating an account — handy for testing and first-run previews. Loads the
-  // demo data and skips onboarding so the app looks populated immediately.
-  const handleGuest = () => {
-    loadSampleData();
-    completeOnboarding();
-    completeSignIn("email", "Guest", "guest@demo.app");
   };
 
   useEffect(() => {
@@ -282,17 +273,6 @@ export const AuthScreen = () => {
         </Text>
       </Pressable>
 
-      <Pressable
-        className="mt-3 items-center rounded-[24px] px-5 py-4"
-        style={{ borderWidth: 1.5, borderColor: palette.primary, opacity: busy ? 0.6 : 1 }}
-        onPress={handleGuest}
-        disabled={busy}
-      >
-        <Text className="text-[15px]" style={{ color: palette.primary }}>
-          Skip for now — explore the demo →
-        </Text>
-      </Pressable>
-
       {SOCIAL_AUTH_ENABLED ? (
         <>
           <View className="my-6 flex-row items-center">
@@ -332,7 +312,7 @@ export const AuthScreen = () => {
       ) : null}
 
       <Text className="mt-6 text-center text-xs leading-5" style={{ color: palette.muted }}>
-        Demo mode loads sample classes so you can look around. Your real data stays private to you.
+        Your attendance data stays private to your account.
       </Text>
     </ScreenContainer>
   );

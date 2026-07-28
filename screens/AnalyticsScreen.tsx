@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useRouter } from "expo-router";
-import { Pressable, Text, View } from "react-native";
+import { Pressable, ScrollView, Text, View } from "react-native";
 import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 
 import { Icon, IconName } from "@/components/Icon";
@@ -13,12 +13,13 @@ import { useAttendanceStore } from "@/store/attendanceStore";
 import { useUserStore } from "@/store/userStore";
 import { useAppPalette } from "@/theme/useAppPalette";
 import { useIsTwoColumn } from "@/theme/responsive";
-import { getOverallWeeklyTrend } from "@/utils/attendance";
+import { getOverallWeeklyTrend, getWeeklyTrend } from "@/utils/attendance";
 import { deriveClass, riskTone } from "@/utils/attenza";
 import { getGamificationProfile } from "@/utils/gamification";
 import { AttendanceRecord } from "@/utils/types";
 import {
   WEEKDAY_LABELS,
+  WEEKDAY_FULL,
   attendGrade,
   classForecast,
   monthlyMomentum,
@@ -62,24 +63,40 @@ export const AnalyticsScreen = () => {
   }, [markForecastViewed]);
   const [attend, setAttend] = useState(85);
   const [goalPct, setGoalPct] = useState(90);
+  // Forecast tab can focus a single course; "all" keeps the term-wide aggregate.
+  const [courseId, setCourseId] = useState("all");
 
   const derived = useMemo(() => classes.map((c) => deriveClass(c, records, settings, canceledDates)), [classes, records, settings, canceledDates]);
   const profile = useMemo(() => getGamificationProfile(classes, records, settings), [classes, records, settings]);
-  const trend = useMemo(() => getOverallWeeklyTrend(classes, records, settings).map((t) => t.percentage), [classes, records, settings]);
 
-  const rows = useMemo(() => derived.map((c) => classForecast(c, attend)).sort((a, b) => a.projected - b.projected), [derived, attend]);
+  const focusList = useMemo(
+    () => (courseId === "all" ? derived : derived.filter((c) => c.classItem.id === courseId)),
+    [derived, courseId]
+  );
+  const focusCourse = courseId === "all" ? null : focusList[0]?.classItem ?? null;
+  const isCourse = courseId !== "all" && !!focusCourse;
+
+  const trend = useMemo(
+    () =>
+      isCourse && focusCourse
+        ? getWeeklyTrend(focusCourse, records, settings).map((t) => t.percentage)
+        : getOverallWeeklyTrend(classes, records, settings).map((t) => t.percentage),
+    [isCourse, focusCourse, classes, records, settings]
+  );
+
+  const rows = useMemo(() => focusList.map((c) => classForecast(c, attend)).sort((a, b) => a.projected - b.projected), [focusList, attend]);
   const overall = rows.length ? Math.round(rows.reduce((s, r) => s + r.projected, 0) / rows.length) : 100;
   const atRisk = rows.filter((r) => !r.willPass);
-  const target = derived.length ? Math.round(derived.reduce((s, c) => s + c.target, 0) / derived.length) : 85;
+  const target = focusList.length ? Math.round(focusList.reduce((s, c) => s + c.target, 0) / focusList.length) : 85;
   const overallNow = derived.length ? Math.round(derived.reduce((s, c) => s + c.pct, 0) / derived.length) : 100;
-  const remainingTotal = derived.reduce((s, c) => s + c.remaining, 0);
+  const remainingTotal = focusList.reduce((s, c) => s + c.remaining, 0);
   const toneFor = (v: number) => (v >= target ? palette.present : v >= target - 8 ? palette.late : palette.riskDanger);
 
   // Goal planner (inverse of the what-if): for a chosen finish target, how many
   // of each class's remaining sessions can still be skipped — the "skip budget".
   const goalRows = useMemo(
     () =>
-      derived.map((c) => {
+      focusList.map((c) => {
         const attended = c.present + c.late;
         // Credits still needed so attended/semTotal lands at >= goal.
         const mustAttend = Math.max(0, Math.ceil((goalPct / 100) * c.semTotal - attended));
@@ -87,7 +104,7 @@ export const AnalyticsScreen = () => {
         const maxSkip = Math.max(0, c.remaining - mustAttend);
         return { c, mustAttend: Math.min(mustAttend, c.remaining), maxSkip, reachable };
       }),
-    [derived, goalPct]
+    [focusList, goalPct]
   );
   const totalSkip = goalRows.reduce((s, r) => s + r.maxSkip, 0);
   const unreachable = goalRows.filter((r) => !r.reachable).length;
@@ -165,6 +182,33 @@ export const AnalyticsScreen = () => {
 
       {tab === "forecast" ? (
         <View>
+          {/* Course focus — scope the whole forecast to one course or the whole term */}
+          {derived.length > 1 ? (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ gap: 8, paddingVertical: 2, paddingRight: 8 }}
+              className="mt-3"
+            >
+              {[{ id: "all", name: "All courses", color: palette.forest }, ...derived.map((c) => ({ id: c.classItem.id, name: c.classItem.name, color: c.classItem.color }))].map((opt) => {
+                const on = courseId === opt.id;
+                return (
+                  <Pressable
+                    key={opt.id}
+                    onPress={() => setCourseId(opt.id)}
+                    className="flex-row items-center gap-1.5 rounded-full px-3.5 py-2"
+                    style={{ backgroundColor: on ? palette.forest : palette.card, borderWidth: 1, borderColor: on ? palette.forest : palette.hairline }}
+                  >
+                    {opt.id !== "all" ? <View className="h-2 w-2 rounded-full" style={{ backgroundColor: on ? "#fff" : opt.color }} /> : null}
+                    <Text className="text-[13px]" style={{ color: on ? "#fff" : palette.ink2, fontFamily: "Outfit_700Bold" }}>
+                      {opt.name}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+          ) : null}
+
           {/* Projected hero */}
           <View className="mt-4 rounded-[22px] p-4" style={{ backgroundColor: palette.card, borderWidth: 1, borderColor: palette.hairline }}>
             <View className="mb-1.5 flex-row items-end justify-between">
@@ -181,7 +225,13 @@ export const AnalyticsScreen = () => {
                   ● target {target}%
                 </Text>
                 <Text className="mt-0.5 text-[12.5px]" style={{ color: palette.ink3, fontFamily: "Outfit_600SemiBold" }}>
-                  {atRisk.length === 0 ? "All courses on track" : `${atRisk.length} course${atRisk.length > 1 ? "s" : ""} at risk`}
+                  {isCourse
+                    ? atRisk.length === 0
+                      ? "On track"
+                      : "At risk"
+                    : atRisk.length === 0
+                      ? "All courses on track"
+                      : `${atRisk.length} course${atRisk.length > 1 ? "s" : ""} at risk`}
                 </Text>
               </View>
             </View>
@@ -211,8 +261,8 @@ export const AnalyticsScreen = () => {
               <Text className="text-[15px]" style={{ color: palette.ink, fontFamily: "Outfit_800ExtraBold" }}>
                 Sessions left this term
               </Text>
-              <Text className="text-[13.5px]" style={{ color: palette.ink2, fontFamily: "Outfit_600SemiBold" }}>
-                Across all your courses
+              <Text numberOfLines={1} className="text-[13.5px]" style={{ color: palette.ink2, fontFamily: "Outfit_600SemiBold" }}>
+                {isCourse && focusCourse ? focusCourse.name : "Across all your courses"}
               </Text>
             </View>
           </View>
@@ -250,7 +300,7 @@ export const AnalyticsScreen = () => {
               </Text>
             </View>
             <Text className="mb-1 text-[14px] leading-[20px]" style={{ color: palette.ink2, fontFamily: "Outfit_500Medium" }}>
-              To finish every course at{" "}
+              To finish {isCourse && focusCourse ? focusCourse.name : "every course"} at{" "}
               <Text style={{ color: palette.forest, fontFamily: "Outfit_800ExtraBold" }}>{goalPct}%</Text>, you can skip up to{" "}
               <Text style={{ color: palette.ink, fontFamily: "Outfit_800ExtraBold" }}>{totalSkip}</Text> of your {remainingTotal} remaining{" "}
               {remainingTotal === 1 ? "session" : "sessions"}.
@@ -380,7 +430,7 @@ const PatternsTab = ({ records, derived }: { records: AttendanceRecord[]; derive
           ))}
         </View>
         <Text className="mt-3 text-[13.5px] leading-[20px]" style={{ color: palette.ink2, fontFamily: "Outfit_500Medium" }}>
-          <Text style={{ color: palette.ink, fontFamily: "Outfit_800ExtraBold" }}>{WEEKDAY_LABELS[worstDay]}days</Text> are your weak spot — protect that morning.
+          <Text style={{ color: palette.ink, fontFamily: "Outfit_800ExtraBold" }}>{WEEKDAY_FULL[worstDay]}s</Text> are your weak spot — protect that morning.
         </Text>
       </View>
 
@@ -461,7 +511,7 @@ const PatternsTab = ({ records, derived }: { records: AttendanceRecord[]; derive
           ))}
         </View>
         <Text className="mt-3 text-[13.5px] leading-[20px]" style={{ color: palette.ink2, fontFamily: "Outfit_500Medium" }}>
-          Most absences land on <Text style={{ color: palette.ink, fontFamily: "Outfit_800ExtraBold" }}>{WEEKDAY_LABELS[worstAbsDay]}days</Text>. Set a sharper reminder the night before.
+          Most absences land on <Text style={{ color: palette.ink, fontFamily: "Outfit_800ExtraBold" }}>{WEEKDAY_FULL[worstAbsDay]}s</Text>. Set a sharper reminder the night before.
         </Text>
       </View>
     </View>
