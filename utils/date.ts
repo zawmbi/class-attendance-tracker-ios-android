@@ -12,18 +12,23 @@ const weekdays: Weekday[] = [
 
 export const getWeekdayLabel = (date: Date) => weekdays[date.getDay()];
 
+// Parse a yyyy-mm-dd key as LOCAL midnight. Bare `new Date("2026-07-13")` parses
+// as UTC, so in timezones behind UTC it renders as the previous day. Callers pass
+// date-only keys (record.date / toISOString slices); the slice guards stray times.
+export const parseLocalDate = (isoDate: string) => new Date(`${isoDate.slice(0, 10)}T00:00:00`);
+
 export const formatDisplayDate = (isoDate: string) =>
   new Intl.DateTimeFormat("en-US", {
     month: "short",
     day: "numeric"
-  }).format(new Date(isoDate));
+  }).format(parseLocalDate(isoDate));
 
 export const formatLongDate = (isoDate: string) =>
   new Intl.DateTimeFormat("en-US", {
     weekday: "short",
     month: "short",
     day: "numeric"
-  }).format(new Date(isoDate));
+  }).format(parseLocalDate(isoDate));
 
 export const formatTimeLabel = (time: string) => {
   const [hours, minutes] = time.split(":").map(Number);

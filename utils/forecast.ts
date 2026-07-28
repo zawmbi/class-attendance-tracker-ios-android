@@ -1,8 +1,12 @@
 import { getClassRecords } from "@/utils/attendance";
 import { AttenzaClass } from "@/utils/attenza";
+import { parseLocalDate } from "@/utils/date";
 import { AttendanceRecord } from "@/utils/types";
 
 export const WEEKDAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri"];
+// Full names (same Mon–Fri ordering) for prose like "Wednesdays" — appending
+// "days" to the short label mangles Tue/Wed/Thu ("Weddays").
+export const WEEKDAY_FULL = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
 
 // Letter grade from an attendance percentage.
 export const attendGrade = (pct: number) => {
@@ -20,7 +24,7 @@ export const attendGrade = (pct: number) => {
 };
 
 const weekdayIndex = (iso: string) => {
-  const d = new Date(iso).getDay(); // 0=Sun..6=Sat
+  const d = parseLocalDate(iso).getDay(); // 0=Sun..6=Sat
   return d === 0 || d === 6 ? -1 : d - 1; // Mon=0..Fri=4
 };
 
@@ -73,7 +77,7 @@ export const monthlyMomentum = (records: AttendanceRecord[], months = 4) => {
   const byMonth = new Map<string, { credit: number; total: number; label: string }>();
   records.forEach((r) => {
     if (r.status === "excused") return;
-    const d = new Date(r.date);
+    const d = parseLocalDate(r.date);
     const key = `${d.getFullYear()}-${d.getMonth()}`;
     const label = d.toLocaleString("en-US", { month: "short" });
     const entry = byMonth.get(key) ?? { credit: 0, total: 0, label };

@@ -1,7 +1,7 @@
 import { appConfig } from "@/theme";
 import { AttendanceRecord, AttendanceSettings, BehaviorInsight, ClassModel, MotivationInsight, PrioritySuggestion } from "@/utils/types";
 import { getAttendanceSummary, getClassRecords, getOverallWeeklyTrend } from "@/utils/attendance";
-import { formatTimeLabel } from "@/utils/date";
+import { formatTimeLabel, parseLocalDate } from "@/utils/date";
 
 export const getMotivationInsights = (
   classes: ClassModel[],
@@ -65,7 +65,7 @@ export const getMotivationInsights = (
 export const getBehaviorInsights = (classes: ClassModel[], records: AttendanceRecord[]): BehaviorInsight[] => {
   const absentRecords = records.filter((record) => record.status === "absent");
   const dayBuckets = absentRecords.reduce<Record<string, number>>((acc, record) => {
-    const weekday = new Intl.DateTimeFormat("en-US", { weekday: "long" }).format(new Date(record.date));
+    const weekday = new Intl.DateTimeFormat("en-US", { weekday: "long" }).format(parseLocalDate(record.date));
     acc[weekday] = (acc[weekday] ?? 0) + 1;
     return acc;
   }, {});

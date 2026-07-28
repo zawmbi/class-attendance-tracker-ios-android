@@ -10,7 +10,7 @@ import {
   Weekday,
   WeeklyTrendPoint
 } from "@/utils/types";
-import { formatDisplayDate, getRelativeDayBuckets, getWeekLabel, startOfWeek } from "@/utils/date";
+import { formatDisplayDate, getRelativeDayBuckets, getWeekLabel, parseLocalDate, startOfWeek } from "@/utils/date";
 
 const WEEKDAY_BY_INDEX: Weekday[] = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
@@ -286,7 +286,7 @@ export const getWeeklyTrend = (
     end.setDate(start.getDate() + 7);
 
     const bucketRecords = classRecords.filter((record) => {
-      const date = new Date(record.date);
+      const date = parseLocalDate(record.date);
       return date >= start && date < end;
     });
     const eligible = getEligibleRecords(bucketRecords);
@@ -319,7 +319,7 @@ export const getOverallWeeklyTrend = (
     end.setDate(start.getDate() + 7);
 
     const bucketRecords = records.filter((record) => {
-      const date = new Date(record.date);
+      const date = parseLocalDate(record.date);
       return date >= start && date < end;
     });
     const eligible = getEligibleRecords(bucketRecords);
