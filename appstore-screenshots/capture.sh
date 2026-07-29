@@ -79,14 +79,21 @@ OUT_DIR="$REPO_ROOT/appstore-screenshots/$SET"
 [[ "$THEME" == "dark" ]] && OUT_DIR="$OUT_DIR-dark"
 mkdir -p "$OUT_DIR"
 
-# Ranked: the first two or three are what show in search results.
+# App Store Connect takes up to 10 per device size; this fills all 10.
+# Ranked deliberately: only the first ~3 show in search results, so the
+# differentiators (forecast, insights) come before the familiar stuff
+# (calendar, settings). Format: name|headline|how to get there.
 SHOTS=(
-  "01-dashboard|Today/Dashboard - streak, rank, today's classes"
-  "02-insights|Insights - overall %, trend, per-course risk + heatmap"
-  "03-checkin|Check-in - tap the center FAB"
-  "04-calendar|Calendar - month view with attendance + the holiday"
-  "05-forecast|Forecast/Analytics - the gold screens (needs Premium ON)"
-  "06-achievements|Trophy/Achievements - ranks + badges"
+  "01-dashboard|Today - streak, rank, today's classes, badges|Today tab. Scroll so the momentum ring AND the Today list are both visible."
+  "02-forecast|End-of-term projection - 'will I pass?'|Insights tab -> End-of-term Forecast card -> Forecast tab. Needs Premium ON."
+  "03-insights|Overall %, 6-week trend, priority course, heatmap|Insights tab. Set Consistency to 'Both' - dates + week labels read richest."
+  "04-checkin|One-tap check-in|Center FAB. Capture with the status options showing, not mid-transition."
+  "05-class-detail|Buffer gauge - 'you can miss N more and stay on target'|Courses -> pick the course with the most history (Biostatistics)."
+  "06-calendar|Month view - color-coded attendance + a canceled holiday|Calendar tab. Land on a month showing the holiday (~3 weeks back)."
+  "07-patterns|Weekday patterns - your weak spot, absence distribution|Forecast -> Patterns tab. Needs enough history to look populated."
+  "08-goal-planner|Skip budget - 'skip up to N of your M remaining'|Forecast tab, scroll to the goal planner. Set the goal slider to 90%."
+  "09-achievements|Rank ladder + earned badges|Trophy tab. Scroll so several unlocked badges are in frame."
+  "10-courses|Multi-course management with schedules and targets|Courses tab. Best with all 5 demo courses visible."
 )
 
 if ! xcrun simctl list devices booted | grep -qi "$DEVICE"; then
@@ -108,25 +115,43 @@ Expecting:     ${EXPECT_W} x ${EXPECT_H}
 
 Before you start, get the app into the demo state:
   1. Log out, sign in with dev login: devtest / devtestpassword
-  2. Settings -> "Demo & data (dev)" -> Premium (dev) ON   (unlocks shot 05)
+  2. Settings -> "Demo & data (dev)" -> Premium (dev) ON   (unlocks 02/07/08)
   3. Settings -> edit name -> "Maya"                       (so it greets a person)
   4. Settings -> Appearance -> Theme -> ${THEME_LABEL}
-  5. "Load sample data" if anything looks stale
+  5. "Load sample data" — regenerate it even if it looks fine. The demo set is
+     built relative to today, so a fresh load gives you a live "Today", an
+     intact streak, and a populated current month.
+
+Making them read as rich rather than empty:
+  - Scroll position matters more than the screen choice. Frame each shot so two
+    things are visible (a number AND the thing it describes), never one card
+    floating in whitespace.
+  - Avoid capturing a screen whose top 2 heatmap rows or trend weeks are blank —
+    scroll past them.
+  - Landing on a course with real history (Biostatistics) beats one with three
+    records; the buffer gauge and risk pill only look meaningful when populated.
 
 BANNER
 
 captured=()
 failed=()
 
+total="${#SHOTS[@]}"
+index=0
+
 for entry in "${SHOTS[@]}"; do
   name="${entry%%|*}"
-  desc="${entry#*|}"
+  rest="${entry#*|}"
+  desc="${rest%%|*}"
+  hint="${rest#*|}"
+  index=$((index + 1))
   target="$OUT_DIR/$name.png"
 
   while true; do
     echo
-    echo "--- $name"
+    echo "--- [$index/$total] $name"
     echo "    $desc"
+    echo "    -> $hint"
     read -r -p "    Navigate there, then press Return (s = skip): " ans
     if [[ "$ans" == "s" ]]; then
       echo "    skipped"
@@ -163,8 +188,13 @@ done
 
 echo
 echo "=============================="
+# Guard both expansions: under `set -u`, bash 3.2 (still what macOS ships)
+# treats "${arr[@]}" on an EMPTY array as an unbound variable and aborts —
+# which is exactly the skip-everything case.
 echo "Captured (${#captured[@]}):"
-for c in "${captured[@]}"; do echo "  - $c"; done
+if [[ ${#captured[@]} -gt 0 ]]; then
+  for c in "${captured[@]}"; do echo "  - $c"; done
+fi
 if [[ ${#failed[@]} -gt 0 ]]; then
   echo "Not captured (${#failed[@]}):"
   for f in "${failed[@]}"; do echo "  - $f"; done
