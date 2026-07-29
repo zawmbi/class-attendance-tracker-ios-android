@@ -50,7 +50,7 @@ const billedLabel = (p: PremiumPeriod) => (p === "year" ? "yearly" : p === "6mon
 export const PremiumScreen = () => {
   const router = useRouter();
   const isPremium = useUserStore((s) => s.isPremium);
-  const { plans, available, purchasing, restoring, purchase, restore } = useIap();
+  const { plans, available, purchasing, restoring, purchase, restore, diagnostic } = useIap();
   const [selectedPeriod, setSelectedPeriod] = useState<PremiumPeriod>("year");
 
   // The store plan that matches the selected tier (needed to actually purchase).
@@ -258,6 +258,18 @@ export const PremiumScreen = () => {
               {!canPurchase ? (
                 <Text className="mt-3 text-center text-[12.5px] leading-[18px]" style={{ color: d.ink3, fontFamily: "Outfit_500Medium" }}>
                   Subscriptions aren't available here. Open the app from TestFlight or the App Store to start your free trial.
+                </Text>
+              ) : null}
+
+              {/* Dev-only: the real reason the paywall is unusable. Stripped from
+                  release builds, so users only ever see the friendly copy above. */}
+              {__DEV__ && diagnostic ? (
+                <Text
+                  selectable
+                  className="mt-3 text-[11px] leading-[16px]"
+                  style={{ color: d.ink3, fontFamily: "Outfit_500Medium", opacity: 0.85 }}
+                >
+                  {`IAP debug — ${diagnostic}`}
                 </Text>
               ) : null}
 

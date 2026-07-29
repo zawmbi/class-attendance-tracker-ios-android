@@ -15,9 +15,24 @@ interface IapContextValue {
   purchase: (plan: PremiumPlan) => Promise<void>;
   // Returns true if an active subscription was found and premium was granted.
   restore: () => Promise<boolean>;
+  // Why the paywall is unusable, when it is. Every failure below is otherwise
+  // swallowed so the JS bundle keeps loading, which makes "subscriptions aren't
+  // available" indistinguishable from a missing agreement or a SKU typo. Shown
+  // on the paywall in dev builds only — see PremiumScreen.
+  diagnostic: string | null;
 }
 
 const IapContext = createContext<IapContextValue | null>(null);
+
+const describeError = (error: unknown): string => {
+  if (error instanceof Error) return error.message;
+  if (typeof error === "string") return error;
+  try {
+    return JSON.stringify(error);
+  } catch {
+    return String(error);
+  }
+};
 
 export const IapProvider = ({ children }: { children: React.ReactNode }) => {
   const setPremium = useUserStore((s) => s.setPremium);
@@ -26,19 +41,29 @@ export const IapProvider = ({ children }: { children: React.ReactNode }) => {
   const [loadingPlans, setLoadingPlans] = useState(true);
   const [purchasing, setPurchasing] = useState<string | null>(null);
   const [restoring, setRestoring] = useState(false);
+  const [diagnostic, setDiagnostic] = useState<string | null>(null);
 
   useEffect(() => {
     let mounted = true;
     let cleanupListeners: () => void = () => {};
 
     const init = async () => {
-      const ok = await Iap.connect().catch(() => false);
+      let connectError: string | null = null;
+      const ok = await Iap.connect().catch((error) => {
+        connectError = describeError(error);
+        return false;
+      });
       if (!mounted) {
         return;
       }
       setAvailable(ok);
       if (!ok) {
         setLoadingPlans(false);
+        setDiagnostic(
+          connectError
+            ? `Store connection failed: ${connectError}`
+            : "Store connection unavailable (expo-iap native module missing — Expo Go or web?)"
+        );
         return;
       }
 
@@ -57,9 +82,10 @@ export const IapProvider = ({ children }: { children: React.ReactNode }) => {
             }
           }
         },
-        onError: () => {
+        onError: (error) => {
           if (mounted) {
             setPurchasing(null);
+            setDiagnostic(`Purchase failed: ${describeError(error)}`);
           }
         }
       });
@@ -68,9 +94,23 @@ export const IapProvider = ({ children }: { children: React.ReactNode }) => {
         const fetched = await Iap.fetchPlans();
         if (mounted) {
           setPlans(fetched);
+          // Connected but nothing came back: the store accepted the query and
+          // returned zero matching products. Almost always App Store Connect
+          // config rather than app code — see the checklist in the message.
+          setDiagnostic(
+            fetched.length > 0
+              ? null
+              : `Connected, but the store returned 0 of ${Iap.PREMIUM_SKUS.length} products.\n` +
+                  "Check, in order: Paid Applications Agreement active (Business -> Agreements, " +
+                  "plus bank + tax info); all three subscriptions in 'Ready to Submit' with a price " +
+                  "and localization; product IDs match services/iap.ts exactly; bundle ID matches."
+          );
         }
-      } catch {
+      } catch (error) {
         // Leave plans empty; the paywall shows an "unavailable" fallback.
+        if (mounted) {
+          setDiagnostic(`Product fetch failed: ${describeError(error)}`);
+        }
       } finally {
         if (mounted) {
           setLoadingPlans(false);
@@ -121,7 +161,7 @@ export const IapProvider = ({ children }: { children: React.ReactNode }) => {
   }, [setPremium]);
 
   return (
-    <IapContext.Provider value={{ available, plans, loadingPlans, purchasing, restoring, purchase, restore }}>
+    <IapContext.Provider value={{ available, plans, loadingPlans, purchasing, restoring, purchase, restore, diagnostic }}>
       {children}
     </IapContext.Provider>
   );
