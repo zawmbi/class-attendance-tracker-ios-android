@@ -16,12 +16,12 @@
 #   iPhone 6.9" (16 Pro Max) portrait -> 1320 x 2868
 #   iPad 13"    (Pro 13")     portrait -> 2064 x 2752
 #
-# Theme note: the app's dark palette is driven by an in-app setting
-# (userStore.themeMode), NOT the system appearance — app.config.ts pins
-# userInterfaceStyle to "light". So `--theme dark` can't flip anything itself;
-# it only routes output to a separate folder and reminds you to switch the
-# toggle in Settings first. expo-status-bar already follows themeMode, so the
-# status bar comes out light-on-dark correctly.
+# Theme note: the app defaults to the system appearance and Settings can pin
+# it (System / Light / Dark). So for a dark set either flip the simulator to
+# dark (Settings > Developer > Dark Appearance, or `xcrun simctl ui <udid>
+# appearance dark`) or pin Dark in-app. `--theme dark` doesn't switch anything
+# itself — it routes output to a separate folder and reminds you. expo-status-bar
+# follows the resolved mode, so the status bar comes out light-on-dark.
 #
 set -uo pipefail
 
@@ -118,6 +118,8 @@ Before you start, get the app into the demo state:
   2. Settings -> "Demo & data (dev)" -> Premium (dev) ON   (unlocks 02/07/08)
   3. Settings -> edit name -> "Maya"                       (so it greets a person)
   4. Settings -> Appearance -> Theme -> ${THEME_LABEL}
+     (or leave it on System and set the simulator itself:
+      xcrun simctl ui $DEVICE appearance $THEME)
   5. "Load sample data" — regenerate it even if it looks fine. The demo set is
      built relative to today, so a fresh load gives you a live "Today", an
      intact streak, and a populated current month.
