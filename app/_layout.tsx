@@ -17,9 +17,10 @@ import {
   Outfit_800ExtraBold
 } from "@expo-google-fonts/outfit";
 import { StatusBar } from "expo-status-bar";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { ActivityIndicator, Text, TextInput, View } from "react-native";
 
+import { AnimatedSplash } from "@/components/AnimatedSplash";
 import { IapProvider } from "@/components/IapProvider";
 import { UpgradeModal } from "@/components/UpgradeModal";
 import { getPalette } from "@/theme";
@@ -59,8 +60,14 @@ export default function RootLayout() {
     Outfit_500Medium,
     Outfit_600SemiBold,
     Outfit_700Bold,
-    Outfit_800ExtraBold
+    Outfit_800ExtraBold,
+    // Studio credit on the intro only. Subset to the glyphs in "Zawmbi
+    // Productions" — the full Gamja Flower ships all of Hangul at 12.6 MB.
+    GamjaFlower_400Regular: require("@/assets/fonts/GamjaFlower-Subset.ttf")
   });
+
+  // Cold-launch intro. Plays once per app start, over the app, then fades.
+  const [introDone, setIntroDone] = useState(false);
 
   useEffect(() => {
     applyGlobalTypography();
@@ -97,6 +104,10 @@ export default function RootLayout() {
         <Stack.Screen name="class/[id]" />
       </Stack>
       <UpgradeModal />
+      {/* Last child so it covers the stack. iOS can't animate the native launch
+          screen (it's a static storyboard), so the intro plays here once JS is
+          ready and fades into the app. */}
+      {introDone ? null : <AnimatedSplash onDone={() => setIntroDone(true)} />}
     </IapProvider>
   );
 }
