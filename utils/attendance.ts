@@ -301,7 +301,8 @@ export const getWeeklyTrend = (
     return {
       label: getWeekLabel(start),
       percentage,
-      absences: bucketRecords.filter((record) => record.status === "absent").length
+      absences: bucketRecords.filter((record) => record.status === "absent").length,
+      hasData: eligible.length > 0
     };
   });
 };
@@ -338,7 +339,8 @@ export const getOverallWeeklyTrend = (
       label: getWeekLabel(start),
       percentage,
       absences: bucketRecords.filter((record) => record.status === "absent").length,
-      count: eligible.length || classes.length
+      count: eligible.length || classes.length,
+      hasData: eligible.length > 0
     };
   });
 };

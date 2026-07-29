@@ -80,7 +80,10 @@ export const InsightsScreen = () => {
   const overall = derived.length ? Math.round(derived.reduce((s, c) => s + c.pct, 0) / derived.length) : 100;
 
   const trend = useMemo(() => getOverallWeeklyTrend(classes, records, settings), [classes, records, settings]);
-  const trendData = trend.map((t) => t.percentage);
+  // Weeks with no sessions report 0%; plotting them draws a cliff to zero and
+  // makes the delta read as a collapse (a term that starts mid-window, or the
+  // current week before its first class).
+  const trendData = trend.filter((t) => t.hasData).map((t) => t.percentage);
   const delta = trendData.length >= 2 ? trendData[trendData.length - 1] - trendData[0] : 0;
 
   const heat = useMemo(() => buildHeatmap(records), [records]);

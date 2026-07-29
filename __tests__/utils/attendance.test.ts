@@ -5,8 +5,10 @@ import {
   getHeatmapData,
   getIncentiveMessage,
   getMissedPatternSummary,
+  getOverallWeeklyTrend,
   getProjectionSummary,
-  getRiskLevel
+  getRiskLevel,
+  getWeeklyTrend
 } from "@/utils/attendance";
 import { makeClass, makeRecord, makeRecords, makeSettings } from "../helpers/fixtures";
 
@@ -154,5 +156,49 @@ describe("getIncentiveMessage", () => {
   it("returns a rotating positive message otherwise", () => {
     expect(typeof getIncentiveMessage(3)).toBe("string");
     expect(getIncentiveMessage(3).length).toBeGreaterThan(0);
+  });
+});
+
+describe("weekly trend hasData", () => {
+  // Regression: an empty week used to be indistinguishable from a 0% week, so a
+  // term starting mid-window (or the current week before its first session)
+  // plotted a cliff to zero and made the Insights delta read as a collapse.
+  const recentMonday = () => {
+    const d = new Date();
+    d.setHours(12, 0, 0, 0);
+    d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+    return d;
+  };
+  const isoDaysAgo = (days: number) => {
+    const d = recentMonday();
+    d.setDate(d.getDate() - days);
+    return `${d.getFullYear()}-${`${d.getMonth() + 1}`.padStart(2, "0")}-${`${d.getDate()}`.padStart(2, "0")}`;
+  };
+
+  it("flags weeks with no eligible sessions", () => {
+    const cls = makeClass();
+    // A single record 3 weeks back: that week has data, the rest do not.
+    const records = [makeRecord({ classId: cls.id, status: "present", date: isoDaysAgo(21) })];
+
+    const trend = getWeeklyTrend(cls, records, settings);
+    const withData = trend.filter((point) => point.hasData);
+
+    expect(withData).toHaveLength(1);
+    expect(withData[0].percentage).toBe(100);
+    // Empty weeks still report 0 — the flag is what distinguishes them.
+    trend
+      .filter((point) => !point.hasData)
+      .forEach((point) => expect(point.percentage).toBe(0));
+  });
+
+  it("does not report empty weeks as a drop to zero in the overall trend", () => {
+    const cls = makeClass();
+    const records = [makeRecord({ classId: cls.id, status: "present", date: isoDaysAgo(21) })];
+
+    const trend = getOverallWeeklyTrend([cls], records, settings);
+    const plotted = trend.filter((point) => point.hasData).map((point) => point.percentage);
+
+    expect(plotted).toEqual([100]);
+    expect(Math.min(...plotted)).toBe(100);
   });
 });

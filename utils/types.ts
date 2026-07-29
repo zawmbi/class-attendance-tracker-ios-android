@@ -122,6 +122,11 @@ export interface WeeklyTrendPoint {
   label: string;
   percentage: number;
   absences: number;
+  // False when the week had no eligible sessions. `percentage` is 0 in that
+  // case, which is "no data" — NOT "attended nothing". Callers plotting a trend
+  // or comparing weeks must skip these or a not-yet-started week reads as a
+  // crash to zero.
+  hasData: boolean;
 }
 
 export interface HeatmapCell {

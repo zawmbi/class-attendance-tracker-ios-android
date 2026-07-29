@@ -79,8 +79,9 @@ export const AnalyticsScreen = () => {
   const trend = useMemo(
     () =>
       isCourse && focusCourse
-        ? getWeeklyTrend(focusCourse, records, settings).map((t) => t.percentage)
-        : getOverallWeeklyTrend(classes, records, settings).map((t) => t.percentage),
+        ? // Skip weeks with no sessions — they report 0% and would draw a cliff.
+          getWeeklyTrend(focusCourse, records, settings).filter((t) => t.hasData).map((t) => t.percentage)
+        : getOverallWeeklyTrend(classes, records, settings).filter((t) => t.hasData).map((t) => t.percentage),
     [isCourse, focusCourse, classes, records, settings]
   );
 

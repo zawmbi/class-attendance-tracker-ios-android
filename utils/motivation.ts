@@ -14,7 +14,10 @@ export const getMotivationInsights = (
   }));
   const strongestStreak = summaries.reduce((best, item) => (item.summary.streak > best ? item.summary.streak : best), 0);
   const atRisk = summaries.find((item) => item.summary.risk !== "safe");
-  const weeklyTrend = getOverallWeeklyTrend(classes, records, settings);
+  // Only weeks that actually had sessions — an empty week reports 0% and would
+  // read as a drop, hiding the "improving" insight whenever the current week
+  // hasn't started yet.
+  const weeklyTrend = getOverallWeeklyTrend(classes, records, settings).filter((point) => point.hasData);
   const recent = weeklyTrend[weeklyTrend.length - 1];
   const previous = weeklyTrend[weeklyTrend.length - 2];
   const improved = recent && previous && recent.percentage > previous.percentage;
