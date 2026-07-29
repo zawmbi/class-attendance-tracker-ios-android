@@ -52,7 +52,10 @@ const initialUserState = {
   // (granted via IapProvider after a real purchase or restore).
   isPremium: false,
   preferredTheme: "fern" as ThemePreset,
-  themeMode: "light" as ThemeMode,
+  // Follow the OS by default. Anyone who already picked light/dark keeps it —
+  // the persisted value is left alone rather than migrated, so an update never
+  // silently changes someone's appearance out from under them.
+  themeMode: "system" as ThemeMode,
   isAuthenticated: false,
   authProvider: null as AuthProvider | null,
   userName: "",

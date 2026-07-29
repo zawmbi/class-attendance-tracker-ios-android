@@ -16,7 +16,10 @@ const config: ExpoConfig = {
   scheme: "attendance-tracker",
   version: "1.0.0",
   orientation: "portrait",
-  userInterfaceStyle: "light",
+  // "automatic" is required for the in-app "System" theme option to work at
+  // all: pinned to "light", useColorScheme() always reports light and the
+  // preference silently does nothing. See theme/useAppPalette.ts.
+  userInterfaceStyle: "automatic",
   assetBundlePatterns: ["**/*"],
   experiments: {
     typedRoutes: true

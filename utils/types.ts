@@ -20,7 +20,10 @@ export type UpgradeTrigger =
   | "advanced_reminders"
   | "syllabus_import";
 export type ThemePreset = "fern" | "sage" | "sandstone";
-export type ThemeMode = "light" | "dark";
+// "system" follows the OS appearance and is the default for new installs.
+// Resolve it to a concrete scheme with useResolvedThemeMode() — getPalette()
+// only understands light/dark.
+export type ThemeMode = "system" | "light" | "dark";
 export type AuthProvider = "email" | "google" | "apple";
 export type DashboardWidget = "actions" | "momentum" | "trophies" | "motivation" | "today" | "more_classes";
 

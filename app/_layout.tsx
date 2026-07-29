@@ -22,8 +22,8 @@ import { ActivityIndicator, Text, TextInput, View } from "react-native";
 
 import { IapProvider } from "@/components/IapProvider";
 import { UpgradeModal } from "@/components/UpgradeModal";
-import { useUserStore } from "@/store/userStore";
 import { getPalette } from "@/theme";
+import { useResolvedThemeMode } from "@/theme/useAppPalette";
 
 // Body/UI default font (Outfit). Hero numerals + rank names opt into the
 // Fraunces display serif via the `font-display` class.
@@ -49,8 +49,8 @@ const applyGlobalTypography = () => {
 };
 
 export default function RootLayout() {
-  const themeMode = useUserStore((state) => state.themeMode);
-  const activePalette = getPalette(themeMode);
+  const resolvedMode = useResolvedThemeMode();
+  const activePalette = getPalette(resolvedMode);
   const [loaded, error] = useFonts({
     Fraunces_500Medium,
     Fraunces_600SemiBold,
@@ -76,7 +76,7 @@ export default function RootLayout() {
 
   return (
     <IapProvider>
-      <StatusBar style={themeMode === "dark" ? "light" : "dark"} />
+      <StatusBar style={resolvedMode === "dark" ? "light" : "dark"} />
       <Stack
         screenOptions={{
           headerShown: false,

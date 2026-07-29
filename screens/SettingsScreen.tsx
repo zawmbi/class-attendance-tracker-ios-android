@@ -18,6 +18,7 @@ import { appConfig } from "@/theme";
 import { useAppPalette } from "@/theme/useAppPalette";
 import { deleteAccountAndWipe } from "@/utils/account";
 import { getGamificationProfile } from "@/utils/gamification";
+import { ThemeMode } from "@/utils/types";
 
 const Group = ({ header, footer, children }: PropsWithChildren<{ header?: string; footer?: string }>) => {
   const palette = useAppPalette();
@@ -314,7 +315,15 @@ export const SettingsScreen = () => {
             Theme
           </Text>
           <View style={{ width: 132 }}>
-            <Segmented options={[{ value: "light", label: "Light" }, { value: "dark", label: "Dark" }]} value={themeMode} onChange={(v) => setThemeMode(v as "light" | "dark")} />
+            <Segmented
+              options={[
+                { value: "system", label: "System" },
+                { value: "light", label: "Light" },
+                { value: "dark", label: "Dark" }
+              ]}
+              value={themeMode}
+              onChange={(v) => setThemeMode(v as ThemeMode)}
+            />
           </View>
         </View>
       </Group>
