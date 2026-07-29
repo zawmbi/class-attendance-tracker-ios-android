@@ -7,8 +7,8 @@
 # at each prompt.
 #
 # Usage:
-#   ./appstore-screenshots/capture.sh                 # iPhone 6.9" (default sim)
-#   ./appstore-screenshots/capture.sh --theme dark    # dark-theme set
+#   ./appstore-screenshots/capture.sh                 # iPhone 6.9", dark (ships)
+#   ./appstore-screenshots/capture.sh --theme light   # light comparison set
 #   ./appstore-screenshots/capture.sh --set ipad-13 --device <IPAD_UDID>
 #   ./appstore-screenshots/capture.sh --list          # show booted sims + UDIDs
 #
@@ -34,7 +34,9 @@ IPAD_UDID="6C9F41C5-8EA2-4D81-A70B-F8A52FD19970"
 
 SET="iphone-6.9"
 DEVICE=""
-THEME="light"
+# Dark is the shipping set — App Store Connect holds one set of screenshots per
+# device size and serves it to everyone, so this is a single choice, not a pair.
+THEME="dark"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -74,9 +76,10 @@ if [[ -z "$DEVICE" ]]; then
 fi
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-# Dark sets live alongside the light ones so both can be uploaded / compared.
+# The shipping (dark) set owns the plain folder; light captures go to a
+# suffixed one so a comparison run can't clobber what you're about to upload.
 OUT_DIR="$REPO_ROOT/appstore-screenshots/$SET"
-[[ "$THEME" == "dark" ]] && OUT_DIR="$OUT_DIR-dark"
+[[ "$THEME" != "dark" ]] && OUT_DIR="$OUT_DIR-$THEME"
 mkdir -p "$OUT_DIR"
 
 # App Store Connect takes up to 10 per device size; this fills all 10.
