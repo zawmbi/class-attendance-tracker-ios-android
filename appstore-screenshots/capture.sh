@@ -140,6 +140,8 @@ BANNER
 
 captured=()
 failed=()
+# "<md5>:<shot name>" per accepted capture, for duplicate detection.
+hashes=()
 
 total="${#SHOTS[@]}"
 index=0
@@ -174,8 +176,29 @@ for entry in "${SHOTS[@]}"; do
     h=$(sips -g pixelHeight "$target" 2>/dev/null | awk '/pixelHeight/{print $2}')
 
     if [[ "$w" == "$EXPECT_W" && "$h" == "$EXPECT_H" ]]; then
+      # Dimensions alone are a weak check: the springboard, a crashed app, and a
+      # screen you forgot to navigate away from all have the right pixel size.
+      # An identical hash to an earlier shot means the screen never changed.
+      sum=$(md5 -q "$target" 2>/dev/null)
+      dupe=""
+      for seen in ${hashes[@]+"${hashes[@]}"}; do
+        [[ "${seen%%:*}" == "$sum" ]] && dupe="${seen#*:}" && break
+      done
+
+      if [[ -n "$dupe" ]]; then
+        echo "    IDENTICAL to $dupe — the screen didn't change."
+        echo "    Is the app actually running and in the foreground?"
+        read -r -p "    [r]etake / [k]eep anyway / [s]kip: " fix
+        case "$fix" in
+          k) captured+=("$name (DUPLICATE of $dupe)"); hashes+=("$sum:$name"); break ;;
+          s) failed+=("$name (skipped)"); break ;;
+          *) continue ;;
+        esac
+      fi
+
       echo "    OK  ${w}x${h}  ->  $name.png"
       captured+=("$name")
+      hashes+=("$sum:$name")
       break
     fi
 
