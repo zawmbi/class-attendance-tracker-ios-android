@@ -199,7 +199,7 @@ export const AuthScreen = () => {
             shadowOffset: { width: 0, height: 10 }
           }}
         >
-          <Image source={require("../assets/icon/attendize-icon-1024.png")} style={{ width: 84, height: 84 }} />
+          <Image source={require("../assets/icon/attendize-glass-1024.png")} style={{ width: 84, height: 84 }} />
         </View>
         <Text className="mt-5 font-serif text-[36px] leading-[40px]" style={{ color: palette.primary }}>
           Attendize
