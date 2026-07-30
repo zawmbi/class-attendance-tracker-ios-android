@@ -216,28 +216,32 @@ type DemoPattern = { late: number[]; excused: number[]; absent: number[] };
 
 const DEMO_PATTERNS: Record<string, DemoPattern> = {
   // Showcase course: no absences → the leading run drives the hero streak.
+  // Absence fractions are deliberately spread so they don't land on the same
+  // weekday. The Consistency heatmap colours a whole day by its dominant status,
+  // so two courses missed on one Thursday reads as a solid red block — a handful
+  // of collisions is enough to make a high-80s student look careless.
   "cls-1": { late: [0.25, 0.6], excused: [0.45], absent: [] },
-  "cls-2": { late: [0.4], excused: [0.75], absent: [0.2] },
+  "cls-2": { late: [0.4], excused: [0.75], absent: [0.18] },
   "cls-5": { late: [0.3], excused: [], absent: [] },
-  "cls-3": { late: [0.5], excused: [0.7], absent: [0.35] },
+  "cls-3": { late: [0.5], excused: [0.7], absent: [] },
   // Optional, low-priority course left in the "watch" zone so the Insights
   // risk/forecast card has a meaningful worst-course to highlight.
-  "cls-4": { late: [0.35], excused: [0.85], absent: [0.2, 0.45, 0.7] },
-  // High required-attendance course with one slip — makes the forecast's
+  "cls-4": { late: [0.35], excused: [0.85], absent: [0.55] },
+  // High required-attendance course with one late slip — makes the forecast's
   // "at risk" count non-zero without looking careless.
-  "cls-6": { late: [0.3, 0.68], excused: [], absent: [0.5] },
-  "cls-7": { late: [0.55], excused: [0.4], absent: [0.25, 0.62] }
+  "cls-6": { late: [0.3, 0.68], excused: [], absent: [0.82] },
+  "cls-7": { late: [0.55], excused: [0.4], absent: [0.35] }
 };
 
 // How much attendance history the demo carries. A whole number of weeks so every
 // weekday gets equal coverage.
 //
-// 5 weeks is deliberate, not arbitrary: badge bonus XP accumulates fast and the
-// rank ladder tops out at 2600 XP, so 6+ weeks pins the demo at Valedictorian
-// with the progress bar full and nothing left to earn. At 5 weeks it lands on
-// Dean's List with Valedictorian still ahead and ~40% of badges unlocked —
+// 4 weeks is deliberate, not arbitrary: badge bonus XP accumulates fast and the
+// rank ladder tops out at 2600 XP, so 5+ weeks pins the demo at Valedictorian
+// with the progress bar full and nothing left to earn. At 4 weeks it lands on
+// Dean's List (~1825 XP) with Valedictorian still ahead and 16/42 badges —
 // a profile in progress rather than a finished one.
-const DEMO_HISTORY_DAYS = 35;
+const DEMO_HISTORY_DAYS = 28;
 
 const nearestIndex = (fraction: number, length: number) =>
   Math.min(length - 1, Math.max(0, Math.round(fraction * (length - 1))));

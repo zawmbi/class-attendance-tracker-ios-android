@@ -12,8 +12,14 @@ import { useUserStore } from "@/store/userStore";
 import { useAppPalette } from "@/theme/useAppPalette";
 import { getOverallWeeklyTrend } from "@/utils/attendance";
 import { deriveClass, RISK_META, riskTone } from "@/utils/attenza";
+import { parseLocalDate, toDateKey } from "@/utils/date";
 
-const HEAT_WEEKS = 12;
+// Longest window shown. The grid shrinks to fit the history that actually
+// exists, so it never opens as mostly-empty rows — which is what a full 12 weeks
+// looks like to anyone a few weeks into a term.
+const HEAT_WEEKS_MAX = 12;
+// ...but not so short it stops reading as a consistency grid.
+const HEAT_WEEKS_MIN = 5;
 const WEEKDAYS = ["M", "T", "W", "T", "F"];
 const HEAT_LABEL_W = 34; // left gutter for week-start labels (Weeks / Both modes)
 
@@ -22,12 +28,34 @@ const HEAT_LABEL_W = 34; // left gutter for week-start labels (Weeks / Both mode
 type HeatCell = { v: number; day: number };
 type HeatWeek = { label: string; cells: HeatCell[] };
 
+/**
+ * The day's representative status: whichever occurred most, ties going to the
+ * more serious one so a genuinely mixed day still reads as a warning.
+ *
+ * This used to be "any absence wins", which was fine at one or two classes a day
+ * but badly overstates things at three or more — a single miss out of three
+ * painted the whole day red, so a student at 90% saw a wall of red.
+ * Excused sessions are neutral and don't colour the day.
+ */
+const dominantStatus = (statuses: string[]): number => {
+  const counts = { absent: 0, late: 0, present: 0 };
+  statuses.forEach((s) => {
+    if (s === "absent") counts.absent += 1;
+    else if (s === "late") counts.late += 1;
+    else if (s === "present") counts.present += 1;
+  });
+  const max = Math.max(counts.absent, counts.late, counts.present);
+  if (max === 0) return 0; // nothing logged (or excused only)
+  if (counts.absent === max) return 1;
+  if (counts.late === max) return 2;
+  return 3;
+};
+
 const buildHeatmap = (records: { date: string; status: string }[]): HeatWeek[] => {
   const now = new Date();
-  const monday = new Date(now);
-  monday.setHours(12, 0, 0, 0);
-  const dow = (now.getDay() + 6) % 7; // 0 = Monday
-  monday.setDate(monday.getDate() - dow - (HEAT_WEEKS - 1) * 7);
+  const thisMonday = new Date(now);
+  thisMonday.setHours(12, 0, 0, 0);
+  thisMonday.setDate(thisMonday.getDate() - ((now.getDay() + 6) % 7));
 
   const byDate = new Map<string, string[]>();
   records.forEach((r) => {
@@ -36,23 +64,31 @@ const buildHeatmap = (records: { date: string; status: string }[]): HeatWeek[] =
     byDate.set(r.date, list);
   });
 
+  // How many weeks back the history actually reaches, clamped to [MIN, MAX].
+  const earliest = records.reduce<string | null>((min, r) => (min == null || r.date < min ? r.date : min), null);
+  let weekCount = HEAT_WEEKS_MAX;
+  if (earliest) {
+    const first = parseLocalDate(earliest);
+    first.setHours(12, 0, 0, 0);
+    const spanWeeks = Math.floor((thisMonday.getTime() - first.getTime()) / (7 * 24 * 60 * 60 * 1000)) + 1;
+    weekCount = Math.min(HEAT_WEEKS_MAX, Math.max(HEAT_WEEKS_MIN, spanWeeks));
+  }
+
+  const monday = new Date(thisMonday);
+  monday.setDate(monday.getDate() - (weekCount - 1) * 7);
+
   const monthDay = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" });
   const weeks: HeatWeek[] = [];
-  for (let w = 0; w < HEAT_WEEKS; w += 1) {
+  for (let w = 0; w < weekCount; w += 1) {
     const cells: HeatCell[] = [];
     let weekStart: Date | null = null;
     for (let d = 0; d < 5; d += 1) {
       const day = new Date(monday);
       day.setDate(monday.getDate() + w * 7 + d);
       if (d === 0) weekStart = day;
-      // Local yyyy-mm-dd so keys line up with stored record dates (see parseLocalDate).
-      const iso = `${day.getFullYear()}-${`${day.getMonth() + 1}`.padStart(2, "0")}-${`${day.getDate()}`.padStart(2, "0")}`;
-      const statuses = byDate.get(iso) ?? [];
-      let v = 0;
-      if (statuses.includes("absent")) v = 1;
-      else if (statuses.includes("late")) v = 2;
-      else if (statuses.includes("present")) v = 3;
-      cells.push({ v, day: day.getDate() });
+      // Local key so it lines up with stored record dates, never the UTC date.
+      const statuses = byDate.get(toDateKey(day)) ?? [];
+      cells.push({ v: dominantStatus(statuses), day: day.getDate() });
     }
     weeks.push({ label: weekStart ? monthDay.format(weekStart) : "", cells });
   }
@@ -131,9 +167,21 @@ export const InsightsScreen = () => {
         </View>
         <View className="flex-1">
           <View className="mb-1 flex-row items-center gap-1.5">
-            <Icon name={delta >= 0 ? "arrowUp" : "arrowRight"} size={16} color={delta >= 0 ? palette.present : palette.late} stroke={2.4} />
-            <Text className="text-[13.5px]" style={{ color: delta >= 0 ? palette.present : palette.late, fontFamily: "Outfit_700Bold" }}>
-              {delta >= 0 ? "+" : ""}{delta}% vs earlier
+            {/* Flat is its own state — an up arrow next to "+0%" reads as a lie. */}
+            <Icon
+              name={delta > 0 ? "arrowUp" : "arrowRight"}
+              size={16}
+              color={delta > 0 ? palette.present : delta < 0 ? palette.late : palette.ink3}
+              stroke={2.4}
+            />
+            <Text
+              className="text-[13.5px]"
+              style={{
+                color: delta > 0 ? palette.present : delta < 0 ? palette.late : palette.ink3,
+                fontFamily: "Outfit_700Bold"
+              }}
+            >
+              {delta === 0 ? "Holding steady" : `${delta > 0 ? "+" : ""}${delta}% vs earlier`}
             </Text>
           </View>
           <Sparkline data={trendData} width={170} height={48} tone={palette.forest} />
@@ -238,7 +286,7 @@ export const InsightsScreen = () => {
           Consistency
         </Text>
         <Text className="text-[13px]" style={{ color: palette.ink3, fontFamily: "Outfit_600SemiBold" }}>
-          {HEAT_WEEKS} weeks
+          {heat.length} weeks
         </Text>
       </View>
       <View className="mb-2.5">
