@@ -30,10 +30,6 @@ const WALK_FRAMES = [
   require("@/assets/zawmbi/frame3.png")
 ];
 const WALK_SEQUENCE = [0, 1, 2, 1];
-const WALK_FRAME_MS = 200;
-// He walks on at 320ms and plants when the hop starts at 1270ms.
-const WALK_START_MS = 320;
-const WALK_END_MS = 1270;
 
 // Springy easings from the design. RN's Easing.bezier matches CSS cubic-bezier,
 // except overshoot curves (y > 1) are fine here — they're plain cubic beziers.
@@ -42,9 +38,24 @@ const POP = Easing.bezier(0.18, 1.78, 0.32, 1);
 const SNAP = Easing.bezier(0.5, 0.02, 0.22, 1);
 const EASE_OUT = Easing.out(Easing.quad);
 
-// Total runtime before the hand-off fade (the web loop restarted at ~2900ms).
-const SEQUENCE_MS = 2900;
-const FADE_MS = 420;
+// The design runs 2900ms (where the web preview looped). This is a utility app
+// people open to log one class, so playback is compressed to 1.5s total.
+//
+// Every delay and duration below stays written at its AUTHORED value and is
+// scaled through ms() — truncating instead would cut the late beats (studio
+// credit, tagline) off mid-animation, and keeping the original numbers means
+// this still reads against the design file.
+const AUTHORED_MS = 2900;
+const TOTAL_MS = 1500;
+const FADE_MS = 220;
+const SEQUENCE_MS = TOTAL_MS - FADE_MS;
+const SCALE = SEQUENCE_MS / AUTHORED_MS;
+const ms = (authored: number) => Math.round(authored * SCALE);
+
+const WALK_FRAME_MS = ms(200);
+// He walks on at 320ms and plants when the hop starts at 1270ms (authored).
+const WALK_START_MS = ms(320);
+const WALK_END_MS = ms(1270);
 
 type Props = { onDone: () => void };
 
@@ -114,26 +125,35 @@ export const AnimatedSplash = ({ onDone }: Props) => {
   }, []);
 
   useEffect(() => {
+    // duration/delay are AUTHORED values; both get scaled to the 1.5s runtime.
     const timing = (
       value: Animated.Value,
       toValue: number,
       duration: number,
       delay: number,
       easing: (v: number) => number
-    ) => Animated.timing(value, { toValue, duration, delay, easing, useNativeDriver: false });
+    ) =>
+      Animated.timing(value, {
+        toValue,
+        duration: ms(duration),
+        delay: ms(delay),
+        easing,
+        useNativeDriver: false
+      });
+
+    // Same, for the hand-rolled keyframe sequences below.
+    const step = (value: Animated.Value, toValue: number, duration: number, easing = EASE_OUT) =>
+      Animated.timing(value, { toValue, duration: ms(duration), easing, useNativeDriver: false });
 
     const sequence = Animated.parallel([
       // 1 · aura blooms with a spring
       Animated.sequence([
-        Animated.delay(60),
+        Animated.delay(ms(60)),
         Animated.parallel([
-          Animated.timing(anims.auraOpacity, { toValue: 1, duration: 660, easing: SPRING, useNativeDriver: false }),
-          Animated.timing(anims.auraScale, { toValue: 1.06, duration: 660, easing: SPRING, useNativeDriver: false })
+          step(anims.auraOpacity, 1, 660, SPRING),
+          step(anims.auraScale, 1.06, 660, SPRING)
         ]),
-        Animated.parallel([
-          Animated.timing(anims.auraOpacity, { toValue: 0.82, duration: 540, easing: EASE_OUT, useNativeDriver: false }),
-          Animated.timing(anims.auraScale, { toValue: 1, duration: 540, easing: EASE_OUT, useNativeDriver: false })
-        ])
+        Animated.parallel([step(anims.auraOpacity, 0.82, 540), step(anims.auraScale, 1, 540)])
       ]),
 
       // 2 · check snaps on along its real traced outline, then a sheen sweeps it
@@ -142,27 +162,27 @@ export const AnimatedSplash = ({ onDone }: Props) => {
 
       // 3 · squash-and-stretch landing
       Animated.sequence([
-        Animated.delay(700),
+        Animated.delay(ms(700)),
         Animated.parallel([
           Animated.sequence([
-            Animated.timing(anims.markX, { toValue: 1.19, duration: 230, easing: EASE_OUT, useNativeDriver: false }),
-            Animated.timing(anims.markX, { toValue: 0.94, duration: 221, easing: EASE_OUT, useNativeDriver: false }),
-            Animated.timing(anims.markX, { toValue: 1.04, duration: 189, easing: EASE_OUT, useNativeDriver: false }),
-            Animated.timing(anims.markX, { toValue: 1, duration: 180, easing: EASE_OUT, useNativeDriver: false })
+            step(anims.markX, 1.19, 230),
+            step(anims.markX, 0.94, 221),
+            step(anims.markX, 1.04, 189),
+            step(anims.markX, 1, 180)
           ]),
           Animated.sequence([
-            Animated.timing(anims.markY, { toValue: 0.86, duration: 230, easing: EASE_OUT, useNativeDriver: false }),
-            Animated.timing(anims.markY, { toValue: 1.06, duration: 221, easing: EASE_OUT, useNativeDriver: false }),
-            Animated.timing(anims.markY, { toValue: 0.98, duration: 189, easing: EASE_OUT, useNativeDriver: false }),
-            Animated.timing(anims.markY, { toValue: 1, duration: 180, easing: EASE_OUT, useNativeDriver: false })
+            step(anims.markY, 0.86, 230),
+            step(anims.markY, 1.06, 221),
+            step(anims.markY, 0.98, 189),
+            step(anims.markY, 1, 180)
           ])
         ])
       ]),
       Animated.sequence([
-        Animated.delay(740),
-        Animated.timing(anims.coreY, { toValue: 4, duration: 144, easing: EASE_OUT, useNativeDriver: false }),
-        Animated.timing(anims.coreY, { toValue: -1, duration: 154, easing: EASE_OUT, useNativeDriver: false }),
-        Animated.timing(anims.coreY, { toValue: 0, duration: 182, easing: EASE_OUT, useNativeDriver: false })
+        Animated.delay(ms(740)),
+        step(anims.coreY, 4, 144),
+        step(anims.coreY, -1, 154),
+        step(anims.coreY, 0, 182)
       ]),
 
       // 4 · letters pop up with overshoot, staggered
@@ -177,24 +197,24 @@ export const AnimatedSplash = ({ onDone }: Props) => {
       // lands. The leg cycle is driven separately (see walkFrame).
       timing(anims.zawX, 0, 940, WALK_START_MS, Easing.bezier(0.32, 0.06, 0.5, 1)),
       Animated.sequence([
-        Animated.delay(1270),
+        Animated.delay(ms(1270)),
         Animated.parallel([
           Animated.sequence([
-            Animated.timing(anims.zawY, { toValue: 0, duration: 102, easing: EASE_OUT, useNativeDriver: false }),
-            Animated.timing(anims.zawY, { toValue: -15, duration: 192, easing: EASE_OUT, useNativeDriver: false }),
-            Animated.timing(anims.zawY, { toValue: 0, duration: 346, easing: EASE_OUT, useNativeDriver: false })
+            step(anims.zawY, 0, 102),
+            step(anims.zawY, -15, 192),
+            step(anims.zawY, 0, 346)
           ]),
           Animated.sequence([
-            Animated.timing(anims.zawScaleX, { toValue: 1.14, duration: 102, easing: EASE_OUT, useNativeDriver: false }),
-            Animated.timing(anims.zawScaleX, { toValue: 0.92, duration: 192, easing: EASE_OUT, useNativeDriver: false }),
-            Animated.timing(anims.zawScaleX, { toValue: 1.12, duration: 205, easing: EASE_OUT, useNativeDriver: false }),
-            Animated.timing(anims.zawScaleX, { toValue: 1, duration: 141, easing: EASE_OUT, useNativeDriver: false })
+            step(anims.zawScaleX, 1.14, 102),
+            step(anims.zawScaleX, 0.92, 192),
+            step(anims.zawScaleX, 1.12, 205),
+            step(anims.zawScaleX, 1, 141)
           ]),
           Animated.sequence([
-            Animated.timing(anims.zawScaleY, { toValue: 0.86, duration: 102, easing: EASE_OUT, useNativeDriver: false }),
-            Animated.timing(anims.zawScaleY, { toValue: 1.12, duration: 192, easing: EASE_OUT, useNativeDriver: false }),
-            Animated.timing(anims.zawScaleY, { toValue: 0.88, duration: 205, easing: EASE_OUT, useNativeDriver: false }),
-            Animated.timing(anims.zawScaleY, { toValue: 1, duration: 141, easing: EASE_OUT, useNativeDriver: false })
+            step(anims.zawScaleY, 0.86, 102),
+            step(anims.zawScaleY, 1.12, 192),
+            step(anims.zawScaleY, 0.88, 205),
+            step(anims.zawScaleY, 1, 141)
           ])
         ])
       ]),
