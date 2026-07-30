@@ -69,8 +69,18 @@ const buildAuthResult = (
 export const authService = {
   signUpWithEmail: async (name: string, email: string, password: string): Promise<AuthResult> => {
     const credential = await createUserWithEmailAndPassword(auth, email.trim(), password);
+
+    // The account exists from here on. Setting the display name is cosmetic — it
+    // must NOT be able to fail the sign-up, or a transient error leaves the user
+    // with a real Firebase account but an error on screen, and their retry then
+    // fails as "email already in use" with no way forward. The name is passed
+    // through to buildAuthResult regardless, so the app still shows it.
     if (name.trim()) {
-      await updateProfile(credential.user, { displayName: name.trim() });
+      try {
+        await updateProfile(credential.user, { displayName: name.trim() });
+      } catch {
+        // Non-fatal — carry on with the account we just created.
+      }
     }
 
     return buildAuthResult(credential, "email", name, email.trim());
