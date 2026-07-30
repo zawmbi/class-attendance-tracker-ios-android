@@ -1,5 +1,5 @@
 import { getAttendanceSummary, getClassRecords } from "@/utils/attendance";
-import { formatLongDate } from "@/utils/date";
+import { formatLongDate, toDateKey } from "@/utils/date";
 import { AttendanceRecord, AttendanceSettings, ClassModel } from "@/utils/types";
 
 const STATUS_LABEL: Record<AttendanceRecord["status"], string> = {
@@ -89,7 +89,7 @@ export const buildAttendanceReportHtml = (
     </style></head>
     <body>
       <h1>Attendize — Attendance Report</h1>
-      <div class="meta">Generated ${escapeHtml(formatLongDate(generatedAt.toISOString().slice(0, 10)))} · ${
+      <div class="meta">Generated ${escapeHtml(formatLongDate(toDateKey(generatedAt)))} · ${
     classes.length
   } classes</div>
       <table>
@@ -102,5 +102,5 @@ export const buildAttendanceReportHtml = (
     </body></html>`;
 };
 
-export const csvFileName = (date: Date = new Date()) => `attendize-attendance-${date.toISOString().slice(0, 10)}.csv`;
-export const pdfFileName = (date: Date = new Date()) => `attendize-report-${date.toISOString().slice(0, 10)}.pdf`;
+export const csvFileName = (date: Date = new Date()) => `attendize-attendance-${toDateKey(date)}.csv`;
+export const pdfFileName = (date: Date = new Date()) => `attendize-report-${toDateKey(date)}.pdf`;

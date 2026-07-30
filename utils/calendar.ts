@@ -1,5 +1,5 @@
 import { ClassModel, Weekday } from "@/utils/types";
-import { addDays, formatTimeLabel, getMonthLabel, getShortWeekday, startOfWeek } from "@/utils/date";
+import { addDays, formatTimeLabel, getMonthLabel, getShortWeekday, startOfWeek, toDateKey } from "@/utils/date";
 
 const weekdayToIndex: Record<Weekday, number> = {
   Monday: 1,
@@ -39,7 +39,7 @@ export const getWeekSessions = (classes: ClassModel[], referenceDate = new Date(
           className: classItem.name,
           sectionLabel: classItem.sectionLabel,
           color: classItem.color,
-          date: date.toISOString().slice(0, 10),
+          date: toDateKey(date),
           dayLabel: getShortWeekday(date),
           startLabel: formatTimeLabel(entry.startTime),
           endLabel: formatTimeLabel(entry.endTime),
@@ -63,7 +63,7 @@ export const getMonthCells = (classes: ClassModel[], referenceDate = new Date())
 
   return Array.from({ length: 35 }, (_, index) => {
     const date = addDays(gridStart, index);
-    const iso = date.toISOString().slice(0, 10);
+    const iso = toDateKey(date);
     const weekday = date.toLocaleDateString("en-US", { weekday: "long" }) as Weekday;
     const sessions = classes.filter((classItem) => classItem.schedule.some((item) => item.day === weekday));
 

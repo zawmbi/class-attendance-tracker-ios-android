@@ -15,7 +15,7 @@ import { Meter } from "@/components/attenza/Meter";
 import { ScreenContainer } from "@/components/ScreenContainer";
 import { useAttendanceStore } from "@/store/attendanceStore";
 import { useAppPalette } from "@/theme/useAppPalette";
-import { formatTimeLabel, isClassToday } from "@/utils/date";
+import { formatTimeLabel, getTodayScheduleEntry, isClassToday, toDateKey } from "@/utils/date";
 import { XP_PER_STATUS } from "@/utils/gamification";
 import { AttendanceStatus } from "@/utils/types";
 
@@ -57,7 +57,7 @@ export const QuickCheckInScreen = () => {
   const palette = useAppPalette();
   const router = useRouter();
   const { classes, records, markAttendance, clearAttendanceForDate } = useAttendanceStore();
-  const today = new Date().toISOString().slice(0, 10);
+  const today = toDateKey(new Date());
   const weekday = new Intl.DateTimeFormat("en-US", { weekday: "long" }).format(new Date());
 
   const todaysClasses = useMemo(() => classes.filter((c) => isClassToday(c.schedule)), [classes]);
@@ -192,7 +192,7 @@ export const QuickCheckInScreen = () => {
                     {c.name}
                   </Text>
                   <Text numberOfLines={1} className="text-[13px]" style={{ color: palette.ink3, fontFamily: "Outfit_600SemiBold" }}>
-                    {formatTimeLabel(c.schedule[0]?.startTime ?? "09:00")}
+                    {formatTimeLabel(getTodayScheduleEntry(c.schedule)?.startTime ?? c.schedule[0]?.startTime ?? "09:00")}
                     {c.sectionLabel ? ` · ${c.sectionLabel}` : ""} · Room {c.room}
                   </Text>
                 </View>

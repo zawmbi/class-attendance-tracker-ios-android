@@ -10,12 +10,12 @@ import {
   Weekday,
   WeeklyTrendPoint
 } from "@/utils/types";
-import { formatDisplayDate, getRelativeDayBuckets, getWeekLabel, parseLocalDate, startOfWeek } from "@/utils/date";
+import { formatDisplayDate, getRelativeDayBuckets, getWeekLabel, parseLocalDate, startOfWeek, toDateKey } from "@/utils/date";
 
 const WEEKDAY_BY_INDEX: Weekday[] = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
 // Count the class's scheduled meetings within [from, to] inclusive, skipping
-// canceled (holiday) dates. Date keys match the toISOString slice used elsewhere.
+// canceled (holiday) dates. Date keys are local (toDateKey), matching stored records.
 export const countScheduledSessions = (
   classItem: ClassModel,
   from: Date,
@@ -36,7 +36,7 @@ export const countScheduledSessions = (
   const cursor = new Date(start);
   let guard = 0;
   while (cursor <= end && guard < 4000) {
-    if (days.has(WEEKDAY_BY_INDEX[cursor.getDay()]) && !canceled.has(cursor.toISOString().slice(0, 10))) {
+    if (days.has(WEEKDAY_BY_INDEX[cursor.getDay()]) && !canceled.has(toDateKey(cursor))) {
       count += 1;
     }
     cursor.setDate(cursor.getDate() + 1);
@@ -366,7 +366,7 @@ export const getHeatmapData = (records: AttendanceRecord[], weeks = appConfig.he
   return Array.from({ length: weeks * 7 }, (_, index) => {
     const date = new Date(start);
     date.setDate(start.getDate() + index);
-    const iso = date.toISOString().slice(0, 10);
+    const iso = toDateKey(date);
     const dayRecords = records.filter((record) => record.date === iso);
     const value = dayRecords.reduce((sum, record) => {
       if (record.status === "present") return sum + 3;

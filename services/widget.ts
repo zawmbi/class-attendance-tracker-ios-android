@@ -1,7 +1,7 @@
 import { Platform } from "react-native";
 import { ExtensionStorage } from "@bacons/apple-targets";
 
-import { formatTimeLabel } from "@/utils/date";
+import { formatTimeLabel, toDateKey } from "@/utils/date";
 import { AttendanceRecord, ClassModel, Weekday } from "@/utils/types";
 
 // Must match the App Group + key used by the iOS widget (targets/widget/index.swift).
@@ -30,7 +30,7 @@ export const syncTodayWidget = (classes: ClassModel[], records: AttendanceRecord
   if (!storage) return;
 
   const now = new Date();
-  const today = now.toISOString().slice(0, 10);
+  const today = toDateKey(now);
   const weekday = WEEKDAY_BY_INDEX[now.getDay()];
 
   const rows: { sort: string; name: string; time: string; status: string | null }[] = [];

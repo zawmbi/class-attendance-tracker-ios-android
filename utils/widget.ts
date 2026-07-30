@@ -1,5 +1,5 @@
 import { deriveClass } from "@/utils/attenza";
-import { getWeekdayLabel, formatTimeLabel } from "@/utils/date";
+import { formatTimeLabel, getWeekdayLabel, toDateKey } from "@/utils/date";
 import { AttendanceRecord, AttendanceSettings, ClassModel } from "@/utils/types";
 
 // App Group / shared-storage key the native widget extension reads from.
@@ -31,7 +31,7 @@ export const buildWidgetData = (
   now: Date = new Date()
 ): WidgetData => {
   const todayName = getWeekdayLabel(now);
-  const todayIso = now.toISOString().slice(0, 10);
+  const todayIso = toDateKey(now);
 
   // Collect with the raw 24h start time so we can sort chronologically before
   // formatting (formatted labels like "1:00 PM" would sort wrong as strings).

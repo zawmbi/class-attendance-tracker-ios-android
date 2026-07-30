@@ -8,12 +8,13 @@ import { SectionHeader } from "@/components/SectionHeader";
 import { useAttendanceStore } from "@/store/attendanceStore";
 import { useAppPalette } from "@/theme/useAppPalette";
 import { AttendanceStatus } from "@/utils/types";
+import { toDateKey } from "@/utils/date";
 
 export const AddRecordScreen = ({ classId }: { classId: string }) => {
   const palette = useAppPalette();
   const { classes, addRecord } = useAttendanceStore();
   const classItem = classes.find((item) => item.id === classId);
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState(toDateKey(new Date()));
   const [status, setStatus] = useState<AttendanceStatus>("present");
   const [notes, setNotes] = useState("");
 

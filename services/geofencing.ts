@@ -4,6 +4,7 @@ import * as Notifications from "expo-notifications";
 import * as TaskManager from "expo-task-manager";
 
 import { AttendanceRecord, AttendanceSettings, AttendanceStatus, ClassModel, Weekday } from "@/utils/types";
+import { toDateKey } from "@/utils/date";
 
 export const GEOFENCE_TASK = "attendize-class-geofence";
 // Same key zustand-persist writes to (store/attendanceStore.ts). The background
@@ -49,7 +50,7 @@ TaskManager.defineTask(GEOFENCE_TASK, async ({ data, error }) => {
     const name = classItem?.name ?? "your class";
 
     const now = new Date();
-    const today = now.toISOString().slice(0, 10);
+    const today = toDateKey(now);
     const weekday = WEEKDAY_BY_INDEX[now.getDay()];
     const entry = classItem?.schedule?.find((s) => s.day === weekday);
 

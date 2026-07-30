@@ -30,7 +30,8 @@ export const seedClasses: ClassModel[] = [
     room: "204",
     schedule: [
       { day: "Monday", startTime: "09:00", endTime: "10:15" },
-      { day: "Wednesday", startTime: "09:00", endTime: "10:15" }
+      { day: "Wednesday", startTime: "09:00", endTime: "10:15" },
+      { day: "Friday", startTime: "09:00", endTime: "10:15" }
     ],
     attendanceType: "percentage",
     termType: "semester",
@@ -75,7 +76,7 @@ export const seedClasses: ClassModel[] = [
     location: "Science Center",
     room: "Lab 6",
     schedule: [
-      { day: "Tuesday", startTime: "14:00", endTime: "16:00" }
+      { day: "Wednesday", startTime: "14:00", endTime: "16:00" }
     ],
     attendanceType: "percentage",
     termType: "semester",
@@ -97,7 +98,8 @@ export const seedClasses: ClassModel[] = [
     location: "Arts Annex",
     room: "3B",
     schedule: [
-      { day: "Friday", startTime: "13:30", endTime: "16:00" }
+      { day: "Monday", startTime: "13:30", endTime: "16:00" },
+      { day: "Thursday", startTime: "13:30", endTime: "16:00" }
     ],
     attendanceType: "points",
     termType: "quarter",
@@ -119,8 +121,8 @@ export const seedClasses: ClassModel[] = [
     location: "Wellness Center",
     room: "Studio 1",
     schedule: [
-      { day: "Monday", startTime: "17:30", endTime: "18:30" },
-      { day: "Thursday", startTime: "17:30", endTime: "18:30" }
+      { day: "Tuesday", startTime: "17:30", endTime: "18:30" },
+      { day: "Friday", startTime: "17:30", endTime: "18:30" }
     ],
     attendanceType: "optional",
     termType: "trimester",
@@ -131,6 +133,53 @@ export const seedClasses: ClassModel[] = [
     color: "#6B8F71",
     priority: "low",
     notes: "Optional class, but streaks unlock extra wellness credits."
+  },
+  {
+    id: "cls-6",
+    name: "Organic Chemistry",
+    linkedGroup: "CHEM 240",
+    sectionLabel: "Lecture",
+    professor: "Dr. Sofia Almeida",
+    ta: "Ravi Menon",
+    location: "Science Center",
+    room: "302",
+    schedule: [
+      { day: "Monday", startTime: "10:30", endTime: "11:45" },
+      { day: "Wednesday", startTime: "10:30", endTime: "11:45" },
+      { day: "Friday", startTime: "10:30", endTime: "11:45" }
+    ],
+    attendanceType: "percentage",
+    termType: "semester",
+    courseLengthWeeks: 16,
+    requiredAttendance: 90,
+    excusedAllowance: 2,
+    hoursPerWeek: 4,
+    color: "#8C6A4A",
+    priority: "high",
+    notes: "Attendance is part of the participation grade — two misses drops a letter."
+  },
+  {
+    id: "cls-7",
+    name: "Discrete Mathematics",
+    linkedGroup: "",
+    sectionLabel: "Lecture",
+    professor: "Prof. Daniel Okafor",
+    ta: "",
+    location: "Engineering Building",
+    room: "141",
+    schedule: [
+      { day: "Tuesday", startTime: "15:00", endTime: "16:15" },
+      { day: "Thursday", startTime: "15:00", endTime: "16:15" }
+    ],
+    attendanceType: "percentage",
+    termType: "semester",
+    courseLengthWeeks: 16,
+    requiredAttendance: 80,
+    excusedAllowance: 3,
+    hoursPerWeek: 3,
+    color: "#5C7C99",
+    priority: "medium",
+    notes: "Problem sets are handed back in class."
   }
 ];
 
@@ -173,8 +222,22 @@ const DEMO_PATTERNS: Record<string, DemoPattern> = {
   "cls-3": { late: [0.5], excused: [0.7], absent: [0.35] },
   // Optional, low-priority course left in the "watch" zone so the Insights
   // risk/forecast card has a meaningful worst-course to highlight.
-  "cls-4": { late: [0.35], excused: [0.85], absent: [0.2, 0.45, 0.7] }
+  "cls-4": { late: [0.35], excused: [0.85], absent: [0.2, 0.45, 0.7] },
+  // High required-attendance course with one slip — makes the forecast's
+  // "at risk" count non-zero without looking careless.
+  "cls-6": { late: [0.3, 0.68], excused: [], absent: [0.5] },
+  "cls-7": { late: [0.55], excused: [0.4], absent: [0.25, 0.62] }
 };
+
+// How much attendance history the demo carries. A whole number of weeks so every
+// weekday gets equal coverage.
+//
+// 5 weeks is deliberate, not arbitrary: badge bonus XP accumulates fast and the
+// rank ladder tops out at 2600 XP, so 6+ weeks pins the demo at Valedictorian
+// with the progress bar full and nothing left to earn. At 5 weeks it lands on
+// Dean's List with Valedictorian still ahead and ~40% of badges unlocked —
+// a profile in progress rather than a finished one.
+const DEMO_HISTORY_DAYS = 35;
 
 const nearestIndex = (fraction: number, length: number) =>
   Math.min(length - 1, Math.max(0, Math.round(fraction * (length - 1))));
@@ -193,13 +256,14 @@ const scheduleForWeekday = (classItem: ClassModel, weekday: number) =>
  * campus holiday, and a live "Today". Regenerated on each call so it never
  * goes stale.
  */
-export const buildDemoData = (now: Date = new Date()) => {
+export const buildDemoData = (now: Date = new Date(), historyDays: number = DEMO_HISTORY_DAYS) => {
   const today = new Date(now);
   today.setHours(12, 0, 0, 0);
   const todayKey = toKey(today);
 
-  const termStart = addDays(today, -63); // ~9 weeks of history
-  const termEnd = addDays(today, 49); // ~7 weeks remaining of a 16-week term
+  const termStart = addDays(today, -historyDays);
+  // Keep the term a 16-week semester regardless of how far in we are.
+  const termEnd = addDays(today, 16 * 7 - historyDays);
 
   // One campus holiday ~3 weeks back (rolled to a Monday) to exercise the
   // canceled-day treatment on the calendar.

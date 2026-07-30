@@ -2,6 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
+import { toDateKey } from "@/utils/date";
 import { buildDemoData, defaultSettings } from "@/utils/mockData";
 import {
   AttendanceRecord,
@@ -67,10 +68,10 @@ export const useAttendanceStore = create<AttendanceState>()(
               classId,
               status,
               notes,
-              date: new Date().toISOString().slice(0, 10)
+              date: toDateKey(new Date())
             },
             ...state.records.filter(
-              (record) => !(record.classId === classId && record.date === new Date().toISOString().slice(0, 10))
+              (record) => !(record.classId === classId && record.date === toDateKey(new Date()))
             )
           ]
         })),

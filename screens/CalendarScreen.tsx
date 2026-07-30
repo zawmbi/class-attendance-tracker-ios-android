@@ -11,7 +11,7 @@ import { useAttendanceStore } from "@/store/attendanceStore";
 import { useAppPalette } from "@/theme/useAppPalette";
 import { useIsWide } from "@/theme/responsive";
 import { deriveClass, riskTone } from "@/utils/attenza";
-import { addDays, formatLongDate, formatTimeLabel, getMonthLabel } from "@/utils/date";
+import { addDays, formatLongDate, formatTimeLabel, getMonthLabel, toDateKey } from "@/utils/date";
 import { AttendanceStatus, Weekday } from "@/utils/types";
 
 const WEEK: { short: Weekday; letter: string }[] = [
@@ -33,7 +33,7 @@ const STATUS_LABEL: Record<AttendanceStatus, string> = {
 };
 
 // Match record date keys produced elsewhere (markAttendance uses toISOString slice).
-const iso = (date: Date) => date.toISOString().slice(0, 10);
+const iso = (date: Date) => toDateKey(date);
 
 const termLabel = (now: Date) => {
   const m = now.getMonth();

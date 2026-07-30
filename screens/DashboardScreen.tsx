@@ -17,7 +17,14 @@ import { getAttendanceSummary } from "@/utils/attendance";
 import { XP_PER_STATUS, getGamificationProfile, tierColor } from "@/utils/gamification";
 import { deriveClass, ringPropsFromProfile } from "@/utils/attenza";
 import { BadgeMedallion } from "@/components/attenza/BadgeMedallion";
-import { formatTimeLabel, isClassToday, parseLocalDate } from "@/utils/date";
+import {
+  formatTimeLabel,
+  getTodayScheduleEntry,
+  isClassToday,
+  parseLocalDate,
+  toDateKey,
+  todayStartMinutes
+} from "@/utils/date";
 
 const greeting = () => {
   const h = new Date().getHours();
@@ -48,7 +55,7 @@ export const DashboardScreen = () => {
   const onboarded = useUserStore((state) => state.onboarded);
   const completeOnboarding = useUserStore((state) => state.completeOnboarding);
   const viewedForecast = useUserStore((state) => state.viewedForecast);
-  const today = new Date().toISOString().slice(0, 10);
+  const today = toDateKey(new Date());
 
   const hasClasses = classes.length > 0;
   const hasAnyRecord = records.length > 0;
@@ -74,7 +81,17 @@ export const DashboardScreen = () => {
   const xpToNext = Math.max(0, profile.xpForNextRank - profile.xpIntoRank);
 
   const todayCanceled = canceledDates.includes(today);
-  const todays = useMemo(() => (todayCanceled ? [] : classes.filter((c) => isClassToday(c.schedule))), [classes, todayCanceled]);
+  // Chronological, not whatever order the courses were added in.
+  const todays = useMemo(
+    () =>
+      todayCanceled
+        ? []
+        : classes
+            .filter((c) => isClassToday(c.schedule))
+            .slice()
+            .sort((a, b) => todayStartMinutes(a.schedule) - todayStartMinutes(b.schedule)),
+    [classes, todayCanceled]
+  );
   const loggedToday = todays.filter((c) => records.some((r) => r.classId === c.id && r.date === today)).length;
 
   const derived = useMemo(() => classes.map((c) => deriveClass(c, records, settings, canceledDates)), [classes, records, settings, canceledDates]);
@@ -264,7 +281,9 @@ export const DashboardScreen = () => {
             {atRisk.classItem.name}
           </Text>
           <Text className="text-[13px]" style={{ color: palette.ink2, fontFamily: "Outfit_500Medium" }}>
-            {atRisk.buffer <= 0 ? "Buffer empty — every class counts now." : `Only ${atRisk.buffer} more miss before risk.`}
+            {atRisk.buffer <= 0
+              ? "Buffer empty — every class counts now."
+              : `Only ${atRisk.buffer} more ${atRisk.buffer === 1 ? "miss" : "misses"} before risk.`}
           </Text>
         </View>
         <Icon name="chevron" size={20} color={palette.ink3} />
@@ -294,7 +313,7 @@ export const DashboardScreen = () => {
                   style={i > 0 ? { borderTopWidth: 1, borderTopColor: palette.border } : undefined}
                 >
                   <Text numberOfLines={1} className="w-[70px] text-[12.5px]" style={{ color: palette.ink2, fontFamily: "Outfit_600SemiBold" }}>
-                    {formatTimeLabel(c.schedule[0]?.startTime ?? "09:00")}
+                    {formatTimeLabel(getTodayScheduleEntry(c.schedule)?.startTime ?? c.schedule[0]?.startTime ?? "09:00")}
                   </Text>
                   <View className="mr-3 h-9 w-1.5 rounded-full" style={{ backgroundColor: c.color }} />
                   <View className="flex-1 pr-2">

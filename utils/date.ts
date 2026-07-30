@@ -17,6 +17,18 @@ export const getWeekdayLabel = (date: Date) => weekdays[date.getDay()];
 // date-only keys (record.date / toISOString slices); the slice guards stray times.
 export const parseLocalDate = (isoDate: string) => new Date(`${isoDate.slice(0, 10)}T00:00:00`);
 
+// yyyy-mm-dd for a Date, in LOCAL time. The inverse of parseLocalDate.
+//
+// Never use `date.toISOString().slice(0, 10)` for this: that's the UTC date, so
+// anywhere behind UTC it rolls over to tomorrow in the evening — check-ins get
+// written under the wrong day and today's records stop matching.
+export const toDateKey = (date: Date) => {
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, "0");
+  const day = `${date.getDate()}`.padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
 export const formatDisplayDate = (isoDate: string) =>
   new Intl.DateTimeFormat("en-US", {
     month: "short",
@@ -87,6 +99,21 @@ export const parseTimeInput = (input: string) => {
 
 export const isClassToday = (schedule: ClassSchedule[], now = new Date()) =>
   schedule.some((item) => item.day === getWeekdayLabel(now));
+
+// The schedule entry for today's weekday. Use this rather than schedule[0] when
+// showing or ordering "today" — a course can meet at different times on
+// different days, and schedule[0] is just whichever day was entered first.
+export const getTodayScheduleEntry = (schedule: ClassSchedule[], now = new Date()) =>
+  schedule.find((item) => item.day === getWeekdayLabel(now));
+
+// Sortable minutes-since-midnight for today's session. Classes that don't meet
+// today sort last rather than jumping to the front.
+export const todayStartMinutes = (schedule: ClassSchedule[], now = new Date()) => {
+  const entry = getTodayScheduleEntry(schedule, now);
+  if (!entry) return Number.MAX_SAFE_INTEGER;
+  const [hours, minutes] = entry.startTime.split(":").map(Number);
+  return (hours || 0) * 60 + (minutes || 0);
+};
 
 export const getNextSession = (schedule: ClassSchedule[], now = new Date()) => {
   const candidates = schedule.map((entry) => {
