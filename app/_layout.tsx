@@ -16,6 +16,7 @@ import {
   Outfit_700Bold,
   Outfit_800ExtraBold
 } from "@expo-google-fonts/outfit";
+import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Text, TextInput, View } from "react-native";
@@ -25,6 +26,12 @@ import { IapProvider } from "@/components/IapProvider";
 import { UpgradeModal } from "@/components/UpgradeModal";
 import { getPalette } from "@/theme";
 import { useResolvedThemeMode } from "@/theme/useAppPalette";
+
+// Hold the native splash until the animated intro has actually painted, so the
+// two don't cross-fade through a bare frame. AnimatedSplash hides it on mount.
+SplashScreen.preventAutoHideAsync().catch(() => {
+  // Already hidden / unavailable — nothing to hold.
+});
 
 // Body/UI default font (Outfit). Hero numerals + rank names opt into the
 // Fraunces display serif via the `font-display` class.
@@ -71,6 +78,16 @@ export default function RootLayout() {
 
   useEffect(() => {
     applyGlobalTypography();
+  }, []);
+
+  // Safety net: AnimatedSplash normally drops the native splash on layout. If
+  // fonts neither load nor error, it would never mount and the splash would sit
+  // there forever — so release it regardless after a few seconds.
+  useEffect(() => {
+    const bail = setTimeout(() => {
+      SplashScreen.hideAsync().catch(() => {});
+    }, 5000);
+    return () => clearTimeout(bail);
   }, []);
 
   if (!loaded && !error) {

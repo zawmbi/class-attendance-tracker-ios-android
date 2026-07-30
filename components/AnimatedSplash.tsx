@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Animated, Easing, Image, StyleSheet, View, useWindowDimensions } from "react-native";
+import * as SplashScreen from "expo-splash-screen";
 import Svg, { ClipPath, Defs, Ellipse, G, LinearGradient, Mask, Path, RadialGradient, Rect, Stop } from "react-native-svg";
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
@@ -244,6 +245,14 @@ export const AnimatedSplash = ({ onDone }: Props) => {
     };
   }, [anims, letters, studio]);
 
+  // Drop the native splash only once this view has laid out, so the handoff
+  // never exposes a bare frame between the two.
+  const hideNativeSplash = useCallback(() => {
+    SplashScreen.hideAsync().catch(() => {
+      // Already hidden — harmless.
+    });
+  }, []);
+
   // Gradient geometry in absolute units — percentage-sized react-native-svg
   // gradients mis-size on device, so everything below is userSpaceOnUse.
   const auraSize = width * 1.2;
@@ -251,6 +260,7 @@ export const AnimatedSplash = ({ onDone }: Props) => {
   return (
     <Animated.View
       pointerEvents="none"
+      onLayout={hideNativeSplash}
       style={[StyleSheet.absoluteFill, { opacity: anims.fade, zIndex: 999 }]}
     >
       {/* Ground + the two radial washes from the design */}

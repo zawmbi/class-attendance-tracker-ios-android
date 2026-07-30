@@ -38,12 +38,22 @@ const config: ExpoConfig = {
     "expo-router",
     "expo-font",
     [
+      // Bare background — the logo is deliberately a 1x1 transparent pixel.
+      //
+      // iOS can't animate the launch screen, so this static screen is only the
+      // ground the animated intro draws onto (components/AnimatedSplash).
+      // Showing the real icon here made it appear and then vanish a beat before
+      // the intro started drawing its own mark.
+      //
+      // Omitting `image` entirely does NOT work: the plugin then emits a
+      // storyboard with an empty <subviews/> but dangling constraints, and
+      // falls back to systemBackgroundColor — i.e. a white launch screen.
       "expo-splash-screen",
       {
-        image: "./assets/icon/attendize-glass-1024.png",
-        imageWidth: 180,
+        image: "./assets/splash-empty.png",
+        imageWidth: 1,
         backgroundColor: "#0F2820",
-        dark: { image: "./assets/icon/attendize-glass-1024.png", backgroundColor: "#0F2820" }
+        dark: { image: "./assets/splash-empty.png", backgroundColor: "#0F2820" }
       }
     ],
     "expo-notifications",
