@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Href, Link } from "expo-router";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
@@ -9,6 +9,7 @@ import { Meter } from "@/components/attenza/Meter";
 import { StatusPill, AttenzaStatus } from "@/components/attenza/StatusPill";
 import { ScreenContainer } from "@/components/ScreenContainer";
 import { GetStartedChecklist, ChecklistStep } from "@/components/GetStartedChecklist";
+import { Sheet } from "@/components/attenza/Sheet";
 import { useAttendanceStore } from "@/store/attendanceStore";
 import { useUserStore } from "@/store/userStore";
 import { useAppPalette } from "@/theme/useAppPalette";
@@ -98,6 +99,9 @@ export const DashboardScreen = () => {
   const atRisk = derived.filter((d) => d.risk === "danger").sort((a, b) => a.buffer - b.buffer)[0];
 
   const unlockedBadges = profile.achievements.filter((b) => b.unlocked);
+  // Tapped badge — the row is a shortcut, so the detail opens in place rather
+  // than bouncing to the Trophy tab and losing the reader's position.
+  const [openBadge, setOpenBadge] = useState<(typeof profile.achievements)[number] | null>(null);
   const firstName = userName ? userName.split(" ")[0] : "there";
   const initial = (userName || "A").trim().charAt(0).toUpperCase();
   // `wide` drives the multi-column hero/grid layout (needs real width); `sidebar`
@@ -367,7 +371,14 @@ export const DashboardScreen = () => {
         </View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingRight: 8 }}>
           {unlockedBadges.map((b) => (
-            <View key={b.id} className="items-center" style={{ width: 92 }}>
+            <Pressable
+              key={b.id}
+              onPress={() => setOpenBadge(b)}
+              accessibilityRole="button"
+              accessibilityLabel={`${b.title}. ${b.description}`}
+              className="items-center"
+              style={({ pressed }) => ({ width: 92, opacity: pressed ? 0.6 : 1 })}
+            >
               <View
                 className="h-[92px] w-[92px] items-center justify-center rounded-[22px]"
                 style={{ backgroundColor: `${tierColor(b.tier)}22`, borderWidth: 1, borderColor: `${tierColor(b.tier)}55` }}
@@ -377,7 +388,7 @@ export const DashboardScreen = () => {
               <Text numberOfLines={2} className="mt-1.5 text-center text-[12px]" style={{ color: palette.ink, fontFamily: "Outfit_700Bold" }}>
                 {b.title}
               </Text>
-            </View>
+            </Pressable>
           ))}
         </ScrollView>
       </View>
@@ -418,6 +429,68 @@ export const DashboardScreen = () => {
           )}
         </>
       )}
+
+      <Sheet open={openBadge != null} onClose={() => setOpenBadge(null)}>
+        {openBadge ? (
+          <View className="items-center">
+            <View
+              className="h-[104px] w-[104px] items-center justify-center rounded-[26px]"
+              style={{
+                backgroundColor: `${tierColor(openBadge.tier)}22`,
+                borderWidth: 1,
+                borderColor: `${tierColor(openBadge.tier)}55`
+              }}
+            >
+              <BadgeMedallion emoji={openBadge.glyph} tier={openBadge.tier} size={68} />
+            </View>
+
+            <Text
+              className="mt-3 text-[12px] uppercase"
+              style={{ color: tierColor(openBadge.tier), fontFamily: "Outfit_800ExtraBold", letterSpacing: 1.2 }}
+            >
+              {openBadge.tier}
+            </Text>
+            <Text className="mt-0.5 text-center text-[22px]" style={{ color: palette.ink, fontFamily: "Outfit_800ExtraBold" }}>
+              {openBadge.title}
+            </Text>
+            <Text
+              className="mt-2 text-center text-[14.5px] leading-[21px]"
+              style={{ color: palette.ink2, fontFamily: "Outfit_500Medium" }}
+            >
+              {openBadge.description}
+            </Text>
+
+            <View
+              className="mt-4 w-full flex-row items-center justify-between rounded-[16px] px-4 py-3"
+              style={{ backgroundColor: palette.paper2, borderWidth: 1, borderColor: palette.hairline }}
+            >
+              <Text className="text-[13.5px]" style={{ color: palette.ink3, fontFamily: "Outfit_600SemiBold" }}>
+                {openBadge.progressLabel}
+              </Text>
+              <Text className="text-[13.5px]" style={{ color: palette.goldDeep, fontFamily: "Outfit_800ExtraBold" }}>
+                +{openBadge.xp} XP
+              </Text>
+            </View>
+
+            <Link href={"/achievements" as Href} asChild>
+              <Pressable
+                onPress={() => setOpenBadge(null)}
+                className="mt-4 w-full items-center rounded-[18px] py-3.5"
+                style={{ backgroundColor: palette.forest }}
+              >
+                <Text style={{ color: palette.onGradient, fontFamily: "Outfit_800ExtraBold", fontSize: 15 }}>
+                  See all badges
+                </Text>
+              </Pressable>
+            </Link>
+            <Pressable onPress={() => setOpenBadge(null)} className="mt-2 items-center py-2">
+              <Text className="text-[14px]" style={{ color: palette.ink3, fontFamily: "Outfit_600SemiBold" }}>
+                Close
+              </Text>
+            </Pressable>
+          </View>
+        ) : null}
+      </Sheet>
     </ScreenContainer>
   );
 };

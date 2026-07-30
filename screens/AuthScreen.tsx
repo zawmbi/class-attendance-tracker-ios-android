@@ -8,7 +8,7 @@ import { Alert, Image, Platform, Pressable, Text, View } from "react-native";
 import { FormField, FormInput } from "@/components/FormField";
 import { ScreenContainer } from "@/components/ScreenContainer";
 import { authConfig, hasGoogleAuthConfig } from "@/services/authConfig";
-import { authService } from "@/services/authService";
+import { authService, describeAuthError } from "@/services/authService";
 import { useUserStore } from "@/store/userStore";
 import { useAttendanceStore } from "@/store/attendanceStore";
 import { useAppPalette } from "@/theme/useAppPalette";
@@ -105,8 +105,7 @@ export const AuthScreen = () => {
 
       completeSignIn(result.provider, result.userName, result.userEmail);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Unable to sign in right now.";
-      Alert.alert(mode === "signup" ? "Couldn’t create account" : "Couldn’t log in", message);
+      Alert.alert(mode === "signup" ? "Couldn’t create account" : "Couldn’t log in", describeAuthError(error));
     } finally {
       setPendingProvider(null);
     }
@@ -176,11 +175,7 @@ export const AuthScreen = () => {
 
       completeSignIn(result.provider, result.userName, result.userEmail);
     } catch (error) {
-      const message =
-        error instanceof Error && error.message
-          ? error.message
-          : `Unable to sign in with ${titleCase(provider)} right now.`;
-      Alert.alert(`${titleCase(provider)} sign-in failed`, message);
+      Alert.alert(`${titleCase(provider)} sign-in failed`, describeAuthError(error));
       setPendingProvider(null);
     }
   };

@@ -14,6 +14,36 @@ import { deleteDoc, doc } from "firebase/firestore";
 
 import { auth, db } from "./firebase";
 
+// Firebase surfaces things like `Firebase: Error (auth/operation-not-allowed).`,
+// which tells a user nothing and tells us nothing either. Map the codes we can
+// actually act on; anything unrecognised keeps its raw message so it's still
+// diagnosable from a bug report.
+const AUTH_ERROR_MESSAGES: Record<string, string> = {
+  "auth/email-already-in-use": "That email already has an account. Try logging in instead.",
+  "auth/invalid-email": "That doesn't look like a valid email address.",
+  "auth/missing-password": "Enter a password.",
+  "auth/weak-password": "Passwords need to be at least 6 characters.",
+  "auth/wrong-password": "That email and password don't match.",
+  "auth/invalid-credential": "That email and password don't match.",
+  "auth/user-not-found": "No account found for that email.",
+  "auth/user-disabled": "That account has been disabled.",
+  "auth/too-many-requests": "Too many attempts. Wait a few minutes and try again.",
+  "auth/network-request-failed": "Couldn't reach the server. Check your connection and try again.",
+  // Configuration problems — the user can't fix these, so say so plainly rather
+  // than implying they typed something wrong.
+  "auth/operation-not-allowed": "Email sign-up isn't switched on for this app yet. Please let us know.",
+  "auth/invalid-api-key": "The app is misconfigured and can't sign in. Please let us know.",
+  "auth/api-key-not-valid": "The app is misconfigured and can't sign in. Please let us know.",
+  "auth/configuration-not-found": "Sign-in isn't fully configured for this app yet. Please let us know."
+};
+
+export const describeAuthError = (error: unknown): string => {
+  const code = typeof error === "object" && error !== null ? (error as { code?: string }).code : undefined;
+  if (code && AUTH_ERROR_MESSAGES[code]) return AUTH_ERROR_MESSAGES[code];
+  if (error instanceof Error && error.message) return error.message;
+  return "Something went wrong. Please try again.";
+};
+
 export interface AuthResult {
   credential: UserCredential;
   provider: "email" | "google" | "apple";
