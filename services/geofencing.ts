@@ -101,7 +101,13 @@ export const requestGeofencePermissions = async () => {
 export const syncGeofences = async (classes: ClassModel[], settings: AttendanceSettings) => {
   const alreadyRunning = await Location.hasStartedGeofencingAsync(GEOFENCE_TASK).catch(() => false);
 
-  const regionsSource = settings.locationRemindersEnabled
+  // Either toggle arms region monitoring. They pick what happens on arrival —
+  // auto-check-in logs a record, plain reminders only nudge (see the task
+  // above) — so gating on locationRemindersEnabled alone left anyone who
+  // enabled just "Auto check-in on arrival" with no regions registered at all,
+  // despite Settings having already asked them for background permission.
+  const locationFeaturesEnabled = settings.locationRemindersEnabled || !!settings.autoCheckInEnabled;
+  const regionsSource = locationFeaturesEnabled
     ? classes.filter((c) => typeof c.latitude === "number" && typeof c.longitude === "number")
     : [];
 

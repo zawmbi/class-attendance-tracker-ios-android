@@ -9,6 +9,7 @@ import { useIap } from "@/components/IapProvider";
 import { PREMIUM_ANNUAL_ID, PREMIUM_MONTHLY_ID, PREMIUM_SEMIANNUAL_ID, PremiumPeriod, PremiumPlan } from "@/services/iap";
 import { useUserStore } from "@/store/userStore";
 import { darkPalette as d } from "@/theme";
+import { PRIVACY_URL, TERMS_URL } from "@/utils/legal";
 
 // Everything Premium unlocks — applies to every plan below.
 const FEATURES: { icon: IconName; title: string; sub: string }[] = [
@@ -38,10 +39,6 @@ const TIERS: {
   { period: "year", sku: PREMIUM_ANNUAL_ID, title: "12 Months", price: "$29.99", perMonth: "$2.50 / mo", billed: "Billed yearly", badge: "BEST VALUE · SAVE 37%" }
 ];
 
-// Apple's standard EULA (use your own Terms of Use URL if you have one).
-const TERMS_URL = "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/";
-// TODO: replace with your hosted privacy policy URL.
-const PRIVACY_URL = "https://lindascomputing.xyz/class-attendance-tracker-ios-android/";
 const MANAGE_URL =
   Platform.OS === "ios" ? "https://apps.apple.com/account/subscriptions" : "https://play.google.com/store/account/subscriptions";
 

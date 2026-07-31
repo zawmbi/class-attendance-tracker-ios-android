@@ -61,7 +61,17 @@ PRIVATE BY DESIGN
 Your classes and attendance stay on your device. No ads, no tracking, no selling your data. Delete your account and data anytime.
 
 ATTENDIZE PREMIUM (OPTIONAL)
-Core tracking is free. Premium unlocks end-of-term forecasting and what-if projections, behavioral insights, syllabus scanning, advanced reminders, and premium themes via an auto-renewable subscription (Monthly, 6-Month, or Annual). Payment is charged to your Apple ID at confirmation of purchase and renews automatically unless canceled at least 24 hours before the period ends; manage or cancel anytime in your account settings. Terms: https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
+Core tracking is free. Premium unlocks end-of-term forecasting and what-if projections, behavioral insights, syllabus scanning, advanced reminders, and premium themes.
+
+Subscription options:
+- Premium (Monthly) — $3.99 / month
+- Premium (6-Month) — $17.99 every 6 months ($3.00 / month)
+- Premium (Annual) — $29.99 / year ($2.50 / month)
+
+Each plan starts with a 2-week free trial. Payment is charged to your Apple ID at confirmation of purchase. Subscriptions renew automatically unless canceled at least 24 hours before the end of the current period, and your account is charged for renewal within 24 hours before the period ends. Manage or cancel anytime in your Apple ID account settings.
+
+Privacy Policy: https://lindascomputing.xyz/class-attendance-tracker-ios-android/privacy.html
+Terms of Use (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
 
 Works great on iPhone and iPad.
 
@@ -83,9 +93,20 @@ First release of Attendize:
 - **Password:** `devtestpassword`
 
 **Notes:** On the login screen, enter the username/password above to sign in.
-This loads sample classes (it's a local demo login, so it works offline).
-Alternatively, "Skip for now — explore the demo" enters as a guest with the same
-sample data. No real account needed.
+This loads sample classes (it's a local demo login, so it works offline). Guest
+mode has been removed, so the demo login above is the only way in — please use it.
+
+**Subscription information (guideline 3.1.2(c)):** The Attendize Premium screen
+shows each plan's title, length, price, and price-per-month, the auto-renewal
+terms, and tappable links to the Privacy Policy and the Terms of Use (EULA). The
+App Description also lists all three plans with prices and carries functional
+links to both documents. We use Apple's standard EULA:
+https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
+
+**Location (guideline 2.5.4):** The "location" background mode has been removed
+from UIBackgroundModes. The app's only location feature is region monitoring
+(geofencing): a student can pin a course to a place, and iOS wakes the app on
+arrival to offer or record a check-in. This needs no persistent location.
 
 **In-App Purchases:** Premium features (forecasting, analytics/insights,
 syllabus scanning, advanced reminders, themes) are unlocked by an auto-renewable
@@ -102,7 +123,7 @@ https://lindascomputing.xyz/class-attendance-tracker-ios-android/
 [optional]
 
 ## Privacy Policy URL (required)
-[paste the hosted URL of docs/privacy-policy.md]
+https://lindascomputing.xyz/class-attendance-tracker-ios-android/privacy.html
 
 ---
 

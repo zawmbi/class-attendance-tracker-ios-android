@@ -262,6 +262,7 @@ export default function TabsLayout() {
   const reminderMinutesBefore = settings.reminderMinutesBefore;
   const missedCheckInDelayMinutes = settings.missedCheckInDelayMinutes;
   const locationRemindersEnabled = settings.locationRemindersEnabled;
+  const autoCheckInEnabled = settings.autoCheckInEnabled;
   useEffect(() => {
     if (!isAuthenticated) return;
     syncScheduledReminders(classes, settings).catch(() => {});
@@ -271,7 +272,7 @@ export default function TabsLayout() {
     if (!isAuthenticated) return;
     syncGeofences(classes, settings).catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated, classes, locationRemindersEnabled]);
+  }, [isAuthenticated, classes, locationRemindersEnabled, autoCheckInEnabled]);
   useEffect(() => {
     if (!isAuthenticated) return;
     syncTodayWidget(classes, records);

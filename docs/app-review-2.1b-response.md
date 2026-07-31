@@ -34,9 +34,8 @@ Purchase** (`expo-iap`). Everything below reflects that.
 > no promo codes, external payments, or alternative unlock paths.
 >
 > **5. How do users obtain an account? Is there a fee?**
-> Accounts are free. Users sign up with email/password (or continue as a guest).
-> Creating an account costs nothing and is not required to use the free
-> features.
+> Accounts are free. Users sign up with email/password, Apple, or Google.
+> Creating an account costs nothing, and all free features are available with it.
 >
 > **6. How do users purchase "Premium"?**
 > Tapping any "Premium" / "Unlock with Premium" prompt opens the Premium screen,

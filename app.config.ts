@@ -93,7 +93,14 @@ const config: ExpoConfig = {
     },
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
-      UIBackgroundModes: ["location"],
+      // Deliberately NO UIBackgroundModes: ["location"]. The only location
+      // feature is geofencing (services/geofencing.ts) — region monitoring,
+      // which iOS wakes the app for even when terminated, without the
+      // background mode. Declaring it got the app rejected under guideline
+      // 2.5.4 ("no features that require persistent location"). expo-location
+      // force-set allowsBackgroundLocationUpdates for geofencing, which throws
+      // without this key; patches/expo-location+19.0.8.patch makes it
+      // conditional. Don't re-add this key without re-reading that patch.
       NSLocationWhenInUseUsageDescription:
         "Attendize reminds you when you're near class. You can turn this off anytime.",
       NSLocationAlwaysAndWhenInUseUsageDescription:

@@ -1,5 +1,5 @@
 import { PropsWithChildren, ReactNode, useMemo, useState } from "react";
-import { Alert, Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { Alert, Linking, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 
 import { Icon, IconName } from "@/components/Icon";
@@ -17,6 +17,7 @@ import { requestGeofencePermissions } from "@/services/geofencing";
 import { appConfig } from "@/theme";
 import { useAppPalette } from "@/theme/useAppPalette";
 import { deleteAccountAndWipe } from "@/utils/account";
+import { PRIVACY_URL, TERMS_URL } from "@/utils/legal";
 import { getGamificationProfile } from "@/utils/gamification";
 import { ThemeMode } from "@/utils/types";
 
@@ -473,9 +474,13 @@ export const SettingsScreen = () => {
         />
       </Group>
 
-      {/* General */}
+      {/* General. The two legal rows are required by App Store guideline
+          3.1.2(c) — the app itself must carry functional links to both
+          documents, and the paywall only shows them to non-subscribers. */}
       <Group header="General">
         <Row icon="book" iconBg={palette.ink2} title="Help & feedback" onPress={() => {}} first />
+        <Row icon="lock" iconBg={palette.ink2} title="Privacy Policy" onPress={() => Linking.openURL(PRIVACY_URL)} />
+        <Row icon="book" iconBg={palette.ink2} title="Terms of Use" onPress={() => Linking.openURL(TERMS_URL)} />
         <Row icon="laurel" iconBg={palette.goldDeep} title="About Attendize" detail="v1.0" />
       </Group>
 

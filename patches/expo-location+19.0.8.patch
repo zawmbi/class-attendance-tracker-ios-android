@@ -1,0 +1,20 @@
+diff --git a/node_modules/expo-location/ios/TaskConsumers/EXGeofencingTaskConsumer.m b/node_modules/expo-location/ios/TaskConsumers/EXGeofencingTaskConsumer.m
+index 7e6482e..bd77198 100644
+--- a/node_modules/expo-location/ios/TaskConsumers/EXGeofencingTaskConsumer.m
++++ b/node_modules/expo-location/ios/TaskConsumers/EXGeofencingTaskConsumer.m
+@@ -71,7 +71,14 @@
+     self->_regionStates = regionStates;
+ 
+     locationManager.delegate = self;
+-    locationManager.allowsBackgroundLocationUpdates = YES;
++    // Region monitoring wakes the app on boundary crossings without the
++    // "location" background mode, and setting this to YES without that mode
++    // declared raises an exception. Only opt in when the app actually declares
++    // it, so geofencing-only apps can omit it (App Store guideline 2.5.4).
++    NSArray *backgroundModes = NSBundle.mainBundle.infoDictionary[@"UIBackgroundModes"];
++    if ([backgroundModes isKindOfClass:[NSArray class]] && [backgroundModes containsObject:@"location"]) {
++      locationManager.allowsBackgroundLocationUpdates = YES;
++    }
+     locationManager.pausesLocationUpdatesAutomatically = NO;
+ 
+     for (NSDictionary *regionDict in regions) {
