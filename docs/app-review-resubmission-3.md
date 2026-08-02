@@ -13,12 +13,30 @@ Rejected 2026-07-31 on two guidelines. Build 21 was reviewed on an iPad Air
 | In-app 3.1.2(c) disclosures | **Already present** — paywall + Settings → General |
 | App Store Connect metadata | **Not done** — manual, see Step 3 |
 | Resolution Center reply | **Not sent** — text below |
-| `Help & feedback` dead row | **Fixed** — needs build 23, see follow-up 1 |
+| `Help & feedback` dead row | **Fixed** — commit `393ac0f` |
+| Build 23 | **Done** — EAS build `af48bd8a`, FINISHED 2026-08-02, from `393ac0f` |
+| Build 23 binary verified | **Yes** — `UIBackgroundModes` = `["fetch"]`, `CFBundleVersion` 23; Hermes bundle carries `support@zawmbi.com`, `stdeula`, `privacy.html` |
+| Device test of geofencing | **Not done** — see "the one open risk" below |
 
-Build 22 is a valid, shippable answer to both rejections. Build 23 exists only to
-wire up the dead `Help & feedback` row in Settings → General, which sits one row
-above the legal links a reviewer taps to verify 3.1.2(c). Substitute "build 23"
-for "build 22" in Step 3 below once it is uploaded.
+Build 22 was already a valid answer to both rejections. **Build 23** additionally
+wires up the dead `Help & feedback` row in Settings → General, which sits one row
+above the legal links a reviewer taps to verify 3.1.2(c). Submit build 23.
+
+### How to verify a build actually carries the fix
+
+`ios/` is gitignored, so the checked-out `Info.plist` can be stale and proves
+nothing. Check the artifact instead:
+
+```sh
+curl -sL -o b.ipa "$(eas build:list --platform ios --limit 1 --json \
+  | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>console.log(JSON.parse(s.slice(s.indexOf("["))) [0].artifacts.applicationArchiveUrl))')"
+unzip -q b.ipa -d out
+plutil -extract UIBackgroundModes json -o - out/Payload/Attendize.app/Info.plist
+# expect: ["fetch"]
+
+# The JS bundle is Hermes bytecode, so grep won't see strings — use `strings`.
+strings -a out/Payload/Attendize.app/main.jsbundle | grep -c stdeula
+```
 
 ---
 
@@ -286,6 +304,12 @@ persistent background location. We removed the key instead.
    questioned, strip it with a small config plugin.
 2. **iOS monitors at most 20 regions per app.** Pinning more than 20 courses
    silently fails for the excess.
+3. **`NSLocationAlwaysUsageDescription` is a generic string.** The shipped
+   Info.plist carries "Allow Attendize to access your location" — injected by
+   `expo-location`'s plugin, not by `app.config.ts`, which only sets the
+   When-In-Use and AlwaysAndWhenInUse strings. It is the deprecated pre-iOS-11
+   key and has survived 23 builds unflagged, but a vague purpose string is a 5.1.1
+   risk. Override it in `ios.infoPlist` if it is ever raised.
 3. **Dead code:** `services/notificationService.ts:67` and `:163` are exported
    but never imported, duplicating permission logic `geofencing.ts` handles.
 4. ~~**`Help & feedback`** in Settings still has a no-op `onPress`.~~ **Fixed for
