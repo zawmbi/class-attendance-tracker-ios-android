@@ -3,6 +3,23 @@
 Rejected 2026-07-31 on two guidelines. Build 21 was reviewed on an iPad Air
 11-inch (M3).
 
+## Status as of 2026-08-02
+
+| | |
+| --- | --- |
+| 2.5.4 code fix | **Done** — committed as `735f7f0` |
+| Build 22 | **Done** — EAS build `446f1482`, FINISHED 2026-07-31, from `735f7f0` |
+| Build 22 binary verified | **Yes** — IPA unpacked; `UIBackgroundModes` = `["fetch"]`, no `location` |
+| In-app 3.1.2(c) disclosures | **Already present** — paywall + Settings → General |
+| App Store Connect metadata | **Not done** — manual, see Step 3 |
+| Resolution Center reply | **Not sent** — text below |
+| `Help & feedback` dead row | **Fixed** — needs build 23, see follow-up 1 |
+
+Build 22 is a valid, shippable answer to both rejections. Build 23 exists only to
+wire up the dead `Help & feedback` row in Settings → General, which sits one row
+above the legal links a reviewer taps to verify 3.1.2(c). Substitute "build 23"
+for "build 22" in Step 3 below once it is uploaded.
+
 ---
 
 ## 1. Guideline 3.1.2(c) — subscription metadata (EULA link)
@@ -98,8 +115,12 @@ automatically via its config plugin. See "Known follow-ups" below.
 
 ### Still required before resubmitting
 
-**A physical-device test.** Geofencing cannot be exercised in the Simulator, and
-this change alters native code. Run:
+**A physical-device test — the one open risk.** Geofencing cannot be exercised in
+the Simulator, and this change alters native code. If this was never run against
+build 22 on a real iPhone, the failure mode is specific: without the
+`expo-location` patch taking effect, `startGeofencingAsync` throws the moment a
+reviewer flips "Location check-in reminders" on. Do this before resubmitting.
+Run:
 
 ```sh
 npx expo prebuild -p ios --clean   # regenerate ios/ without the background mode
@@ -144,7 +165,7 @@ reminders", grant **Always**, then leave and re-enter the area. Confirm the
 arrival notification fires with the app backgrounded, and — the specific
 regression the patch guards — that flipping the toggle does not crash.
 
-### Step 2 — commit and build
+### Step 2 — commit and build — **DONE**
 
 EAS builds from committed state, so commit first.
 
@@ -154,7 +175,28 @@ eas build --platform ios --profile production
 eas submit --platform ios --profile production
 ```
 
-`autoIncrement` is on, so this becomes build 22.
+`autoIncrement` is on, so this became **build 22** (EAS build
+`446f1482-0ba5-425a-b338-36ca34a6d51d`, finished 2026-07-31 from commit
+`735f7f0`).
+
+**Binary verified.** The shipped IPA was downloaded and unpacked; the embedded
+`Payload/Attendize.app/Info.plist` resolves to:
+
+```
+UIBackgroundModes = ["fetch"]
+CFBundleVersion  = 22
+```
+
+No `location` entry. This is the artifact-level proof that 2.5.4 is addressed —
+worth re-running with `plutil -extract UIBackgroundModes json -o -` on any future
+build, since `ios/` is gitignored and the local copy can go stale.
+
+If build 22 does not appear in the App Store Connect build picker, `eas submit`
+was never run for it:
+
+```sh
+eas submit --platform ios --profile production   # pick build 22
+```
 
 ### Step 3 — App Store Connect metadata
 
@@ -184,6 +226,55 @@ automatically. No need to recreate them.
 Send both replies below as a single message, in the app's Resolution Center
 thread for submission `f3f1f0d8-6373-4f92-bd96-594c07c288ab`.
 
+Apple asked for a **screen recording** confirming the 3.1.2(c) information is
+present. Record ~30 seconds on device or Simulator:
+
+1. Sign in as `devtest`, open any Premium prompt → **Attendize Premium**.
+2. Show the three plan rows — each with its title, billing period, price and
+   price per month.
+3. Scroll to the auto-renewal disclosure paragraph.
+4. Tap **Terms of Use**, show it opens Apple's standard EULA, come back.
+5. Tap **Privacy Policy**, show it opens the hosted policy.
+6. Go to **Settings → General** and show the same two rows there.
+
+No recording is needed for 2.5.4 — Apple only asks for one if you are *claiming*
+persistent background location. We removed the key instead.
+
+#### Combined reply — copy this verbatim
+
+> Hello, and thank you for the detailed review.
+>
+> **Guideline 3.1.2(c) — subscription information**
+>
+> We have updated the App Store metadata. The App Description now lists each
+> auto-renewable subscription with its title, length, price and price per month:
+> Premium (Monthly) — $3.99 per month; Premium (6-Month) — $17.99 every 6 months
+> ($3.00 per month); Premium (Annual) — $29.99 per year ($2.50 per month). It
+> states the auto-renewal terms and ends with functional links to both our
+> Privacy Policy and the Terms of Use (EULA). We use Apple's standard EULA:
+> https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
+> The Privacy Policy URL field in App Store Connect is also populated:
+> https://lindascomputing.xyz/class-attendance-tracker-ios-android/privacy.html
+>
+> Inside the app, the "Attendize Premium" screen shows each plan's title, length,
+> price and price per month, the auto-renewal terms, and tappable links to the
+> Privacy Policy and the Terms of Use. Both links are also available in
+> Settings → General. A screen recording confirming this is attached, and the
+> same information is now in the App Review Information notes.
+>
+> **Guideline 2.5.4 — UIBackgroundModes**
+>
+> We have removed the "location" value from the UIBackgroundModes key. Build 22
+> declares only "fetch". The app does not require persistent real-time location.
+>
+> Our only location feature is region monitoring, exactly as your guidance
+> recommends. A student can optionally pin a course to a place; iOS then wakes
+> the app on region entry to offer or automatically record an attendance
+> check-in. The app never calls startLocationUpdatesAsync or watchPositionAsync
+> and never streams continuous location.
+>
+> Please review build 22, which contains this change. Thank you.
+
 ---
 
 ## Known follow-ups (not blocking this resubmission)
@@ -197,7 +288,11 @@ thread for submission `f3f1f0d8-6373-4f92-bd96-594c07c288ab`.
    silently fails for the excess.
 3. **Dead code:** `services/notificationService.ts:67` and `:163` are exported
    but never imported, duplicating permission logic `geofencing.ts` handles.
-4. **`Help & feedback`** in Settings still has a no-op `onPress`.
+4. ~~**`Help & feedback`** in Settings still has a no-op `onPress`.~~ **Fixed for
+   build 23** — it now opens a `mailto:` to `support@zawmbi.com` (the address the
+   privacy policy publishes), falling back to the support site and then an alert
+   if no mail client is configured. It sat directly above the two legal rows a
+   reviewer taps to verify 3.1.2(c), so a dead tap there was a live 2.1 risk.
 
 ---
 

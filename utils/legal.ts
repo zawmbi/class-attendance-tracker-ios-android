@@ -13,3 +13,11 @@ export const TERMS_URL = "https://www.apple.com/legal/internet-services/itunes/d
 
 /** Deep-links to the policy itself, not the site landing page — review checks this. */
 export const PRIVACY_URL = "https://lindascomputing.xyz/class-attendance-tracker-ios-android/privacy.html";
+
+/** The address published in the privacy policy; also the App Store support contact. */
+export const SUPPORT_EMAIL = "support@zawmbi.com";
+
+/** Fallback for Settings → Help & feedback when no mail client is configured. */
+export const SUPPORT_URL = "https://lindascomputing.xyz/class-attendance-tracker-ios-android/";
+
+export const SUPPORT_MAILTO = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent("Attendize — help & feedback")}`;

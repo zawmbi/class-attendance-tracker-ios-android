@@ -17,7 +17,7 @@ import { requestGeofencePermissions } from "@/services/geofencing";
 import { appConfig } from "@/theme";
 import { useAppPalette } from "@/theme/useAppPalette";
 import { deleteAccountAndWipe } from "@/utils/account";
-import { PRIVACY_URL, TERMS_URL } from "@/utils/legal";
+import { PRIVACY_URL, SUPPORT_EMAIL, SUPPORT_MAILTO, SUPPORT_URL, TERMS_URL } from "@/utils/legal";
 import { getGamificationProfile } from "@/utils/gamification";
 import { ThemeMode } from "@/utils/types";
 
@@ -209,6 +209,23 @@ export const SettingsScreen = () => {
       setUserName(trimmed);
     }
     setEditingName(false);
+  };
+
+  // A device with no mail client configured — common on the Simulator, and
+  // possible on a review device — makes the mailto: throw. Falling back to the
+  // support site keeps the row from being a dead tap, which App Review reads as
+  // a bug (guideline 2.1) and which sits right beside the two legal rows they
+  // check for 3.1.2(c).
+  const handleSupport = async () => {
+    try {
+      await Linking.openURL(SUPPORT_MAILTO);
+    } catch {
+      try {
+        await Linking.openURL(SUPPORT_URL);
+      } catch {
+        Alert.alert("Help & feedback", `Email us at ${SUPPORT_EMAIL} and we'll get back to you.`);
+      }
+    }
   };
 
   const handleLoadSample = () => {
@@ -478,7 +495,7 @@ export const SettingsScreen = () => {
           3.1.2(c) — the app itself must carry functional links to both
           documents, and the paywall only shows them to non-subscribers. */}
       <Group header="General">
-        <Row icon="book" iconBg={palette.ink2} title="Help & feedback" onPress={() => {}} first />
+        <Row icon="book" iconBg={palette.ink2} title="Help & feedback" detail={SUPPORT_EMAIL} onPress={handleSupport} first />
         <Row icon="lock" iconBg={palette.ink2} title="Privacy Policy" onPress={() => Linking.openURL(PRIVACY_URL)} />
         <Row icon="book" iconBg={palette.ink2} title="Terms of Use" onPress={() => Linking.openURL(TERMS_URL)} />
         <Row icon="laurel" iconBg={palette.goldDeep} title="About Attendize" detail="v1.0" />
